@@ -1,0 +1,9 @@
+Drop a real PNG (3840x2160 recommended) at packages/torrentos-theme/wallpaper.png.
+The build script refuses to package without it. Suggested generator:
+
+    convert -size 3840x2160 \
+        gradient:'#0A1628-#1E6FFF' \
+        -blur 0x80 \
+        wallpaper.png
+
+or use any flow-field renderer keyed to seed 'torrentos-riptide'.

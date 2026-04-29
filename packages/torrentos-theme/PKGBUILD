@@ -1,0 +1,41 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-theme
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="TorrentOS GTK + Qt theme, icon set, cursor, wallpapers, sounds"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=(
+    'gtk3'
+    'gtk4'
+    'libadwaita'
+    'qt5ct'
+    'qt6ct'
+)
+optdepends=(
+    'kvantum: Qt theming engine'
+    'bibata-cursor-theme: cursor pack'
+)
+source=(
+    'wallpaper.png'
+    'logo.svg'
+    'gtk-light.css'
+    'gtk-dark.css'
+    'index.theme'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    local share="$pkgdir/usr/share"
+    install -Dm644 "$srcdir/wallpaper.png" "$share/torrentos/branding/wallpaper.png"
+    install -Dm644 "$srcdir/logo.svg"      "$share/torrentos/branding/logo.svg"
+
+    # GTK theme
+    install -Dm644 "$srcdir/gtk-light.css" "$share/themes/TorrentOS-Light/gtk-3.0/gtk.css"
+    install -Dm644 "$srcdir/gtk-light.css" "$share/themes/TorrentOS-Light/gtk-4.0/gtk.css"
+    install -Dm644 "$srcdir/gtk-dark.css"  "$share/themes/TorrentOS-Dark/gtk-3.0/gtk.css"
+    install -Dm644 "$srcdir/gtk-dark.css"  "$share/themes/TorrentOS-Dark/gtk-4.0/gtk.css"
+    install -Dm644 "$srcdir/index.theme"   "$share/themes/TorrentOS-Dark/index.theme"
+    install -Dm644 "$srcdir/index.theme"   "$share/themes/TorrentOS-Light/index.theme"
+}

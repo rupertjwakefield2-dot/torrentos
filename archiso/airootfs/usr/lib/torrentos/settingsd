@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# torrentos-settingsd — STUB.
+# The real daemon (Rust + zbus + GTK4 applier modules) lives in a separate
+# crate. This stub keeps the unit file functional during the v0 boot test.
+#
+set -euo pipefail
+exec sleep infinity

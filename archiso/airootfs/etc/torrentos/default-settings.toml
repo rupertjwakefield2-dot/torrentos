@@ -1,0 +1,34 @@
+# TorrentOS — shipped default settings.
+# Read by torrentos-settingsd at boot. Replaced on update.
+# User overrides live in ~/.config/torrentos/settings.toml.
+
+[appearance]
+theme = "dark"          # "light" | "dark" | "auto"
+accent = "#1E6FFF"
+wallpaper = "/usr/share/torrentos/branding/wallpaper.png"
+icon-theme = "Torrent-Icons"
+cursor-theme = "Bibata-Modern-Classic"
+
+[accessibility]
+high-contrast = false
+screen-reader = false
+magnifier = false
+ui-scale = 1.0
+sticky-keys = false
+slow-keys = false
+mouse-keys = false
+live-captions = false
+color-filter = "none"   # "none" | "protanopia" | "deuteranopia" | "tritanopia"
+
+[display]
+night-light = false
+night-light-temp = 4000
+
+[dev-mode]
+enabled = false
+
+[ai]
+provider = "off"        # "off" | "claude" | "ollama"
+
+[telemetry]
+enabled = false

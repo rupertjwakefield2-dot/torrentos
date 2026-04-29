@@ -1,0 +1,18 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-first-boot
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="TorrentOS first-boot welcome wizard (stub — replace with GTK4 app)"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=('bash' 'torrentos-base')
+source=('firstboot.desktop' 'firstboot-autostart.sh')
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+    install -Dm644 "$srcdir/firstboot.desktop" \
+        "$pkgdir/etc/xdg/autostart/torrentos-firstboot.desktop"
+    install -Dm755 "$srcdir/firstboot-autostart.sh" \
+        "$pkgdir/usr/lib/torrentos/firstboot-autostart"
+}

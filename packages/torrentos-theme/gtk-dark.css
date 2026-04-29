@@ -1,0 +1,23 @@
+/* TorrentOS Dark — minimal libadwaita override.
+ * Real theme would be a full GTK CSS tree; this sets only the accent
+ * + window surface so the rest inherits Adwaita-dark. */
+
+@define-color accent_bg_color           #1E6FFF;
+@define-color accent_fg_color           #FFFFFF;
+@define-color accent_color              #5BC0EB;
+
+@define-color window_bg_color           #0A1628;
+@define-color window_fg_color           #F4F7FB;
+@define-color view_bg_color             #0E1C36;
+@define-color view_fg_color             #F4F7FB;
+@define-color headerbar_bg_color        rgba(10, 22, 40, 0.85);
+@define-color headerbar_fg_color        #F4F7FB;
+@define-color card_bg_color             rgba(255, 255, 255, 0.04);
+
+@define-color destructive_bg_color      #FF6B6B;
+@define-color success_bg_color          #5BC0EB;
+@define-color warning_bg_color          #FFB454;
+
+window {
+    border-radius: 12px;
+}

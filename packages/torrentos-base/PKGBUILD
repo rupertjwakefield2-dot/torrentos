@@ -1,0 +1,60 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-base
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="TorrentOS base meta-package: branding, version file, defaults"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=(
+    'hyprland'
+    'waybar'
+    'swaync'
+    'rofi-wayland'
+    'nwg-dock-hyprland'
+    'hyprlock'
+    'hypridle'
+    'hyprpaper'
+    'ghostty'
+    'networkmanager'
+    'pipewire'
+    'pipewire-pulse'
+    'wireplumber'
+    'bluez'
+    'flatpak'
+    'zsh'
+    'starship'
+    'fzf'
+    'ripgrep'
+    'fd'
+    'bat'
+    'eza'
+    'zoxide'
+    'orca'
+    'at-spi2-core'
+)
+backup=(
+    'etc/torrentos/default-settings.toml'
+    'etc/torrentos/version'
+)
+source=(
+    'version'
+    'default-settings.toml'
+    'os-release'
+    'devmode'
+    'settingsd'
+    'firstboot'
+    'torrentos-settingsd.service'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    install -Dm644 "$srcdir/version"               "$pkgdir/etc/torrentos/version"
+    install -Dm644 "$srcdir/default-settings.toml" "$pkgdir/etc/torrentos/default-settings.toml"
+    install -Dm644 "$srcdir/os-release"            "$pkgdir/usr/lib/os-release.torrentos"
+    install -Dm755 "$srcdir/devmode"               "$pkgdir/usr/lib/torrentos/devmode"
+    install -Dm755 "$srcdir/settingsd"             "$pkgdir/usr/lib/torrentos/settingsd"
+    install -Dm755 "$srcdir/firstboot"             "$pkgdir/usr/local/bin/torrentos-firstboot"
+    install -Dm644 "$srcdir/torrentos-settingsd.service" \
+        "$pkgdir/usr/lib/systemd/system/torrentos-settingsd.service"
+}

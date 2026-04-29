@@ -1,0 +1,4 @@
+Source files (version, default-settings.toml, os-release, devmode, settingsd,
+firstboot, torrentos-settingsd.service) are copied here at build time by
+scripts/build-pkgs.sh from archiso/airootfs/. Do not edit them in place;
+edit the originals under archiso/airootfs/ and rebuild.

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TorrentOS logo: three streams converging into a downward arrow -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="torrent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#5BC0EB"/>
+      <stop offset="100%" stop-color="#1E6FFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#0A1628"/>
+  <g fill="none" stroke="url(#torrent)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M64 64 Q 128 100 128 160"/>
+    <path d="M128 56 Q 128 100 128 160"/>
+    <path d="M192 64 Q 128 100 128 160"/>
+    <path d="M88 160 L 128 200 L 168 160" stroke-width="16"/>
+  </g>
+</svg>

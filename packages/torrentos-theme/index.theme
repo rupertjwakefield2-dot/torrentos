@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=TorrentOS
+Comment=TorrentOS — Torrent Blue accent, macOS-feel surfaces
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=TorrentOS-Dark
+MetacityTheme=TorrentOS-Dark
+IconTheme=Torrent-Icons
+CursorTheme=Bibata-Modern-Classic
+ButtonLayout=close,minimize,maximize:menu

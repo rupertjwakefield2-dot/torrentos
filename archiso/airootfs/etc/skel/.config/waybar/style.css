@@ -1,0 +1,92 @@
+/* TorrentOS — Waybar style. macOS-translucent menubar feel. */
+
+* {
+    font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(10, 22, 40, 0.55);
+    color: #F4F7FB;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: background 200ms ease;
+}
+
+window#waybar.empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+#workspaces, #window, #clock, #tray, #network, #bluetooth,
+#pulseaudio, #battery, #custom-logo, #custom-notifications, #custom-power {
+    padding: 0 10px;
+    margin: 2px 2px;
+    color: #F4F7FB;
+}
+
+#custom-logo {
+    color: #1E6FFF;
+    font-size: 14px;
+    font-weight: 700;
+    padding-left: 12px;
+    padding-right: 8px;
+}
+
+#workspaces button {
+    padding: 0 4px;
+    color: rgba(244, 247, 251, 0.45);
+    background: transparent;
+    border-radius: 8px;
+    transition: color 150ms ease, background 150ms ease;
+}
+
+#workspaces button.active {
+    color: #1E6FFF;
+}
+
+#workspaces button.urgent {
+    color: #FF6B6B;
+}
+
+#workspaces button:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #F4F7FB;
+}
+
+#window {
+    color: rgba(244, 247, 251, 0.85);
+    font-weight: 500;
+}
+
+#clock {
+    color: #F4F7FB;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 0 14px;
+}
+
+#battery.charging  { color: #5BC0EB; }
+#battery.warning   { color: #FFB454; }
+#battery.critical  { color: #FF6B6B; }
+
+#network.disconnected, #pulseaudio.muted {
+    color: rgba(244, 247, 251, 0.45);
+}
+
+#custom-power {
+    color: #FF6B6B;
+    padding-right: 12px;
+}
+
+tooltip {
+    background: rgba(10, 22, 40, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #F4F7FB;
+}

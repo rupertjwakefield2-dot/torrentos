@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# TorrentOS — first-boot welcome wizard (stub).
+# A full GTK4/libadwaita wizard ships in torrentos-first-boot; this is the
+# shell fallback used on the live ISO.
+#
+set -euo pipefail
+
+MARKER="$HOME/.config/torrentos/first-boot-done"
+mkdir -p "$(dirname "$MARKER")"
+
+[[ -f "$MARKER" ]] && exit 0
+
+cat <<'EOF'
+
+   ████████  ████████  ████████  ████████  ████████  ██████   ██████  ██████
+      ██     ██     ██ ██     ██ ██     ██ ██        ██   ██ ██    ██ ██
+      ██     ██     ██ ██████   ██████   ████      ██   ██ ██    ██ ██████
+      ██     ██     ██ ██   ██   ██   ██   ██        ██   ██ ██    ██     ██
+      ██      ████████  ██    ██  ██    ██  ████████  ██   ██  ██████  ██████
+
+                              Welcome to TorrentOS
+
+EOF
+
+echo "First-boot setup will run in the graphical wizard the first time you log in."
+echo "(Run 'torrentos-firstboot' again later to re-trigger.)"
+touch "$MARKER"

@@ -1,0 +1,55 @@
+# TorrentOS — starship prompt
+add_newline = false
+format = """
+$directory\
+$git_branch\
+$git_status\
+$python\
+$nodejs\
+$rust\
+$golang\
+$docker_context\
+$cmd_duration\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[›](bold #1E6FFF)"
+error_symbol   = "[›](bold #FF6B6B)"
+
+[directory]
+style = "bold #5BC0EB"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = " "
+style = "bold #C678DD"
+
+[git_status]
+style = "bold #FFB454"
+
+[cmd_duration]
+min_time = 2_000
+format = "[ $duration]($style) "
+style = "italic #FFB454"
+
+[python]
+symbol = " "
+style = "bold #5BC0EB"
+
+[nodejs]
+symbol = " "
+style = "bold #5BC0EB"
+
+[rust]
+symbol = " "
+style = "bold #FF8585"
+
+[golang]
+symbol = " "
+style = "bold #5BC0EB"
+
+[docker_context]
+symbol = " "
+style = "bold #1E6FFF"
