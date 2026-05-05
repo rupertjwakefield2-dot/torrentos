@@ -1,39 +1,67 @@
-// TorrentOS — top menubar (macOS-feel)
+// TorrentOS — Waybar config  (macOS-feel menubar)
+// Branding: TorrentOS logo + named workspaces with Nerd Font icons
 {
     "layer": "top",
     "position": "top",
-    "height": 28,
-    "spacing": 6,
-    "margin-top": 4,
-    "margin-left": 8,
-    "margin-right": 8,
+    "height": 30,
+    "spacing": 4,
+    "margin-top": 6,
+    "margin-left": 10,
+    "margin-right": 10,
 
     "modules-left":   ["custom/logo", "hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right":  ["tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
+    "modules-right":  ["mpris", "tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
 
+    // ── Left ────────────────────────────────────────────────────────────
     "custom/logo": {
-        "format": "",
+        "format": "  TorrentOS",
         "tooltip": false,
-        "on-click": "rofi -show drun"
+        "on-click": "rofi -show drun -theme ~/.config/rofi/torrentos.rasi"
     },
 
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "active": "●",
+            "1": "󰖟",   // Web
+            "2": "󰨞",   // Code
+            "3": "",    // Terminal
+            "4": "󰉋",   // Files
+            "5": "󰎄",   // Media
+            "6": "󰭹",   // Chat
+            "7": "󰒱",   // Torrent
+            "8": "",    // Settings
+            "urgent":  "󱈸",
             "default": "○",
-            "urgent": "◉"
+            "active":  "●"
         },
-        "on-click": "activate"
+        "persistent-workspaces": {
+            "1": [], "2": [], "3": []
+        },
+        "on-click": "activate",
+        "on-scroll-up": "hyprctl dispatch workspace e+1",
+        "on-scroll-down": "hyprctl dispatch workspace e-1"
     },
 
     "hyprland/window": {
         "format": "{}",
-        "max-length": 60,
-        "separate-outputs": true
+        "max-length": 55,
+        "separate-outputs": true,
+        "rewrite": {
+            // Strip " — Mozilla Firefox" / " - Google Chrome" suffixes
+            "(.*) — Mozilla Firefox": "$1",
+            "(.*) - Google Chrome": "$1",
+            "(.*) - Chromium": "$1",
+            // Hide "Linux" from terminal titles like "zsh — rupert@torrentos"
+            "(.*)\\s+—\\s+.*@.*": "$1",
+            // Ghostty default
+            "Ghostty": "Terminal",
+            // qBittorrent
+            "qBittorrent (.*)": "Torrents — $1"
+        }
     },
 
+    // ── Center ───────────────────────────────────────────────────────────
     "clock": {
         "format": "{:%a  %b %-d   %H:%M}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
@@ -41,62 +69,87 @@
             "mode": "month",
             "weeks-pos": "right",
             "format": {
-                "today": "<span color='#1E6FFF'><b>{}</b></span>"
+                "months":   "<span color='#F4F7FB'><b>{}</b></span>",
+                "days":     "<span color='#B0C4DE'>{}</span>",
+                "weeks":    "<span color='#5E8EC4'>W{}</span>",
+                "weekdays": "<span color='#7AADFF'><b>{}</b></span>",
+                "today":    "<span color='#1E6FFF'><b><u>{}</u></b></span>"
             }
         }
     },
 
+    // ── Right ────────────────────────────────────────────────────────────
+    "mpris": {
+        "format": "{player_icon}  {title}",
+        "format-paused": "{player_icon}  <i>{title}</i>",
+        "player-icons": {
+            "default":  "▶",
+            "spotify":  "󰓇",
+            "firefox":  "󰈹",
+            "chrome":   "󰊯",
+            "mpv":      "󰐊"
+        },
+        "status-icons": {
+            "paused": "⏸"
+        },
+        "max-length": 32,
+        "ignored-players": ["firefox"]
+    },
+
     "tray": {
-        "icon-size": 16,
-        "spacing": 8
+        "icon-size": 15,
+        "spacing": 7
     },
 
     "network": {
-        "format-wifi": "  {signalStrength}%",
-        "format-ethernet": "󰈀  {ifname}",
-        "format-disconnected": "󰖪",
-        "tooltip-format": "{essid} — {ipaddr}",
-        "on-click": "nm-connection-editor"
+        "format-wifi":       "󰤨  {essid}",
+        "format-ethernet":   "󰈀  Wired",
+        "format-disconnected":"󰤭  No Network",
+        "tooltip-format":    "{essid}  {signalStrength}%\n{ipaddr}",
+        "on-click":          "nm-connection-editor"
     },
 
     "bluetooth": {
-        "format": "",
-        "format-disabled": "󰂲",
-        "format-connected": " {num_connections}",
-        "tooltip-format": "{controller_alias}\n{num_connections} connected",
-        "on-click": "blueman-manager"
+        "format":           "󰂯",
+        "format-disabled":  "󰂲",
+        "format-connected": "󰂱  {num_connections}",
+        "tooltip-format":   "Bluetooth: {controller_alias}\n{num_connections} device(s) connected",
+        "on-click":         "blueman-manager"
     },
 
     "pulseaudio": {
-        "format": "{icon}  {volume}%",
-        "format-muted": "",
+        "format":       "{icon}  {volume}%",
+        "format-muted": "󰝟  Muted",
         "format-icons": {
-            "headphone": "",
-            "default": ["", "", ""]
+            "headphone": "󰋋",
+            "headset":   "󰋎",
+            "default":   ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
-        "on-click": "pavucontrol"
+        "on-click":    "pavucontrol"
     },
 
     "battery": {
-        "format": "{icon}  {capacity}%",
-        "format-charging": "  {capacity}%",
-        "format-icons": ["", "", "", "", ""],
+        "format":          "{icon}  {capacity}%",
+        "format-charging": "󰂄  {capacity}%",
+        "format-plugged":  "󰚥  {capacity}%",
+        "format-icons":    ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "states": {
-            "warning": 25,
+            "warning":  25,
             "critical": 10
-        }
+        },
+        "tooltip-format": "Battery: {capacity}%  {timeTo}"
     },
 
     "custom/notifications": {
-        "format": "",
+        "format": "󰂚",
         "tooltip": false,
         "on-click": "swaync-client -t -sw"
     },
 
     "custom/power": {
-        "format": "",
+        "format": "⏻",
         "tooltip": false,
-        "on-click": "wlogout || hyprctl dispatch exit"
+        "on-click": "rofi -show power-menu -modi 'power-menu:~/.config/rofi/power-menu.sh' -theme ~/.config/rofi/torrentos.rasi || hyprctl dispatch exit"
     }
 }

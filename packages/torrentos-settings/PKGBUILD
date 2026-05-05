@@ -1,0 +1,47 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-settings
+pkgver=0.3.0
+pkgrel=1
+pkgdesc="TorrentOS Settings — appearance, accessibility, display, dev mode"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=(
+    'python'
+    'python-gobject'
+    'python-tomli-w'
+    'gtk4'
+    'libadwaita'
+)
+optdepends=(
+    'orca: screen reader (toggleable from Accessibility)'
+    'gammastep: night light'
+    'ghostty: terminal used by Dev Mode installer'
+)
+source=(
+    'torrentos-settings'
+    'torrentos-settings.desktop'
+    'torrentos-settings.svg'
+    'torrentos_settings.tar.gz'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    set -e
+
+    # Sanity: makepkg must have extracted the python source tree
+    if [[ ! -d "$srcdir/torrentos_settings" ]]; then
+        echo "ERROR: \$srcdir/torrentos_settings missing — staging step likely skipped." >&2
+        echo "       Ensure scripts/build-pkgs.sh ran stage_settings before makepkg." >&2
+        exit 1
+    fi
+
+    # Install python source to a fixed, version-independent location.
+    # The launcher (/usr/bin/torrentos-settings) sets PYTHONPATH to find it.
+    install -d "$pkgdir/usr/share/torrentos-settings"
+    cp -r "$srcdir/torrentos_settings" "$pkgdir/usr/share/torrentos-settings/torrentos_settings"
+
+    install -Dm755 "$srcdir/torrentos-settings"           "$pkgdir/usr/bin/torrentos-settings"
+    install -Dm644 "$srcdir/torrentos-settings.desktop"   "$pkgdir/usr/share/applications/torrentos-settings.desktop"
+    install -Dm644 "$srcdir/torrentos-settings.svg"       "$pkgdir/usr/share/icons/hicolor/scalable/apps/torrentos-settings.svg"
+}

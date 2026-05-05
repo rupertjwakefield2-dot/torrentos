@@ -1,0 +1,67 @@
+# TorrentOS GRUB Theme
+# Deep navy → electric blue gradient feel, matching the desktop wallpaper.
+
+title-text: ""
+desktop-color: "#0A1628"
+desktop-image: "background.png"
+
+# ── Menu box ────────────────────────────────────────────────────────────────
++ boot_menu {
+    left   = 15%
+    top    = 30%
+    width  = 70%
+    height = 45%
+
+    item_font       = "Inter Regular 16"
+    item_color      = "#C8D8F0"
+    selected_item_color = "#FFFFFF"
+
+    item_height     = 36
+    item_padding    = 8
+    item_spacing    = 4
+
+    selected_item_pixmap_style = "select_bkg/*.png"
+
+    scrollbar              = false
+    scrollbar_width        = 4
+    scrollbar_thumb        = "scrollbar_thumb*.png"
+}
+
+# ── Progress / timeout bar ───────────────────────────────────────────────────
++ progress_bar {
+    id         = "__timeout__"
+    left       = 15%
+    top        = 80%
+    width      = 70%
+    height     = 4
+
+    fg_color   = "#1E6FFF"
+    bg_color   = "#0A1628"
+    border_color = "#1E6FFF"
+    text_color = "#C8D8F0"
+    font       = "Inter Regular 12"
+    text       = "Starting in %d seconds…"
+}
+
+# ── Branding label ───────────────────────────────────────────────────────────
++ label {
+    left  = 50%-200
+    top   = 12%
+    width = 400
+    align = "center"
+
+    text  = "TorrentOS"
+    font  = "Inter Regular 32"
+    color = "#FFFFFF"
+}
+
++ label {
+    left  = 50%-200
+    top   = 19%
+    width = 400
+    align = "center"
+
+    text  = "v0.4  ·  riptide"
+    font  = "Inter Regular 14"
+    color = "#5BC0EB"
+}

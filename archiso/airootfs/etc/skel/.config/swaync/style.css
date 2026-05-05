@@ -1,0 +1,217 @@
+/* TorrentOS — SwayNC notification center style
+   Palette: #070f1d navy, #1E6FFF blue, #F4F7FB text */
+
+* {
+    font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+    font-size:   13px;
+    all: unset;
+    font-size:   13px;
+}
+
+.blank-window {
+    background: transparent;
+}
+
+/* ── Control Center panel ───────────────────────────────────── */
+.control-center {
+    background: rgba(7, 15, 29, 0.94);
+    border:     1px solid rgba(30, 111, 255, 0.22);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    padding:    16px;
+    margin:     8px;
+}
+
+/* ── Header / title ─────────────────────────────────────────── */
+.widget-title {
+    color:       #F4F7FB;
+    font-size:   14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding:     0 0 12px 2px;
+}
+
+.widget-title > button {
+    font-size:        11px;
+    font-weight:      500;
+    color:            #7AADFF;
+    background:       rgba(30, 111, 255, 0.12);
+    border:           1px solid rgba(30, 111, 255, 0.22);
+    border-radius:    8px;
+    padding:          4px 12px;
+    transition:       background 150ms ease;
+}
+
+.widget-title > button:hover {
+    background: rgba(30, 111, 255, 0.24);
+    color:      #F4F7FB;
+}
+
+/* ── Do Not Disturb toggle ──────────────────────────────────── */
+.widget-dnd {
+    color:       #B0C4DE;
+    font-size:   12px;
+    margin:      4px 0;
+}
+
+.widget-dnd > switch {
+    border-radius: 20px;
+    background:   rgba(255, 255, 255, 0.1);
+    border:       1px solid rgba(255, 255, 255, 0.15);
+}
+
+.widget-dnd > switch:checked {
+    background: #1E6FFF;
+}
+
+.widget-dnd > switch slider {
+    border-radius: 20px;
+    background:   #F4F7FB;
+    margin:        2px;
+}
+
+/* ── MPRIS / media player ───────────────────────────────────── */
+.widget-mpris {
+    background:   rgba(14, 28, 55, 0.7);
+    border-radius: 12px;
+    border:        1px solid rgba(30, 111, 255, 0.15);
+    padding:       12px;
+    margin:        6px 0;
+}
+
+.widget-mpris-title {
+    color:       #F4F7FB;
+    font-weight: 600;
+    font-size:   13px;
+}
+
+.widget-mpris-subtitle {
+    color:    #7AADFF;
+    font-size: 11.5px;
+}
+
+/* ── Volume slider ──────────────────────────────────────────── */
+.widget-volume {
+    margin:  6px 0;
+    color:   #B0C4DE;
+}
+
+.widget-volume > box > button {
+    color:            #7AADFF;
+    background:       transparent;
+    border-radius:    8px;
+    padding:          4px 8px;
+}
+
+.widget-volume scale trough {
+    background:   rgba(255, 255, 255, 0.10);
+    border-radius: 6px;
+    min-height:    4px;
+}
+
+.widget-volume scale highlight {
+    background:   #1E6FFF;
+    border-radius: 6px;
+}
+
+.widget-volume scale slider {
+    background:   #F4F7FB;
+    border-radius: 50%;
+    min-width:    14px;
+    min-height:   14px;
+    box-shadow:   0 0 4px rgba(30, 111, 255, 0.5);
+}
+
+/* ── Notification cards ─────────────────────────────────────── */
+.notification-row {
+    margin: 4px 0;
+}
+
+.notification {
+    background:    rgba(14, 28, 55, 0.85);
+    border:        1px solid rgba(30, 111, 255, 0.16);
+    border-radius: 12px;
+    padding:       12px 14px;
+    margin:        2px 0;
+    transition:    background 150ms ease;
+}
+
+.notification:hover {
+    background: rgba(30, 111, 255, 0.10);
+}
+
+.notification.critical {
+    border-color: rgba(255, 107, 107, 0.45);
+    background:   rgba(255, 107, 107, 0.08);
+}
+
+.notification-default-action {
+    background:    transparent;
+    border-radius: 10px;
+}
+
+/* App icon */
+.notification-app-icon {
+    border-radius: 8px;
+}
+
+/* Title + body */
+.notification-summary {
+    color:       #F4F7FB;
+    font-weight: 600;
+    font-size:   13px;
+}
+
+.notification-body {
+    color:     #B0C4DE;
+    font-size: 12px;
+}
+
+/* Action buttons */
+.notification-action {
+    background:    rgba(30, 111, 255, 0.12);
+    color:         #7AADFF;
+    border:        1px solid rgba(30, 111, 255, 0.20);
+    border-radius: 8px;
+    padding:       4px 14px;
+    margin:        4px 4px 0 0;
+    transition:    background 120ms ease;
+}
+
+.notification-action:hover {
+    background: rgba(30, 111, 255, 0.28);
+    color:      #F4F7FB;
+}
+
+/* Close (×) button */
+.close-button {
+    color:         rgba(244, 247, 251, 0.45);
+    background:    transparent;
+    border-radius: 50%;
+    padding:       2px 6px;
+    font-size:     14px;
+    transition:    color 120ms ease;
+}
+
+.close-button:hover {
+    color:      #FF6B6B;
+    background: rgba(255, 107, 107, 0.12);
+}
+
+/* ── Popup notifications (floating) ─────────────────────────── */
+.floating-notifications {
+    background: transparent;
+}
+
+.notification-popup {
+    background:    rgba(7, 15, 29, 0.93);
+    border:        1px solid rgba(30, 111, 255, 0.25);
+    border-radius: 14px;
+    box-shadow:    0 6px 24px rgba(0, 0, 0, 0.50);
+    padding:       12px 14px;
+    margin:        6px;
+}
+
+.notification-popup.critical {
+    border-color: rgba(255, 107, 107, 0.55);
+}

@@ -1,6 +1,6 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-base
-pkgver=0.1.0
+pkgver=0.4.0
 pkgrel=1
 pkgdesc="TorrentOS base meta-package: branding, version file, defaults"
 arch=('any')
@@ -45,8 +45,9 @@ source=(
     'settingsd'
     'firstboot'
     'torrentos-settingsd.service'
+    'greetd-config.toml'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     install -Dm644 "$srcdir/version"               "$pkgdir/etc/torrentos/version"
@@ -57,4 +58,12 @@ package() {
     install -Dm755 "$srcdir/firstboot"             "$pkgdir/usr/local/bin/torrentos-firstboot"
     install -Dm644 "$srcdir/torrentos-settingsd.service" \
         "$pkgdir/usr/lib/systemd/system/torrentos-settingsd.service"
+
+    # greetd login screen — installed systems only (live ISO keeps getty autologin)
+    install -Dm644 "$srcdir/greetd-config.toml" \
+        "$pkgdir/etc/greetd/config.toml"
+    # Enable greetd at boot on installed system
+    install -dm755 "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
+    ln -sf /usr/lib/systemd/system/greetd.service \
+        "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/greetd.service"
 }

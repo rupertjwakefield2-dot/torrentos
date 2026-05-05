@@ -30,9 +30,9 @@
     ],
     "widget-config": {
         "title": {
-            "text": "Notifications",
+            "text": "TorrentOS",
             "clear-all-button": true,
-            "button-text": "Clear all"
+            "button-text": "Clear All"
         },
         "dnd": { "text": "Do Not Disturb" },
         "volume": { "label": "󰕾", "show-per-app": true }

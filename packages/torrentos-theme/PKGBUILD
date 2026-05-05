@@ -1,6 +1,6 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-theme
-pkgver=0.1.0
+pkgver=0.3.0
 pkgrel=1
 pkgdesc="TorrentOS GTK + Qt theme, icon set, cursor, wallpapers, sounds"
 arch=('any')

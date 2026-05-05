@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Install TorrentOS
+GenericName=Disk Installer
+Comment=Install TorrentOS to your hard drive
+Exec=torrentos-install-gui
+Icon=drive-harddisk-system
+Terminal=false
+Categories=System;
+Keywords=install;disk;setup;
+StartupNotify=true

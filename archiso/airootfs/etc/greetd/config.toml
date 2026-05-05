@@ -2,5 +2,10 @@
 vt = 1
 
 [default_session]
-command = "tuigreet --time --remember --remember-user-session --asterisks --greeting 'Welcome to TorrentOS' --cmd Hyprland"
+# tuigreet — TUI login screen shown at boot on installed systems.
+# --time         show clock
+# --remember     remember last username
+# --asterisks    show * for password chars
+# --greeting     custom welcome text
+command = "tuigreet --time --remember --asterisks --greeting 'Welcome to TorrentOS' --cmd Hyprland"
 user = "greeter"

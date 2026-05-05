@@ -1,18 +1,25 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-first-boot
-pkgver=0.1.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc="TorrentOS first-boot welcome wizard (stub — replace with GTK4 app)"
+pkgdesc="TorrentOS first-boot welcome wizard (GTK4/libadwaita)"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
-depends=('bash' 'torrentos-base')
-source=('firstboot.desktop' 'firstboot-autostart.sh')
-sha256sums=('SKIP' 'SKIP')
+depends=('bash' 'torrentos-base' 'python' 'python-gobject' 'gtk4' 'libadwaita')
+source=('firstboot.desktop' 'firstboot-autostart.sh' 'torrentos-first-boot-wizard')
+sha256sums=('SKIP' 'SKIP' 'SKIP')
 
 package() {
+    # XDG autostart — runs on every login, exits immediately if marker exists
     install -Dm644 "$srcdir/firstboot.desktop" \
         "$pkgdir/etc/xdg/autostart/torrentos-firstboot.desktop"
+
+    # Autostart launcher shim
     install -Dm755 "$srcdir/firstboot-autostart.sh" \
         "$pkgdir/usr/lib/torrentos/firstboot-autostart"
+
+    # GTK4 wizard
+    install -Dm755 "$srcdir/torrentos-first-boot-wizard" \
+        "$pkgdir/usr/bin/torrentos-first-boot-wizard"
 }

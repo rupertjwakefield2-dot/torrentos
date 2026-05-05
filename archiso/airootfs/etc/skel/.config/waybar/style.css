@@ -1,7 +1,8 @@
-/* TorrentOS — Waybar style. macOS-translucent menubar feel. */
+/* TorrentOS — Waybar stylesheet
+   Palette: navy #0A1628 | blue #1E6FFF | text #F4F7FB | dim #7AADFF */
 
 * {
-    font-family: "Inter", "JetBrainsMono Nerd Font", sans-serif;
+    font-family: "Inter", "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
     font-size: 12px;
     font-weight: 500;
     border: none;
@@ -10,83 +11,192 @@
 }
 
 window#waybar {
-    background: rgba(10, 22, 40, 0.55);
+    background: rgba(7, 15, 29, 0.72);
     color: #F4F7FB;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: background 200ms ease;
+    border-radius: 14px;
+    border: 1px solid rgba(30, 111, 255, 0.18);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    transition: background 250ms ease;
 }
 
 window#waybar.empty {
     background: transparent;
     border-color: transparent;
+    box-shadow: none;
 }
 
-#workspaces, #window, #clock, #tray, #network, #bluetooth,
-#pulseaudio, #battery, #custom-logo, #custom-notifications, #custom-power {
+/* ── Shared module padding ─────────────────────────────────── */
+#custom-logo, #workspaces, #window,
+#clock, #mpris,
+#tray, #network, #bluetooth, #pulseaudio, #battery,
+#custom-notifications, #custom-power {
     padding: 0 10px;
-    margin: 2px 2px;
+    margin: 3px 1px;
     color: #F4F7FB;
 }
 
+/* ── Logo ──────────────────────────────────────────────────── */
 #custom-logo {
     color: #1E6FFF;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    padding-left: 12px;
-    padding-right: 8px;
+    letter-spacing: 0.5px;
+    padding-left: 14px;
+    padding-right: 10px;
+}
+
+/* ── Workspaces ────────────────────────────────────────────── */
+#workspaces {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 0 6px;
 }
 
 #workspaces button {
-    padding: 0 4px;
-    color: rgba(244, 247, 251, 0.45);
+    padding: 2px 6px;
+    color: rgba(244, 247, 251, 0.38);
     background: transparent;
     border-radius: 8px;
     transition: color 150ms ease, background 150ms ease;
+    font-size: 11px;
 }
 
 #workspaces button.active {
     color: #1E6FFF;
+    background: rgba(30, 111, 255, 0.14);
 }
 
 #workspaces button.urgent {
     color: #FF6B6B;
+    background: rgba(255, 107, 107, 0.12);
 }
 
 #workspaces button:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.07);
     color: #F4F7FB;
 }
 
+/* ── Window title ──────────────────────────────────────────── */
 #window {
-    color: rgba(244, 247, 251, 0.85);
-    font-weight: 500;
+    color: rgba(244, 247, 251, 0.72);
+    font-weight: 400;
+    font-size: 11.5px;
 }
 
+/* ── Clock ─────────────────────────────────────────────────── */
 #clock {
     color: #F4F7FB;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 8px;
-    padding: 0 14px;
+    letter-spacing: 0.3px;
+    background: rgba(30, 111, 255, 0.10);
+    border-radius: 9px;
+    border: 1px solid rgba(30, 111, 255, 0.20);
+    padding: 2px 16px;
 }
 
-#battery.charging  { color: #5BC0EB; }
-#battery.warning   { color: #FFB454; }
-#battery.critical  { color: #FF6B6B; }
-
-#network.disconnected, #pulseaudio.muted {
-    color: rgba(244, 247, 251, 0.45);
+/* ── Media player ──────────────────────────────────────────── */
+#mpris {
+    color: #7AADFF;
+    font-size: 11px;
+    font-style: normal;
+    max-width: 200px;
+    padding: 0 10px;
 }
 
+/* ── Tray ──────────────────────────────────────────────────── */
+#tray {
+    padding: 0 8px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    background-color: rgba(255, 107, 107, 0.18);
+    border-radius: 6px;
+}
+
+/* ── Network ───────────────────────────────────────────────── */
+#network {
+    color: #B0D4FF;
+}
+
+#network.disconnected {
+    color: rgba(244, 247, 251, 0.35);
+}
+
+/* ── Bluetooth ─────────────────────────────────────────────── */
+#bluetooth {
+    color: #7AADFF;
+}
+
+#bluetooth.disabled {
+    color: rgba(244, 247, 251, 0.30);
+}
+
+/* ── Audio ─────────────────────────────────────────────────── */
+#pulseaudio {
+    color: #B0D4FF;
+}
+
+#pulseaudio.muted {
+    color: rgba(244, 247, 251, 0.35);
+}
+
+/* ── Battery ───────────────────────────────────────────────── */
+#battery {
+    color: #B0D4FF;
+}
+
+#battery.charging, #battery.plugged {
+    color: #5BC0EB;
+}
+
+#battery.warning:not(.charging) {
+    color: #FFB454;
+}
+
+#battery.critical:not(.charging) {
+    color: #FF6B6B;
+    animation: battery-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes battery-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+/* ── Notifications bell ────────────────────────────────────── */
+#custom-notifications {
+    color: #7AADFF;
+    font-size: 13px;
+}
+
+/* ── Power button ──────────────────────────────────────────── */
 #custom-power {
     color: #FF6B6B;
-    padding-right: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    padding-right: 14px;
+    border-radius: 8px;
+    transition: color 150ms ease, background 150ms ease;
 }
 
+#custom-power:hover {
+    background: rgba(255, 107, 107, 0.14);
+}
+
+/* ── Tooltips ──────────────────────────────────────────────── */
 tooltip {
-    background: rgba(10, 22, 40, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    background: rgba(7, 15, 29, 0.96);
+    border: 1px solid rgba(30, 111, 255, 0.22);
+    border-radius: 10px;
+    color: #F4F7FB;
+    padding: 6px;
+}
+
+tooltip label {
     color: #F4F7FB;
 }

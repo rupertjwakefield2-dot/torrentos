@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""TorrentOS Install — GTK4 launcher that shows a warning then opens the installer in a terminal."""
+import gi, subprocess, sys
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Gtk, Adw, GLib
+
+class InstallerLauncher(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id="org.torrentos.Install")
+        self.connect("activate", self._on_activate)
+
+    def _on_activate(self, app):
+        win = Adw.ApplicationWindow(application=app, title="Install TorrentOS",
+                                    default_width=480, default_height=1)
+        win.set_resizable(False)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        win.set_content(box)
+
+        # Header
+        header = Adw.HeaderBar()
+        header.set_show_end_title_buttons(False)
+        box.append(header)
+
+        # Content
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18,
+                          margin_top=24, margin_bottom=24,
+                          margin_start=24, margin_end=24)
+        box.append(content)
+
+        icon = Gtk.Image.new_from_icon_name("drive-harddisk-system-symbolic")
+        icon.set_pixel_size(64)
+        icon.add_css_class("warning")
+        content.append(icon)
+
+        title = Gtk.Label(label="<b>Install TorrentOS to Disk</b>")
+        title.set_use_markup(True)
+        title.add_css_class("title-2")
+        content.append(title)
+
+        body = Gtk.Label(wrap=True, justify=Gtk.Justification.CENTER, label=
+            "This will permanently erase the disk you choose and install "
+            "TorrentOS.\n\n"
+            "Make sure you have backed up any important data before continuing. "
+            "An internet connection is required to download packages.")
+        body.set_wrap(True)
+        content.append(body)
+
+        # Buttons
+        btn_box = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
+        content.append(btn_box)
+
+        cancel = Gtk.Button(label="Cancel")
+        cancel.connect("clicked", lambda _: app.quit())
+        btn_box.append(cancel)
+
+        install = Gtk.Button(label="Begin Installation")
+        install.add_css_class("destructive-action")
+        install.connect("clicked", self._launch_installer)
+        btn_box.append(install)
+
+        win.present()
+        self._win = win
+
+    def _launch_installer(self, _btn):
+        self._win.close()
+        # Find a suitable terminal
+        for term_cmd in [
+            ["ghostty", "-e", "sudo torrentos-install"],
+            ["foot",    "-e", "sudo torrentos-install"],
+            ["xterm",   "-e", "sudo torrentos-install"],
+        ]:
+            try:
+                subprocess.Popen(term_cmd)
+                break
+            except FileNotFoundError:
+                continue
+        self.quit()
+
+if __name__ == "__main__":
+    app = InstallerLauncher()
+    sys.exit(app.run(sys.argv))

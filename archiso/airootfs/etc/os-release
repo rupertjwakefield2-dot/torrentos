@@ -1,0 +1,14 @@
+NAME="TorrentOS"
+PRETTY_NAME="TorrentOS 0.4"
+ID=torrentos
+ID_LIKE=arch
+BUILD_ID=rolling
+VERSION="0.4.0 (riptide)"
+VERSION_ID="0.4.0"
+VERSION_CODENAME=riptide
+ANSI_COLOR="38;2;30;111;255"
+HOME_URL="https://torrentos.github.io/"
+DOCUMENTATION_URL="https://torrentos.github.io/docs"
+SUPPORT_URL="https://torrentos.github.io/help"
+BUG_REPORT_URL="https://github.com/torrentos/torrentos/issues"
+LOGO=torrentos

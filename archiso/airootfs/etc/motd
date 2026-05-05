@@ -1,0 +1,19 @@
+
+   ████████  ██████  ██████  ██████  ███████ ███    ██ ████████  ██████  ███████
+      ██    ██    ██ ██   ██ ██   ██ ██      ████   ██    ██    ██    ██ ██
+      ██    ██    ██ ██████  ██████  █████   ██ ██  ██    ██    ██    ██ ███████
+      ██    ██    ██ ██   ██ ██   ██ ██      ██  ██ ██    ██    ██    ██      ██
+      ██     ██████  ██   ██ ██   ██ ███████ ██   ████    ██     ██████  ███████
+
+   TorrentOS 0.4 · riptide                           torrentos.github.io
+
+   Quick start:
+     • Desktop              already launching — wait a moment
+     • nmtui                connect to Wi-Fi from this terminal
+     • torrentos-install    install to disk (text mode)
+     • Super + Space        Spotlight launcher (in desktop)
+     • Super + Return       open a terminal (in desktop)
+     • Super + ,            TorrentOS Settings
+
+   Live image — changes don't persist. Run torrentos-install to keep them.
+

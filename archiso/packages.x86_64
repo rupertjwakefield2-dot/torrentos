@@ -18,7 +18,6 @@ efibootmgr
 memtest86+
 memtest86+-efi
 arch-install-scripts
-archinstall
 
 # --- networking ---
 networkmanager
@@ -104,8 +103,22 @@ grim
 slurp
 wl-clipboard
 cliphist
+wl-clip-persist
+xdg-desktop-portal-hyprland
 libinput-gestures
 gammastep
+
+# --- GPU drivers (broad hardware support) ---
+mesa
+xf86-video-amdgpu
+xf86-video-intel
+vulkan-radeon
+vulkan-intel
+libva-mesa-driver
+# Nvidia utils (userspace only — kernel module installed post-disk-install)
+nvidia-utils
+nvidia-settings
+egl-wayland
 
 # --- file manager / archives ---
 nautilus
@@ -169,11 +182,27 @@ podman
 # --- flatpak (for sandboxed apps) ---
 flatpak
 
-# --- browser (live ISO needs one for first-boot help) ---
+# --- browsers ---
 firefox
+google-chrome
+
+# --- torrent client (on-brand for TorrentOS) ---
+qbittorrent
+
+# --- python (required by torrentos-settings) ---
+python
+python-gobject
+python-tomli-w
 
 # --- TorrentOS custom packages (built locally into ./repo/) ---
 torrentos-base
 torrentos-theme
 torrentos-hyprland-config
 torrentos-first-boot
+torrentos-settings
+
+# --- AUR packages (built locally by scripts/build-aur.sh) ---
+paru-bin
+libinput-gestures
+magnus
+bibata-cursor-theme-bin

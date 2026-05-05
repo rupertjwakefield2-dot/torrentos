@@ -4,17 +4,23 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
-      contents: write     # to attach ISO to a release
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
 
       - name: Build inside Arch container
         uses: docker://archlinux:latest
@@ -24,12 +30,18 @@ jobs:
             -ec '
               set -euo pipefail
 
+              echo "::group::Disabling pacman sandbox (QEMU compat)"
+              grep -q "^DisableSandbox" /etc/pacman.conf \
+                || sed -i "/^\[options\]/a DisableSandbox" /etc/pacman.conf
+
               echo "::group::Installing build deps"
               pacman-key --init
               pacman -Sy --noconfirm archlinux-keyring
               pacman -Syu --noconfirm
               pacman -S --needed --noconfirm \
-                archiso base-devel git sudo imagemagick
+                archiso base-devel git sudo imagemagick which file \
+                grub edk2-shell mtools dosfstools libisoburn squashfs-tools \
+                erofs-utils python
 
               echo "::group::Creating builder user (makepkg refuses root)"
               useradd -m -G wheel builder
@@ -38,35 +50,46 @@ jobs:
 
               echo "::group::Generating wallpaper"
               cd /github/workspace
-              if [ ! -f packages/torrentos-theme/wallpaper.png ]; then
+              if [ ! -f packages/torrentos-theme/wallpaper.png ] || \
+                 [ "$(stat -c%s packages/torrentos-theme/wallpaper.png 2>/dev/null)" -lt 1000 ]; then
                 convert -size 3840x2160 \
                   gradient:"#0A1628-#1E6FFF" -blur 0x80 \
                   packages/torrentos-theme/wallpaper.png || true
+                chown builder:builder packages/torrentos-theme/wallpaper.png
               fi
+
+              echo "::group::Pre-installing AUR build deps"
+              pacman -S --needed --noconfirm \
+                libinput python-gobject hicolor-icon-theme xdotool gtk4 libadwaita
 
               echo "::group::Building custom packages"
               sudo -u builder ./scripts/build-pkgs.sh
 
+              echo "::group::Building AUR packages"
+              sudo -u builder ./scripts/build-aur.sh
+
               echo "::group::Building ISO"
-              ./scripts/build-iso.sh
+              bash ./scripts/ci-build.sh
             '
 
       - name: List artifacts
         run: ls -lh out/
 
-      - name: Upload ISO
+      - name: Compute checksums
+        run: cd out && sha256sum *.iso > SHA256SUMS && cat SHA256SUMS
+
+      - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: torrentos-iso
-          path: out/*.iso
+          name: torrentos-${{ steps.version.outputs.version }}-x86_64
+          path: |
+            out/*.iso
+            out/SHA256SUMS
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload SHA256
-        run: cd out && sha256sum *.iso > SHA256SUMS && cat SHA256SUMS
-
-      - name: Create release on tag
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach to GitHub Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |

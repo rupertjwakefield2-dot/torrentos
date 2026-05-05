@@ -1,8 +1,8 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-hyprland-config
-pkgver=0.1.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc="TorrentOS default Hyprland, Waybar, swaync, ghostty, and shell configs"
+pkgdesc="TorrentOS default Hyprland, Waybar, swaync, rofi, ghostty, and shell configs"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
@@ -23,11 +23,14 @@ source=(
     'waybar-config.jsonc'
     'waybar-style.css'
     'swaync-config.json'
+    'swaync-style.css'
+    'rofi-torrentos.rasi'
+    'rofi-power-menu.sh'
     'ghostty-config'
     'starship.toml'
     'zshrc'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     local skel="$pkgdir/etc/skel/.config"
@@ -39,6 +42,9 @@ package() {
     install -Dm644 "$srcdir/waybar-config.jsonc"  "$skel/waybar/config.jsonc"
     install -Dm644 "$srcdir/waybar-style.css"     "$skel/waybar/style.css"
     install -Dm644 "$srcdir/swaync-config.json"   "$skel/swaync/config.json"
+    install -Dm644 "$srcdir/swaync-style.css"     "$skel/swaync/style.css"
+    install -Dm644 "$srcdir/rofi-torrentos.rasi"  "$skel/rofi/torrentos.rasi"
+    install -Dm755 "$srcdir/rofi-power-menu.sh"   "$skel/rofi/power-menu.sh"
     install -Dm644 "$srcdir/ghostty-config"       "$skel/ghostty/config"
     install -Dm644 "$srcdir/starship.toml"        "$skel/starship.toml"
     install -Dm644 "$srcdir/zshrc"                "$pkgdir/etc/skel/.zshrc"

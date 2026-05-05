@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TorrentOS — Linux, reimagined</title>
+  <meta name="description" content="TorrentOS is a Linux distribution built for speed, accessibility, and a macOS-quality desktop experience." />
+  <meta property="og:title" content="TorrentOS" />
+  <meta property="og:description" content="Linux, reimagined. Beautiful. Accessible. Fast." />
+  <meta property="og:image" content="https://torrentos.github.io/assets/og-card.png" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #070f1d;
+      --bg2:      #0a1628;
+      --blue:     #1e6fff;
+      --cyan:     #5bc0eb;
+      --text:     #c8d8f0;
+      --white:    #ffffff;
+      --radius:   14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Inter", "Segoe UI", sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      border-bottom: 1px solid rgba(30,111,255,.15);
+      position: sticky;
+      top: 0;
+      background: rgba(7,15,29,.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--white); letter-spacing: -.02em; }
+    .logo span { color: var(--blue); }
+    nav ul { list-style: none; display: flex; gap: 2rem; }
+    nav a { color: var(--text); text-decoration: none; font-size: .95rem; }
+    nav a:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--blue);
+      color: var(--white) !important;
+      padding: .45rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .nav-cta:hover { background: #3a80ff !important; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 7rem 1.5rem 5rem;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(30,111,255,.18) 0%, transparent 70%);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(30,111,255,.15);
+      border: 1px solid rgba(30,111,255,.35);
+      color: var(--cyan);
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .3rem .9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -.04em;
+      line-height: 1.05;
+      margin-bottom: 1.2rem;
+    }
+    h1 em { font-style: normal; color: var(--blue); }
+    .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text);
+      max-width: 540px;
+      margin: 0 auto 2.5rem;
+    }
+    .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1.8rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+      box-shadow: 0 0 32px rgba(30,111,255,.35);
+    }
+    .btn-primary:hover { background: #3a80ff; box-shadow: 0 0 48px rgba(30,111,255,.5); }
+    .btn-outline {
+      border: 1px solid rgba(255,255,255,.2);
+      color: var(--white);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,.5); }
+
+    /* ── Features ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid rgba(30,111,255,.12);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+    }
+    .card-icon { font-size: 1.8rem; margin-bottom: .8rem; }
+    .card h3 { color: var(--white); font-size: 1.05rem; margin-bottom: .5rem; }
+    .card p  { font-size: .9rem; color: var(--text); }
+
+    /* ── Download section ── */
+    .download {
+      text-align: center;
+      padding: 5rem 1.5rem;
+      background: linear-gradient(180deg, transparent, rgba(30,111,255,.06) 50%, transparent);
+    }
+    .download h2 { font-size: 2.2rem; color: var(--white); margin-bottom: .6rem; font-weight: 700; }
+    .download p  { color: var(--text); margin-bottom: 2rem; }
+    .version-pill {
+      display: inline-block;
+      background: rgba(91,192,235,.12);
+      border: 1px solid rgba(91,192,235,.3);
+      color: var(--cyan);
+      padding: .25rem .8rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      margin-bottom: 1.5rem;
+    }
+    .checksum {
+      margin-top: 1.2rem;
+      font-size: .8rem;
+      color: rgba(200,216,240,.5);
+    }
+    .checksum a { color: rgba(200,216,240,.6); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid rgba(30,111,255,.1);
+      padding: 2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: .85rem;
+      color: rgba(200,216,240,.5);
+    }
+    footer a { color: rgba(200,216,240,.6); text-decoration: none; }
+    footer a:hover { color: var(--white); }
+    .footer-links { display: flex; gap: 1.5rem; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">Torrent<span>OS</span></div>
+    <ul>
+      <li><a href="#features">Features</a></li>
+      <li><a href="docs/">Docs</a></li>
+      <li><a href="https://github.com/torrentos/torrentos">GitHub</a></li>
+      <li><a href="#download" class="nav-cta">Download</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero">
+    <div class="badge">v0.4 · riptide · now available</div>
+    <h1>Linux,<br /><em>reimagined.</em></h1>
+    <p class="subtitle">
+      A fast, beautiful, accessible desktop operating system built on Linux.
+      Hyprland compositor. macOS-quality feel. Developer-ready out of the box.
+    </p>
+    <div class="hero-btns">
+      <a href="#download" class="btn btn-primary">
+        ↓ Download ISO
+      </a>
+      <a href="https://github.com/torrentos/torrentos" class="btn btn-outline">
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="card">
+      <div class="card-icon">🎨</div>
+      <h3>macOS-quality desktop</h3>
+      <p>Hyprland compositor with blur, rounded corners, smooth animations, and a native-feeling dock.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">♿</div>
+      <h3>Built-in accessibility</h3>
+      <p>Screen reader (Orca), magnifier, high-contrast support, and TTS included at boot — no setup needed.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>Developer ready</h3>
+      <p>Git, Neovim, Helix, Docker, Zsh, Ghostty, Ripgrep, and more pre-installed and configured.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔧</div>
+      <h3>First-boot wizard</h3>
+      <p>Keyboard layout, WiFi, and display setup — all handled on first launch before you even open a terminal.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛡️</div>
+      <h3>Rolling release</h3>
+      <p>Always up to date. Based on Arch Linux's packages — stable, well-maintained, and bleeding-edge when you need it.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📦</div>
+      <h3>Flatpak + AUR</h3>
+      <p>Access thousands of sandboxed apps via Flatpak or install anything from the AUR with paru, pre-configured.</p>
+    </div>
+  </section>
+
+  <section class="download" id="download">
+    <div class="version-pill">Latest: v0.4.0 — riptide</div>
+    <h2>Download TorrentOS</h2>
+    <p>Flash to a USB drive with Rufus (Windows) or <code>dd</code> (Linux/macOS).<br />Minimum: 4 GB USB, 4 GB RAM, 64-bit x86 CPU.</p>
+    <a href="https://github.com/torrentos/torrentos/releases/latest" class="btn btn-primary">
+      ↓ Download Latest ISO
+    </a>
+    <div class="checksum">
+      SHA256 checksums available on the <a href="https://github.com/torrentos/torrentos/releases/latest">releases page</a>.
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2026 TorrentOS Project · <a href="https://torrentos.github.io">torrentos.github.io</a></div>
+    <div class="footer-links">
+      <a href="docs/">Documentation</a>
+      <a href="https://github.com/torrentos/torrentos/issues">Report a bug</a>
+      <a href="https://github.com/torrentos/torrentos">GitHub</a>
+      <a href="privacy/">Privacy</a>
+    </div>
+  </footer>
+
+</body>
+</html>

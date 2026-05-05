@@ -1,0 +1,472 @@
+#!/usr/bin/env python3
+"""
+TorrentOS — First-boot welcome wizard (GTK4 / libadwaita).
+Pages: Welcome → Keyboard → WiFi → Shortcuts → Finish
+"""
+
+import sys
+import os
+import subprocess
+import threading
+from pathlib import Path
+
+import gi
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Gtk, Adw, GLib, Gdk, Gio
+
+MARKER = Path.home() / ".config" / "torrentos" / "first-boot-done"
+
+CSS = b"""
+.title-hero  { font-size: 34px; font-weight: 800; color: #1E6FFF; }
+.subtitle-hero { font-size: 15px; opacity: 0.75; }
+.section-title { font-size: 18px; font-weight: 700; }
+.shortcut-key  { font-family: monospace; font-size: 13px;
+                 background: alpha(currentColor,0.12);
+                 border-radius: 6px; padding: 2px 8px; }
+.done-title  { font-size: 26px; font-weight: 700; }
+.status-ok   { color: #33d17a; }
+.status-err  { color: #e01b24; }
+"""
+
+KEYBOARD_LAYOUTS = [
+    ("us",    "United States (US)"),
+    ("uk",    "United Kingdom (UK)"),
+    ("de",    "German (DE)"),
+    ("fr",    "French (FR)"),
+    ("es",    "Spanish (ES)"),
+    ("it",    "Italian (IT)"),
+    ("pt",    "Portuguese (PT)"),
+    ("nl",    "Dutch (NL)"),
+    ("pl",    "Polish (PL)"),
+    ("ru",    "Russian (RU)"),
+    ("jp",    "Japanese (JP)"),
+    ("dvorak","Dvorak"),
+    ("colemak","Colemak"),
+]
+
+SHORTCUTS = [
+    ("Super + Space",     "Open app launcher"),
+    ("Super + Return",    "Open terminal"),
+    ("Super + Q",         "Close window"),
+    ("Super + F",         "Fullscreen"),
+    ("Super + E",         "File manager"),
+    ("Super + V",         "Clipboard history"),
+    ("Super + L",         "Lock screen"),
+    ("Super + ,",         "Settings"),
+    ("Super + 1–9",       "Switch workspace"),
+    ("Print",             "Screenshot to clipboard"),
+    ("Shift + Print",     "Screenshot region"),
+]
+
+
+def run(cmd, **kw):
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
+
+# ── Pages ─────────────────────────────────────────────────────────────────────
+
+class WelcomePage(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_margin_top(40); self.set_margin_bottom(40)
+        self.set_margin_start(48); self.set_margin_end(48)
+
+        icon = Gtk.Image.new_from_icon_name("distributor-logo-archlinux")
+        icon.set_pixel_size(88)
+        icon.add_css_class("dim-label")
+        self.append(icon)
+
+        title = Gtk.Label(label="Welcome to TorrentOS")
+        title.add_css_class("title-hero")
+        self.append(title)
+
+        sub = Gtk.Label(label="macOS aesthetics · Linux power · Accessibility first")
+        sub.add_css_class("subtitle-hero")
+        self.append(sub)
+
+        Gtk.Separator().set_margin_top(4); self.append(Gtk.Separator())
+
+        for emoji, text in [
+            ("🚀", "Hyprland desktop — blur, animations, rounded corners"),
+            ("🎨", "macOS-style dock, Spotlight launcher, notification centre"),
+            ("♿", "Screen reader, magnifier & high-contrast built in"),
+            ("🔧", "Full dev stack: git, docker, neovim, zsh, python"),
+        ]:
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            row.set_halign(Gtk.Align.CENTER)
+            em = Gtk.Label(label=emoji); em.set_size_request(28, -1)
+            row.append(em)
+            row.append(Gtk.Label(label=text))
+            self.append(row)
+
+
+class KeyboardPage(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_margin_top(32); self.set_margin_bottom(32)
+        self.set_margin_start(48); self.set_margin_end(48)
+        self._selected = "us"
+
+        heading = Gtk.Label(label="Keyboard Layout")
+        heading.add_css_class("section-title")
+        heading.set_halign(Gtk.Align.START)
+        self.append(heading)
+
+        sub = Gtk.Label(label="Choose the layout that matches your physical keyboard.")
+        sub.add_css_class("dim-label")
+        sub.set_halign(Gtk.Align.START)
+        self.append(sub)
+
+        # Dropdown
+        self._model = Gtk.StringList()
+        for code, label in KEYBOARD_LAYOUTS:
+            self._model.append(label)
+
+        self._dropdown = Gtk.DropDown(model=self._model)
+        self._dropdown.set_selected(0)
+        self._dropdown.connect("notify::selected", self._on_changed)
+        self.append(self._dropdown)
+
+        # Test label
+        self._test_entry = Gtk.Entry()
+        self._test_entry.set_placeholder_text('Type here to test — try " @ # etc.')
+        self._test_entry.set_hexpand(True)
+        self.append(self._test_entry)
+
+        self._status = Gtk.Label(label="")
+        self._status.set_halign(Gtk.Align.START)
+        self.append(self._status)
+
+    def _on_changed(self, dd, _):
+        idx = dd.get_selected()
+        self._selected = KEYBOARD_LAYOUTS[idx][0]
+        self._apply_layout()
+
+    def _apply_layout(self):
+        code = self._selected
+        # Apply to running session
+        run(["localectl", "set-keymap", code])
+        # Also write to hyprland user config so it persists after reboot
+        hypr_user = Path.home() / ".config" / "hypr" / "user.conf"
+        hypr_user.parent.mkdir(parents=True, exist_ok=True)
+        content = hypr_user.read_text() if hypr_user.exists() else ""
+        import re
+        kb_line = f"input {{\n    kb_layout = {code}\n}}\n"
+        if "kb_layout" in content:
+            content = re.sub(r'kb_layout\s*=\s*\S+', f'kb_layout = {code}', content)
+        else:
+            content += "\n" + kb_line
+        hypr_user.write_text(content)
+        self._status.set_text(f"✓ Layout set to {code}")
+        self._status.add_css_class("status-ok")
+
+    def get_selected(self):
+        return self._selected
+
+
+class WiFiPage(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_margin_top(32); self.set_margin_bottom(32)
+        self.set_margin_start(48); self.set_margin_end(48)
+
+        heading = Gtk.Label(label="Connect to WiFi")
+        heading.add_css_class("section-title")
+        heading.set_halign(Gtk.Align.START)
+        self.append(heading)
+
+        self._status = Gtk.Label(label="Scanning…")
+        self._status.set_halign(Gtk.Align.START)
+        self._status.add_css_class("dim-label")
+        self.append(self._status)
+
+        # Network list
+        self._list_store = Gtk.StringList()
+        self._list_view_factory = Gtk.SignalListItemFactory()
+        self._list_view_factory.connect("setup", self._setup_item)
+        self._list_view_factory.connect("bind", self._bind_item)
+
+        self._selection = Gtk.SingleSelection(model=self._list_store)
+        self._list_box = Gtk.ListView(model=self._selection, factory=self._list_view_factory)
+        self._list_box.set_size_request(400, 160)
+
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_child(self._list_box)
+        scroll.set_vexpand(False)
+        self.append(scroll)
+
+        # Password
+        pw_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self._pw = Gtk.PasswordEntry()
+        self._pw.set_hexpand(True)
+        self._pw.set_placeholder_text("WiFi Password")
+        self._pw.set_show_peek_icon(True)
+        pw_row.append(self._pw)
+
+        self._connect_btn = Gtk.Button(label="Connect")
+        self._connect_btn.add_css_class("suggested-action")
+        self._connect_btn.connect("clicked", self._on_connect)
+        pw_row.append(self._connect_btn)
+        self.append(pw_row)
+
+        self._conn_status = Gtk.Label(label="")
+        self._conn_status.set_halign(Gtk.Align.START)
+        self.append(self._conn_status)
+
+        # Scan in background
+        threading.Thread(target=self._scan, daemon=True).start()
+
+    def _setup_item(self, factory, item):
+        item.set_child(Gtk.Label(xalign=0))
+
+    def _bind_item(self, factory, item):
+        item.get_child().set_label(item.get_item().get_string())
+
+    def _scan(self):
+        run(["nmcli", "device", "wifi", "rescan"])
+        result = run(["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY", "device", "wifi", "list"])
+        networks = []
+        seen = set()
+        for line in result.stdout.splitlines():
+            parts = line.split(":")
+            if parts and parts[0] and parts[0] not in seen:
+                seen.add(parts[0])
+                sig = parts[1] if len(parts) > 1 else "?"
+                sec = parts[2] if len(parts) > 2 else ""
+                lock = "🔒 " if sec and sec != "--" else "   "
+                networks.append(f"{lock}{parts[0]}  ({sig}%)")
+        self._networks_raw = [line.split(":")[0] for line in result.stdout.splitlines()
+                               if line.split(":")[0]]
+        GLib.idle_add(self._populate, networks)
+
+    def _populate(self, networks):
+        while self._list_store.get_n_items():
+            self._list_store.remove(0)
+        if networks:
+            for n in networks:
+                self._list_store.append(n)
+            self._status.set_text(f"Found {len(networks)} network(s) — select one below")
+        else:
+            self._status.set_text("No networks found — check your WiFi adapter")
+
+    def _on_connect(self, _):
+        idx = self._selection.get_selected()
+        if idx == Gtk.INVALID_LIST_POSITION or idx >= len(getattr(self, "_networks_raw", [])):
+            self._conn_status.set_text("Please select a network first")
+            return
+        ssid = self._networks_raw[idx]
+        pw = self._pw.get_text()
+        self._connect_btn.set_sensitive(False)
+        self._conn_status.set_text("Connecting…")
+        threading.Thread(target=self._do_connect, args=(ssid, pw), daemon=True).start()
+
+    def _do_connect(self, ssid, pw):
+        if pw:
+            r = run(["nmcli", "device", "wifi", "connect", ssid, "password", pw])
+        else:
+            r = run(["nmcli", "device", "wifi", "connect", ssid])
+        ok = r.returncode == 0
+        msg = f"✓ Connected to {ssid}" if ok else f"✗ Failed: {r.stderr.strip()[:60]}"
+        GLib.idle_add(self._set_conn_status, msg, ok)
+
+    def _set_conn_status(self, msg, ok):
+        self._conn_status.set_text(msg)
+        self._conn_status.remove_css_class("status-ok")
+        self._conn_status.remove_css_class("status-err")
+        self._conn_status.add_css_class("status-ok" if ok else "status-err")
+        self._connect_btn.set_sensitive(True)
+
+
+class ShortcutsPage(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_margin_top(28); self.set_margin_bottom(28)
+        self.set_margin_start(48); self.set_margin_end(48)
+
+        heading = Gtk.Label(label="Key Shortcuts")
+        heading.add_css_class("section-title")
+        heading.set_halign(Gtk.Align.START)
+        self.append(heading)
+
+        sub = Gtk.Label(label="Super = Windows key")
+        sub.add_css_class("dim-label")
+        sub.set_halign(Gtk.Align.START)
+        self.append(sub)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(8)
+        grid.set_column_spacing(20)
+        for i, (key, desc) in enumerate(SHORTCUTS):
+            kl = Gtk.Label(label=key)
+            kl.add_css_class("shortcut-key")
+            kl.set_halign(Gtk.Align.END)
+            dl = Gtk.Label(label=desc)
+            dl.set_halign(Gtk.Align.START)
+            grid.attach(kl, 0, i, 1, 1)
+            grid.attach(dl, 1, i, 1, 1)
+        self.append(grid)
+
+
+class FinishPage(Gtk.Box):
+    def __init__(self):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=18)
+        self.set_valign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_margin_top(40); self.set_margin_bottom(40)
+        self.set_margin_start(48); self.set_margin_end(48)
+
+        icon = Gtk.Image.new_from_icon_name("emblem-default-symbolic")
+        icon.set_pixel_size(72)
+        self.append(icon)
+
+        title = Gtk.Label(label="You're all set!")
+        title.add_css_class("done-title")
+        self.append(title)
+
+        sub = Gtk.Label(label="Press Super + Space to open the launcher.\nSettings are at Super + , (comma).")
+        sub.set_wrap(True)
+        sub.set_justify(Gtk.Justification.CENTER)
+        sub.add_css_class("dim-label")
+        self.append(sub)
+
+        btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_row.set_halign(Gtk.Align.CENTER)
+        btn_row.set_margin_top(8)
+
+        for label, cmd in [("Terminal", ["ghostty"]),
+                            ("Files", ["nautilus"]),
+                            ("Settings", ["torrentos-settings"])]:
+            btn = Gtk.Button(label=label)
+            if label == "Terminal":
+                btn.add_css_class("suggested-action")
+            btn.connect("clicked", lambda _, c=cmd: subprocess.Popen(c))
+            btn_row.append(btn)
+
+        self.append(btn_row)
+
+
+# ── Window ────────────────────────────────────────────────────────────────────
+
+class FirstBootWindow(Adw.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app)
+        self.set_title("Welcome to TorrentOS")
+        self.set_default_size(680, 540)
+        self.set_resizable(False)
+
+        self._kb_page = KeyboardPage()
+        self._pages = [WelcomePage(), self._kb_page, WiFiPage(), ShortcutsPage(), FinishPage()]
+        self._idx = 0
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.set_content(outer)
+
+        header = Adw.HeaderBar()
+        header.set_show_end_title_buttons(False)
+        outer.append(header)
+
+        self._stack = Gtk.Stack()
+        self._stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self._stack.set_vexpand(True)
+        for i, p in enumerate(self._pages):
+            self._stack.add_named(p, str(i))
+        outer.append(self._stack)
+
+        # Progress dots
+        dots_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        dots_box.set_halign(Gtk.Align.CENTER)
+        dots_box.set_margin_bottom(6)
+        self._dots = []
+        for i in range(len(self._pages)):
+            dot = Gtk.Label(label="●")
+            dot.add_css_class("dim-label")
+            dots_box.append(dot)
+            self._dots.append(dot)
+        outer.append(dots_box)
+
+        nav = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        nav.set_margin_start(20); nav.set_margin_end(20); nav.set_margin_bottom(14)
+
+        self._back_btn = Gtk.Button(label="Back")
+        self._back_btn.connect("clicked", lambda _: self._go(-1))
+        nav.append(self._back_btn)
+
+        skip_btn = Gtk.Button(label="Skip WiFi")
+        skip_btn.add_css_class("flat")
+        skip_btn.connect("clicked", lambda _: self._go(1))
+        self._skip_btn = skip_btn
+        nav.append(skip_btn)
+
+        spacer = Gtk.Label(); spacer.set_hexpand(True)
+        nav.append(spacer)
+
+        self._next_btn = Gtk.Button(label="Next")
+        self._next_btn.add_css_class("suggested-action")
+        self._next_btn.connect("clicked", lambda _: self._go(1))
+        nav.append(self._next_btn)
+
+        outer.append(nav)
+        self._update_ui()
+
+    def _go(self, direction):
+        n = len(self._pages)
+        new = self._idx + direction
+        if new < 0:
+            return
+        if new >= n:
+            self._finish()
+            return
+        self._idx = new
+        self._update_ui()
+
+    def _update_ui(self):
+        i = self._idx
+        n = len(self._pages)
+        self._stack.set_visible_child_name(str(i))
+        self._back_btn.set_sensitive(i > 0)
+        self._next_btn.set_label("Finish" if i == n - 1 else "Next")
+        # Show skip only on WiFi page (index 2)
+        self._skip_btn.set_visible(i == 2)
+        for j, dot in enumerate(self._dots):
+            dot.remove_css_class("dim-label")
+            dot.remove_css_class("accent")
+            dot.add_css_class("accent" if j == i else "dim-label")
+
+    def _finish(self):
+        MARKER.parent.mkdir(parents=True, exist_ok=True)
+        MARKER.touch()
+        self.get_application().quit()
+
+
+class FirstBootApp(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id="org.torrentos.FirstBoot",
+                         flags=Gio.ApplicationFlags.FLAGS_NONE)
+        self.connect("activate", self._on_activate)
+
+    def _on_activate(self, app):
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        FirstBootWindow(app).present()
+
+
+def main():
+    if MARKER.exists():
+        sys.exit(0)
+    sys.exit(FirstBootApp().run(sys.argv))
+
+
+if __name__ == "__main__":
+    main()

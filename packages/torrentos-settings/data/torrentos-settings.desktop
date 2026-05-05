@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TorrentOS Settings
+GenericName=System Settings
+Comment=Configure appearance, accessibility, display, and developer mode
+Exec=torrentos-settings
+Icon=torrentos-settings
+Terminal=false
+Categories=Settings;DesktopSettings;GTK;
+StartupNotify=true
+Keywords=settings;preferences;theme;accessibility;dev mode;
