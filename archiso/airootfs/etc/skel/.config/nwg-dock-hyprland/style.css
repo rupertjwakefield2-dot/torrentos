@@ -1,0 +1,49 @@
+/* TorrentOS — nwg-dock-hyprland stylesheet
+   Matches the TorrentOS navy/blue palette with macOS-feel glass effect */
+
+window {
+    background: rgba(7, 15, 29, 0.80);
+    border-radius: 20px;
+    border: 1px solid rgba(30, 111, 255, 0.20);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55),
+                0 0 0 1px rgba(255, 255, 255, 0.04);
+    padding: 6px 8px;
+}
+
+/* Individual dock items */
+#box {
+    background: transparent;
+    padding: 0;
+}
+
+button {
+    background: transparent;
+    border: none;
+    border-radius: 14px;
+    padding: 6px;
+    margin: 2px;
+    transition: background 120ms ease, transform 120ms ease;
+}
+
+button:hover {
+    background: rgba(30, 111, 255, 0.15);
+    transform: translateY(-4px);
+}
+
+button:active {
+    background: rgba(30, 111, 255, 0.28);
+    transform: translateY(-2px);
+}
+
+/* Active (running) app indicator dot */
+button.active {
+    background: rgba(30, 111, 255, 0.12);
+}
+
+/* Separator between pinned and running apps */
+separator {
+    background: rgba(255, 255, 255, 0.10);
+    min-width: 1px;
+    min-height: 32px;
+    margin: 8px 4px;
+}

@@ -1,57 +1,73 @@
 /* TorrentOS — Rofi theme
-   Navy/electric-blue brand palette. macOS Spotlight feel. */
+   Navy/electric-blue brand palette. macOS Spotlight feel.
+   Version 2 — adds mode tabs, dividers, improved element sizing */
 
 * {
-    bg:          rgba(7, 15, 29, 0.96);
-    bg-alt:      rgba(14, 28, 55, 0.92);
-    fg:          #F4F7FB;
-    fg-dim:      #7AADFF;
-    accent:      #1E6FFF;
-    accent-dim:  rgba(30, 111, 255, 0.18);
-    urgent:      #FF6B6B;
-    border-col:  rgba(30, 111, 255, 0.28);
+    bg:           rgba(7, 15, 29, 0.97);
+    bg-alt:       rgba(14, 28, 55, 0.94);
+    bg-hover:     rgba(30, 111, 255, 0.08);
+    fg:           #F4F7FB;
+    fg-dim:       rgba(244, 247, 251, 0.55);
+    fg-dimmer:    rgba(244, 247, 251, 0.30);
+    accent:       #1E6FFF;
+    accent-dim:   rgba(30, 111, 255, 0.16);
+    accent-glow:  rgba(30, 111, 255, 0.35);
+    urgent:       #FF6B6B;
+    border-col:   rgba(30, 111, 255, 0.25);
+    separator:    rgba(255, 255, 255, 0.06);
 
     background-color: transparent;
     text-color:       @fg;
+    font:             "Inter 13";
 }
 
 configuration {
     modi:                  "drun,run,window";
     show-icons:            true;
-    icon-theme:            "Bibata-Modern-Classic";
+    icon-theme:            "Papirus-Dark";
     drun-display-format:   "{name}";
     window-format:         "{t}   {c}";
     display-drun:          "  Apps";
     display-run:           "  Run";
     display-window:        "  Windows";
     terminal:              "ghostty";
-    font:                  "Inter 13";
+    drun-match-fields:     "name,exec,categories,comment";
+    matching:              "fuzzy";
+    sort:                  true;
+    sorting-method:        "fzf";
+    steal-focus:           true;
+    click-to-exit:         true;
 }
 
+/* ── Window ─────────────────────────────────────────────────── */
 window {
     transparency:      "real";
     location:          center;
     anchor:            center;
-    width:             560px;
+    width:             580px;
     background-color:  @bg;
     border:            1px solid @border-col;
-    border-radius:     16px;
+    border-radius:     18px;
     padding:           0;
     children:          [ mainbox ];
+    box-shadow:        0 20px 60px rgba(0, 0, 0, 0.70),
+                       0 0 0 1px rgba(30, 111, 255, 0.10);
 }
 
 mainbox {
     background-color: transparent;
-    children: [ inputbar, listview, message ];
+    children: [ inputbar, mode-switcher, listview, message ];
+    spacing: 0;
 }
 
 /* ── Search bar ─────────────────────────────────────────────── */
 inputbar {
     background-color: @bg-alt;
-    border-radius:    14px 14px 0 0;
+    border-radius:    16px 16px 0 0;
     padding:          14px 18px 12px 18px;
     spacing:          10px;
     children:         [ prompt, entry ];
+    border-bottom:    1px solid @separator;
 }
 
 prompt {
@@ -59,63 +75,27 @@ prompt {
     text-color:       @accent;
     font:             "Inter Bold 14";
     padding:          2px 0;
+    vertical-align:   0.5;
 }
 
 entry {
     background-color: transparent;
     text-color:       @fg;
     placeholder:      "Search apps, files, commands…";
-    placeholder-color: rgba(244, 247, 251, 0.35);
+    placeholder-color: @fg-dim;
     cursor:           text;
     blink:            true;
-}
-
-/* ── Results list ───────────────────────────────────────────── */
-listview {
-    background-color: transparent;
-    padding:          8px 8px;
-    spacing:          2px;
-    columns:          1;
-    fixed-height:     true;
-    lines:            8;
-    scrollbar:        false;
-}
-
-element {
-    background-color: transparent;
-    text-color:       @fg;
-    border-radius:    10px;
-    padding:          9px 12px;
-    spacing:          12px;
-    orientation:      horizontal;
-    children:         [ element-icon, element-text ];
-}
-
-element.selected {
-    background-color: @accent-dim;
-    text-color:       #FFFFFF;
-}
-
-element.urgent {
-    text-color: @urgent;
-}
-
-element-icon {
-    size:             22px;
     vertical-align:   0.5;
-}
-
-element-text {
-    vertical-align: 0.5;
-    highlight:      bold;
 }
 
 /* ── Mode switcher tabs ─────────────────────────────────────── */
 mode-switcher {
-    background-color: transparent;
-    border-radius:    0 0 14px 14px;
-    padding:          6px 10px;
+    background-color: @bg;
+    border-radius:    0;
+    padding:          6px 12px;
     spacing:          4px;
+    orientation:      horizontal;
+    border-bottom:    1px solid @separator;
 }
 
 button {
@@ -123,6 +103,8 @@ button {
     text-color:       @fg-dim;
     border-radius:    8px;
     padding:          4px 14px;
+    font:             "Inter 12";
+    cursor:           pointer;
 }
 
 button.selected {
@@ -131,13 +113,79 @@ button.selected {
     font:             "Inter SemiBold 12";
 }
 
+button:hover:not(.selected) {
+    background-color: @bg-hover;
+    text-color:       @fg;
+}
+
+/* ── Results list ───────────────────────────────────────────── */
+listview {
+    background-color: transparent;
+    padding:          6px 8px;
+    spacing:          1px;
+    columns:          1;
+    fixed-height:     true;
+    lines:            9;
+    scrollbar:        true;
+    cycle:            true;
+}
+
+/* ── Individual elements ────────────────────────────────────── */
+element {
+    background-color: transparent;
+    text-color:       @fg;
+    border-radius:    10px;
+    padding:          8px 12px;
+    spacing:          12px;
+    orientation:      horizontal;
+    children:         [ element-icon, element-text ];
+    cursor:           pointer;
+}
+
+element.normal.normal      { background-color: transparent; }
+element.normal.urgent      { background-color: transparent; text-color: @urgent; }
+element.normal.active      { background-color: @accent-dim; text-color: @accent; }
+
+element.selected.normal    { background-color: @accent-dim; text-color: #FFFFFF; }
+element.selected.urgent    { background-color: rgba(255,107,107,0.14); text-color: @urgent; }
+element.selected.active    { background-color: @accent-dim; }
+
+element.alternate.normal   { background-color: transparent; }
+
+element:hover {
+    background-color: @bg-hover;
+}
+
+element-icon {
+    size:           22px;
+    vertical-align: 0.5;
+}
+
+element-text {
+    vertical-align:  0.5;
+    highlight:       bold;
+    text-color:      inherit;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+scrollbar {
+    width:            4px;
+    border:           0;
+    handle-width:     4px;
+    handle-color:     rgba(30, 111, 255, 0.35);
+    border-radius:    4px;
+}
+
 /* ── Messages / no results ──────────────────────────────────── */
 message {
     background-color: transparent;
     padding:          6px 18px;
+    border-top:       1px solid @separator;
 }
 
 textbox {
     background-color: transparent;
     text-color:       @fg-dim;
+    font:             "Inter 11";
+    padding:          4px 6px;
 }

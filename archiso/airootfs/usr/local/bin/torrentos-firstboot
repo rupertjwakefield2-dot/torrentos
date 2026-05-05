@@ -1,42 +1,61 @@
-#!/bin/bash
-# TorrentOS first-boot setup wizard
-# Runs once on first Hyprland start to configure keyboard layout and timezone.
+#!/usr/bin/env bash
+# TorrentOS first-boot setup wizard (terminal fallback)
+# Runs once on first Hyprland start; the GTK wizard takes over if available.
+# Falls back to this if the GTK wizard is not installed or cannot launch.
 
 DONE_FLAG="$HOME/.config/torrentos/.firstboot-done"
 USER_CONF="$HOME/.config/hypr/user.conf"
+VERSION="$(cat /etc/torrentos/version 2>/dev/null || echo 0.4)"
 
+# ── Try the GTK wizard first ─────────────────────────────────────────────────
+if command -v torrentos-first-boot-wizard >/dev/null 2>&1; then
+    torrentos-first-boot-wizard
+    exit 0
+fi
+
+# ── Already completed? ───────────────────────────────────────────────────────
 [ -f "$DONE_FLAG" ] && exit 0
 
-mkdir -p "$HOME/.config/torrentos"
-mkdir -p "$HOME/.config/hypr"
+mkdir -p "$HOME/.config/torrentos" "$HOME/.config/hypr"
 touch "$USER_CONF" 2>/dev/null
 
+# ── Colours ──────────────────────────────────────────────────────────────────
+B='\033[38;2;30;111;255m'
+C='\033[38;2;91;192;235m'
+W='\033[1;37m'
+D='\033[2;37m'
+G='\033[38;2;91;235;161m'
+N='\033[0m'
+HR="${D}  ─────────────────────────────────────────────────────────${N}"
+
 clear
-echo ""
+echo
+printf "${B}"
 echo "  ████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗ ██████╗ ███████╗"
 echo "     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔════╝"
 echo "     ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   ██║   ██║███████╗"
 echo "     ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ██║   ██║╚════██║"
 echo "     ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ╚██████╔╝███████║"
 echo "     ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝"
-echo ""
-echo "  Welcome to TorrentOS v0.4  -  riptide"
-echo "  -----------------------------------------------------------------------"
-echo ""
-echo "  Let's get you set up. This will only take a moment."
-echo ""
+printf "${N}"
+echo
+printf "${D}  Welcome to TorrentOS v${VERSION}  ·  riptide${N}\n"
+echo "$HR"
+echo
+printf "${D}  Let's get you set up. This will only take a minute.${N}\n"
+echo
 
-# Keyboard layout
-echo "  Keyboard layout"
-echo "  -----------------------------------------------------------------------"
-echo ""
-echo "   1) United Kingdom (gb)     6) Italian (it)"
-echo "   2) United States (us)      7) Portuguese (pt)"
-echo "   3) German (de)             8) Dutch (nl)"
-echo "   4) French (fr)             9) Swedish (se)"
-echo "   5) Spanish (es)           10) Other (type manually)"
-echo ""
-printf "  Your choice [1]: "
+# ── 1. Keyboard layout ───────────────────────────────────────────────────────
+printf "${C}  Keyboard layout${N}\n"
+echo "$HR"
+echo
+printf "${D}   1) United Kingdom (gb)   ${N}  ${D}6) Italian (it)${N}\n"
+printf "${D}   2) United States (us)    ${N}  ${D}7) Portuguese (pt)${N}\n"
+printf "${D}   3) German (de)           ${N}  ${D}8) Dutch (nl)${N}\n"
+printf "${D}   4) French (fr)           ${N}  ${D}9) Swedish (se)${N}\n"
+printf "${D}   5) Spanish (es)          ${N}  ${D}10) Other (type manually)${N}\n"
+echo
+printf "${W}  Your choice [1]: ${N}"
 read -r KB_CHOICE
 
 case "$KB_CHOICE" in
@@ -48,26 +67,25 @@ case "$KB_CHOICE" in
     7)  KB="pt" ;;
     8)  KB="nl" ;;
     9)  KB="se" ;;
-    10) printf "  Layout code (e.g. pl, ru, jp): "; read -r KB; KB="${KB:-us}" ;;
+    10) printf "${W}  Layout code (e.g. pl, ru, jp): ${N}"; read -r KB; KB="${KB:-us}" ;;
     *)  KB="gb" ;;
 esac
 
-echo ""
-echo "  Keyboard set to: $KB"
+printf "${G}  Keyboard: $KB${N}\n"
 localectl set-keymap "$KB" 2>/dev/null || true
 
-# Timezone
-echo ""
-echo "  Timezone"
-echo "  -----------------------------------------------------------------------"
-echo ""
-echo "   1) London (Europe/London)     5) Berlin (Europe/Berlin)"
-echo "   2) New York (America/New_York) 6) Paris (Europe/Paris)"
-echo "   3) Los Angeles (America/LA)   7) Tokyo (Asia/Tokyo)"
-echo "   4) Chicago (America/Chicago)  8) Sydney (Australia/Sydney)"
-echo "   9) Other (type manually)"
-echo ""
-printf "  Your choice [1]: "
+# ── 2. Timezone ──────────────────────────────────────────────────────────────
+echo
+printf "${C}  Timezone${N}\n"
+echo "$HR"
+echo
+printf "${D}   1) London (Europe/London)          ${N}  ${D}6) Paris (Europe/Paris)${N}\n"
+printf "${D}   2) New York (America/New_York)      ${N}  ${D}7) Tokyo (Asia/Tokyo)${N}\n"
+printf "${D}   3) Los Angeles (America/LA)         ${N}  ${D}8) Sydney (Australia/Sydney)${N}\n"
+printf "${D}   4) Chicago (America/Chicago)        ${N}  ${D}9) Dubai (Asia/Dubai)${N}\n"
+printf "${D}   5) Berlin (Europe/Berlin)           ${N}  ${D}10) Other (type manually)${N}\n"
+echo
+printf "${W}  Your choice [1]: ${N}"
 read -r TZ_CHOICE
 
 case "$TZ_CHOICE" in
@@ -78,18 +96,56 @@ case "$TZ_CHOICE" in
     6)  TZ="Europe/Paris" ;;
     7)  TZ="Asia/Tokyo" ;;
     8)  TZ="Australia/Sydney" ;;
-    9)  printf "  Timezone (e.g. Europe/Warsaw): "; read -r TZ; TZ="${TZ:-Europe/London}" ;;
+    9)  TZ="Asia/Dubai" ;;
+    10) printf "${W}  Timezone (e.g. Europe/Warsaw): ${N}"; read -r TZ; TZ="${TZ:-Europe/London}" ;;
     *)  TZ="Europe/London" ;;
 esac
 
-echo ""
-echo "  Timezone set to: $TZ"
-timedatectl set-timezone "$TZ" 2>/dev/null || ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime 2>/dev/null || true
+printf "${G}  Timezone: $TZ${N}\n"
+timedatectl set-timezone "$TZ" 2>/dev/null \
+    || ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime 2>/dev/null \
+    || true
 
-# Write user.conf
+# ── 3. Locale / language ─────────────────────────────────────────────────────
+echo
+printf "${C}  System language${N}\n"
+echo "$HR"
+echo
+printf "${D}   1) English (en_GB.UTF-8)     ${N}  ${D}5) Spanish (es_ES.UTF-8)${N}\n"
+printf "${D}   2) English US (en_US.UTF-8)  ${N}  ${D}6) Italian (it_IT.UTF-8)${N}\n"
+printf "${D}   3) German (de_DE.UTF-8)      ${N}  ${D}7) French (fr_FR.UTF-8)${N}\n"
+printf "${D}   4) Portuguese (pt_PT.UTF-8)  ${N}  ${D}8) Keep current${N}\n"
+echo
+printf "${W}  Your choice [1]: ${N}"
+read -r LOCALE_CHOICE
+
+case "$LOCALE_CHOICE" in
+    2)  LOCALE="en_US.UTF-8" ;;
+    3)  LOCALE="de_DE.UTF-8" ;;
+    4)  LOCALE="pt_PT.UTF-8" ;;
+    5)  LOCALE="es_ES.UTF-8" ;;
+    6)  LOCALE="it_IT.UTF-8" ;;
+    7)  LOCALE="fr_FR.UTF-8" ;;
+    8)  LOCALE="" ;;
+    *)  LOCALE="en_GB.UTF-8" ;;
+esac
+
+if [ -n "$LOCALE" ]; then
+    printf "${G}  Locale: $LOCALE${N}\n"
+    localectl set-locale "LANG=$LOCALE" 2>/dev/null || true
+fi
+
+# ── Create XDG user directories ──────────────────────────────────────────────
+for dir in Desktop Downloads Documents Pictures Videos Music Public Templates; do
+    mkdir -p "$HOME/$dir"
+done
+command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update
+
+# ── Write user.conf ──────────────────────────────────────────────────────────
 {
-    echo "# TorrentOS user config - generated by first-boot setup"
+    echo "# TorrentOS user config — generated by first-boot wizard"
     echo "# Edit this file to customise your desktop."
+    echo "# This file is sourced at the bottom of hyprland.conf."
     echo ""
     echo "input {"
     echo "    kb_layout = $KB"
@@ -98,8 +154,8 @@ timedatectl set-timezone "$TZ" 2>/dev/null || ln -sf "/usr/share/zoneinfo/$TZ" /
 
 touch "$DONE_FLAG"
 
-echo ""
-echo "  -----------------------------------------------------------------------"
-echo "  All done. Starting the desktop now..."
-echo ""
+echo
+echo "$HR"
+printf "${G}  All done.${N} ${D}Starting your desktop now…${N}\n"
+echo
 sleep 1

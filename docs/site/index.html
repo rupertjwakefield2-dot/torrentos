@@ -513,6 +513,52 @@
     .req-val { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 0.25rem; }
     .req-note { font-size: 0.79rem; color: var(--text); }
 
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: 0; max-width: 720px; margin: 2.5rem auto 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-item:first-child { border-top: 1px solid var(--border); }
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 1.1rem 0;
+      color: var(--white);
+      font-size: 0.975rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+';
+      color: var(--blue);
+      font-size: 1.3rem;
+      font-weight: 300;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+    .faq-item[open] summary::after { transform: rotate(45deg); }
+    .faq-item p {
+      color: var(--text);
+      font-size: 0.9rem;
+      line-height: 1.75;
+      padding-bottom: 1.2rem;
+    }
+    .faq-item p a { color: var(--blue); text-decoration: none; }
+    .faq-item p a:hover { text-decoration: underline; }
+    .faq-item p code {
+      background: rgba(30,127,255,0.10);
+      color: var(--blue2);
+      padding: 0.1em 0.45em;
+      border-radius: 5px;
+      font-size: 0.87em;
+      font-family: "JetBrains Mono", monospace;
+    }
+
     /* Download */
     .download-section { background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(47,127,255,0.08) 0%, transparent 70%); }
     .download-card {
@@ -623,9 +669,10 @@
     <ul>
       <li><a href="#features">Features</a></li>
       <li><a href="#install">Install</a></li>
+      <li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a></li>
       <li><a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a></li>
-      <li><a href="#download" class="nav-cta">Download</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/releases/latest" class="nav-cta">Download</a></li>
     </ul>
   </nav>
 
@@ -917,6 +964,46 @@
     </div>
   </section>
 
+  <hr class="divider" />
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-eyebrow reveal">FAQ</div>
+      <h2 class="section-title reveal reveal-delay-1">Common questions.</h2>
+      <p class="section-sub reveal reveal-delay-2">Everything you need before you download.</p>
+
+      <div class="faq-list">
+        <details class="faq-item reveal reveal-delay-1">
+          <summary>Is TorrentOS free?</summary>
+          <p>Yes. TorrentOS is fully open source under the GPL-3.0 licence. You can use it, modify it, and share it freely. The source code is on <a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a>.</p>
+        </details>
+        <details class="faq-item reveal reveal-delay-2">
+          <summary>Does it work on a Mac?</summary>
+          <p>Intel Macs can boot TorrentOS from USB and run it as a live desktop, but installing to disk requires disabling Secure Boot and repartitioning. Apple Silicon (M1/M2/M3) is not currently supported — the ISO is x86_64 only.</p>
+        </details>
+        <details class="faq-item reveal reveal-delay-3">
+          <summary>Do I need an NVIDIA GPU?</summary>
+          <p>No. TorrentOS works on Intel integrated graphics, AMD, and NVIDIA. NVIDIA requires the proprietary driver after installing to disk — the live ISO uses software rendering as a fallback so it boots on anything.</p>
+        </details>
+        <details class="faq-item reveal reveal-delay-4">
+          <summary>Can I try it without installing?</summary>
+          <p>Yes — flash the ISO to a USB and boot into the live environment. Everything works: WiFi, the desktop, the terminal, and qBittorrent. Nothing is written to your disk until you click the install button.</p>
+        </details>
+        <details class="faq-item reveal reveal-delay-5">
+          <summary>How do I update TorrentOS?</summary>
+          <p>TorrentOS uses a rolling release model based on Arch Linux. Run <code>update</code> in the terminal, or open the Update tool from Settings. You'll always have the latest packages without reinstalling.</p>
+        </details>
+        <details class="faq-item reveal reveal-delay-6">
+          <summary>Can I install my own apps?</summary>
+          <p>Yes. TorrentOS uses <code>pacman</code> (Arch Linux package manager) and supports the AUR via <code>paru</code>. You can install almost any Linux application, including Flatpaks and AppImages.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
   <!-- Download -->
   <section class="download-section" id="download">
     <div class="container">
@@ -949,9 +1036,12 @@
   <footer>
     <div>2026 TorrentOS · <a href="https://rupertjwakefield2-dot.github.io/torrentos/">torrentos.github.io</a></div>
     <div class="footer-links">
+      <a href="#faq">FAQ</a>
       <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Installation">Install guide</a>
       <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Changelog">Changelog</a>
       <a href="https://github.com/rupertjwakefield2-dot/torrentos/issues">Report a bug</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/releases">Releases</a>
       <a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a>
     </div>
   </footer>

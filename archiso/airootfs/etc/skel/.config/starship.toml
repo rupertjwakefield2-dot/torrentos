@@ -1,6 +1,11 @@
 # TorrentOS — starship prompt
+# Minimal, fast, macOS-feel prompt with useful dev context
+
 add_newline = false
+command_timeout = 800
+
 format = """
+$os\
 $directory\
 $git_branch\
 $git_status\
@@ -9,47 +14,129 @@ $nodejs\
 $rust\
 $golang\
 $docker_context\
+$kubernetes\
 $cmd_duration\
 $line_break\
+$battery\
 $character"""
 
-[character]
-success_symbol = "[›](bold #1E6FFF)"
-error_symbol   = "[›](bold #FF6B6B)"
+# ── OS icon ──────────────────────────────────────────────────────────────────
+[os]
+disabled = false
+style = "bold #1E6FFF"
 
+[os.symbols]
+Arch = " "
+Unknown = " "
+
+# ── Directory ────────────────────────────────────────────────────────────────
 [directory]
 style = "bold #5BC0EB"
 truncation_length = 3
 truncate_to_repo = true
+home_symbol = "~"
+read_only = " 󰌾"
+read_only_style = "bold #FF6B6B"
+format = "[$path]($style)[$read_only]($read_only_style) "
 
+# ── Git branch ───────────────────────────────────────────────────────────────
 [git_branch]
 symbol = " "
 style = "bold #C678DD"
+truncation_length = 24
+format = "[$symbol$branch(:$remote_branch)]($style) "
 
+# ── Git status ───────────────────────────────────────────────────────────────
 [git_status]
 style = "bold #FFB454"
+ahead    = "⇡${count}"
+behind   = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+modified = "!${count}"
+staged   = "+${count}"
+untracked = "?${count}"
+deleted   = "✘${count}"
+format = "([$all_status$ahead_behind]($style) )"
 
+# ── Command duration ─────────────────────────────────────────────────────────
 [cmd_duration]
-min_time = 2_000
+min_time = 2000
 format = "[ $duration]($style) "
 style = "italic #FFB454"
+show_milliseconds = false
 
+# ── Battery (shows only when below 30%) ──────────────────────────────────────
+[battery]
+full_symbol     = "󰁹"
+charging_symbol = "󰂄"
+discharging_symbol = "󰁾"
+unknown_symbol  = "󰂑"
+empty_symbol    = "󰂎"
+format = "[$symbol $percentage]($style) "
+
+[[battery.display]]
+threshold = 30
+style = "bold #FFB454"
+
+[[battery.display]]
+threshold = 10
+style = "bold #FF6B6B"
+
+# ── Character (prompt symbol) ────────────────────────────────────────────────
+[character]
+success_symbol = "[›](bold #1E6FFF)"
+error_symbol   = "[›](bold #FF6B6B)"
+vimcmd_symbol  = "[‹](bold #C678DD)"
+
+# ── Python ───────────────────────────────────────────────────────────────────
 [python]
 symbol = " "
 style = "bold #5BC0EB"
+format = "[$symbol$pyenv_prefix($version )(\\($virtualenv\\) )]($style)"
+detect_extensions = ["py"]
+detect_files = ["requirements.txt", "pyproject.toml", ".python-version", "Pipfile"]
 
+# ── Node.js ──────────────────────────────────────────────────────────────────
 [nodejs]
 symbol = " "
 style = "bold #5BC0EB"
+detect_files = ["package.json", ".nvmrc", ".node-version"]
+detect_folders = ["node_modules"]
 
+# ── Rust ─────────────────────────────────────────────────────────────────────
 [rust]
 symbol = " "
 style = "bold #FF8585"
+detect_files = ["Cargo.toml"]
 
+# ── Go ───────────────────────────────────────────────────────────────────────
 [golang]
 symbol = " "
 style = "bold #5BC0EB"
+detect_files = ["go.mod", "go.sum"]
 
+# ── Docker ───────────────────────────────────────────────────────────────────
 [docker_context]
 symbol = " "
 style = "bold #1E6FFF"
+detect_files = ["docker-compose.yml", "docker-compose.yaml", "Dockerfile"]
+only_with_files = true
+
+# ── Kubernetes ───────────────────────────────────────────────────────────────
+[kubernetes]
+disabled = false
+symbol = "󱃾 "
+style = "bold #7AADFF"
+detect_files = ["Dockerfile"]
+detect_folders = [".kube"]
+format = "[$symbol$context( \\($namespace\\))]($style) "
+
+# ── Disabled modules (keep prompt fast) ──────────────────────────────────────
+[package]
+disabled = true
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
