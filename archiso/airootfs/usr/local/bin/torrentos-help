@@ -49,8 +49,10 @@ topic_keys() {
     printf "${C}  Screenshots${N}\n"
     printf "${D}  %-30s${N} %s\n" "Print"               "Full screen → clipboard"
     printf "${D}  %-30s${N} %s\n" "Shift + Print"       "Region → clipboard"
-    printf "${D}  %-30s${N} %s\n" "Super + Print"       "Full screen → ~/Pictures"
+    printf "${D}  %-30s${N} %s\n" "Super + Print"       "Full screen → ~/Pictures/Screenshots"
     printf "${D}  %-30s${N} %s\n" "Super + Shift + S"   "Region → save + clipboard"
+    printf "${D}  %-30s${N} %s\n" "Super + Ctrl + S"    "Screenshot GUI (mode/delay/preview)"
+    printf "${D}  %-30s${N} %s\n" "Super + P"           "Colour picker (hyprpicker)"
     echo
     printf "${C}  Focus & layout${N}\n"
     printf "${D}  %-30s${N} %s\n" "Super + H/J/K/L"     "Move focus (vim-style)"
