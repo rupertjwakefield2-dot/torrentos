@@ -2,7 +2,7 @@
 pkgname=torrentos-base
 pkgver=0.4.0
 pkgrel=1
-pkgdesc="TorrentOS base meta-package: branding, version file, defaults"
+pkgdesc="TorrentOS base meta-package — branding, version file, defaults, and core tools"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
@@ -32,6 +32,18 @@ depends=(
     'zoxide'
     'orca'
     'at-spi2-core'
+    'grim'
+    'slurp'
+    'wl-clipboard'
+    'xdg-user-dirs'
+    'playerctl'
+    'brightnessctl'
+    'xdg-utils'
+    'qt6ct'
+    'kvantum'
+    'papirus-icon-theme'
+    'noto-fonts'
+    'ttf-jetbrains-mono-nerd'
 )
 backup=(
     'etc/torrentos/default-settings.toml'

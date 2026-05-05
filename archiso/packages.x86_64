@@ -78,10 +78,13 @@ xdg-desktop-portal
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 xdg-utils
+xdg-user-dirs
 polkit
 polkit-gnome
 qt5-wayland
 qt6-wayland
+qt6ct
+kvantum
 
 # --- desktop (the macOS-feel stack) ---
 hyprland
@@ -120,8 +123,9 @@ nvidia-utils
 nvidia-settings
 egl-wayland
 
-# --- file manager / archives ---
+# --- file manager / images / archives ---
 nautilus
+loupe
 file-roller
 gvfs
 gvfs-mtp
@@ -136,6 +140,12 @@ at-spi2-core
 espeak-ng
 festival
 magnus
+
+# --- theming ---
+papirus-icon-theme
+
+# --- VTE terminal widget (used by torrentos-update-gui) ---
+vte4
 
 # --- fonts ---
 ttf-jetbrains-mono
@@ -200,6 +210,7 @@ torrentos-theme
 torrentos-hyprland-config
 torrentos-first-boot
 torrentos-settings
+torrentos-tools
 
 # --- AUR packages (built locally by scripts/build-aur.sh) ---
 paru-bin

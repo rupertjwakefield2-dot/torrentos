@@ -1,0 +1,337 @@
+#!/usr/bin/env python3
+"""TorrentOS Screenshot Tool — GTK4/libadwaita region/full/window capture."""
+
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import gi
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, GdkPixbuf, Gio, GLib, Gtk
+
+
+APP_ID      = "org.torrentos.Screenshot"
+SAVE_DIR    = Path.home() / "Pictures" / "Screenshots"
+DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+def _ts() -> str:
+    return datetime.now().strftime(DATE_FORMAT)
+
+
+def _notify(title: str, body: str) -> None:
+    try:
+        subprocess.Popen(
+            ["notify-send", "-a", "TorrentOS Screenshot", "-i", "camera-photo", title, body],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
+
+def _wl_copy(path: Path) -> None:
+    """Copy image to Wayland clipboard via wl-copy."""
+    try:
+        with open(path, "rb") as fh:
+            subprocess.Popen(
+                ["wl-copy", "--type", "image/png"],
+                stdin=fh, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+    except Exception:
+        pass
+
+
+# ── main window ───────────────────────────────────────────────────────────────
+
+class ScreenshotWindow(Adw.ApplicationWindow):
+    def __init__(self, app: Adw.Application) -> None:
+        super().__init__(application=app)
+        self.set_title("Screenshot")
+        self.set_default_size(420, 580)
+        self.set_resizable(False)
+        self._last_path: Path | None = None
+
+        # ── toolbar ──────────────────────────────────────────────────────────
+        toolbar = Adw.ToolbarView()
+        self.set_content(toolbar)
+
+        header = Adw.HeaderBar()
+        header.set_show_end_title_buttons(True)
+        toolbar.add_top_bar(header)
+
+        # ── main content ─────────────────────────────────────────────────────
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        toolbar.set_content(scroll)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        scroll.set_child(outer)
+
+        clamp = Adw.Clamp()
+        clamp.set_maximum_size(400)
+        clamp.set_margin_top(12)
+        clamp.set_margin_bottom(24)
+        clamp.set_margin_start(12)
+        clamp.set_margin_end(12)
+        outer.append(clamp)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        clamp.set_child(content)
+
+        # ── mode group ───────────────────────────────────────────────────────
+        mode_group = Adw.PreferencesGroup()
+        mode_group.set_title("Capture Mode")
+        content.append(mode_group)
+
+        self._mode_radios: dict[str, Gtk.CheckButton] = {}
+        modes = [
+            ("region",  "Select Region",    "Select an area of the screen"),
+            ("full",    "Full Screen",       "Capture the entire display"),
+            ("window",  "Active Window",     "Capture the focused window"),
+        ]
+        first_radio: Gtk.CheckButton | None = None
+        for key, label, subtitle in modes:
+            row = Adw.ActionRow()
+            row.set_title(label)
+            row.set_subtitle(subtitle)
+            radio = Gtk.CheckButton()
+            if first_radio is None:
+                first_radio = radio
+            else:
+                radio.set_group(first_radio)
+            radio.set_valign(Gtk.Align.CENTER)
+            row.add_prefix(radio)
+            row.set_activatable_widget(radio)
+            self._mode_radios[key] = radio
+            mode_group.add(row)
+
+        self._mode_radios["region"].set_active(True)
+
+        # ── options group ─────────────────────────────────────────────────────
+        opts_group = Adw.PreferencesGroup()
+        opts_group.set_title("Options")
+        content.append(opts_group)
+
+        # Delay
+        delay_row = Adw.ActionRow()
+        delay_row.set_title("Delay")
+        delay_row.set_subtitle("Seconds before capture")
+        self._delay_spin = Gtk.SpinButton()
+        self._delay_spin.set_adjustment(Gtk.Adjustment(value=0, lower=0, upper=10, step_increment=1))
+        self._delay_spin.set_valign(Gtk.Align.CENTER)
+        delay_row.add_suffix(self._delay_spin)
+        opts_group.add(delay_row)
+
+        # Copy to clipboard
+        clip_row = Adw.SwitchRow()
+        clip_row.set_title("Copy to Clipboard")
+        clip_row.set_subtitle("Also copy image after saving")
+        clip_row.set_active(True)
+        self._clip_switch = clip_row
+        opts_group.add(clip_row)
+
+        # Show cursor
+        cursor_row = Adw.SwitchRow()
+        cursor_row.set_title("Include Cursor")
+        cursor_row.set_subtitle("Show the mouse pointer in the screenshot")
+        cursor_row.set_active(False)
+        self._cursor_switch = cursor_row
+        opts_group.add(cursor_row)
+
+        # ── capture button ────────────────────────────────────────────────────
+        capture_btn = Gtk.Button(label="Take Screenshot")
+        capture_btn.add_css_class("suggested-action")
+        capture_btn.add_css_class("pill")
+        capture_btn.set_margin_top(4)
+        capture_btn.connect("clicked", self._on_capture)
+        content.append(capture_btn)
+
+        # ── preview area ──────────────────────────────────────────────────────
+        self._preview_group = Adw.PreferencesGroup()
+        self._preview_group.set_title("Preview")
+        self._preview_group.set_visible(False)
+        content.append(self._preview_group)
+
+        self._preview_img = Gtk.Picture()
+        self._preview_img.set_size_request(-1, 220)
+        self._preview_img.set_content_fit(Gtk.ContentFit.CONTAIN)
+        self._preview_img.add_css_class("card")
+        self._preview_group.add(self._preview_img)
+
+        # Action buttons below preview
+        self._action_box = Gtk.Box(spacing=8)
+        self._action_box.set_visible(False)
+        self._action_box.set_halign(Gtk.Align.CENTER)
+        content.append(self._action_box)
+
+        save_btn = Gtk.Button(label="Save As…")
+        save_btn.add_css_class("pill")
+        save_btn.connect("clicked", self._on_save_as)
+        self._action_box.append(save_btn)
+
+        copy_btn = Gtk.Button(label="Copy")
+        copy_btn.add_css_class("pill")
+        copy_btn.connect("clicked", self._on_copy)
+        self._action_box.append(copy_btn)
+
+        open_btn = Gtk.Button(label="Open in Loupe")
+        open_btn.add_css_class("pill")
+        open_btn.connect("clicked", self._on_open)
+        self._action_box.append(open_btn)
+
+        # ── status banner ─────────────────────────────────────────────────────
+        self._banner = Adw.Banner()
+        self._banner.set_revealed(False)
+        content.append(self._banner)
+
+    # ── capture logic ─────────────────────────────────────────────────────────
+
+    def _on_capture(self, _btn: Gtk.Button) -> None:
+        delay = int(self._delay_spin.get_value())
+        if delay > 0:
+            self._show_banner(f"Capturing in {delay}s…", revealed=True)
+            GLib.timeout_add_seconds(delay, self._do_capture)
+        else:
+            # Hide window briefly so it doesn't appear in region/window capture
+            self.set_visible(False)
+            GLib.timeout_add(300, self._do_capture)
+
+    def _do_capture(self) -> bool:
+        SAVE_DIR.mkdir(parents=True, exist_ok=True)
+        out_path = SAVE_DIR / f"Screenshot-{_ts()}.png"
+
+        mode = "region"
+        for key, radio in self._mode_radios.items():
+            if radio.get_active():
+                mode = key
+                break
+
+        cursor = self._cursor_switch.get_active()
+        cursor_flags = ["--cursor"] if cursor else []
+
+        try:
+            if mode == "region":
+                # grim + slurp for region select
+                slurp = subprocess.run(
+                    ["slurp"], capture_output=True, text=True, check=True
+                )
+                geom = slurp.stdout.strip()
+                subprocess.run(
+                    ["grim", "-g", geom, *cursor_flags, str(out_path)],
+                    check=True, capture_output=True,
+                )
+            elif mode == "full":
+                subprocess.run(
+                    ["grim", *cursor_flags, str(out_path)],
+                    check=True, capture_output=True,
+                )
+            elif mode == "window":
+                # Get active window geometry from hyprctl
+                import json
+                result = subprocess.check_output(
+                    ["hyprctl", "activewindow", "-j"], text=True
+                )
+                data = json.loads(result)
+                at = data.get("at", [0, 0])
+                size = data.get("size", [1920, 1080])
+                geom = f"{at[0]},{at[1]} {size[0]}x{size[1]}"
+                subprocess.run(
+                    ["grim", "-g", geom, *cursor_flags, str(out_path)],
+                    check=True, capture_output=True,
+                )
+        except subprocess.CalledProcessError as e:
+            self.set_visible(True)
+            self._show_banner("Capture cancelled or failed.", revealed=True)
+            return GLib.SOURCE_REMOVE
+
+        self.set_visible(True)
+        self._last_path = out_path
+        self._show_preview(out_path)
+
+        if self._clip_switch.get_active():
+            _wl_copy(out_path)
+
+        _notify("Screenshot saved", str(out_path.relative_to(Path.home())))
+        self._show_banner(f"Saved to ~/Pictures/Screenshots/{out_path.name}", revealed=True)
+        return GLib.SOURCE_REMOVE
+
+    def _show_preview(self, path: Path) -> None:
+        try:
+            self._preview_img.set_filename(str(path))
+            self._preview_group.set_visible(True)
+            self._action_box.set_visible(True)
+        except Exception:
+            pass
+
+    def _show_banner(self, text: str, revealed: bool = True) -> None:
+        self._banner.set_title(text)
+        self._banner.set_revealed(revealed)
+
+    # ── action buttons ────────────────────────────────────────────────────────
+
+    def _on_save_as(self, _btn: Gtk.Button) -> None:
+        if not self._last_path:
+            return
+        dialog = Gtk.FileDialog()
+        dialog.set_title("Save Screenshot As")
+        dialog.set_initial_name(self._last_path.name)
+        filter_ = Gtk.FileFilter()
+        filter_.add_mime_type("image/png")
+        filter_.set_name("PNG Images")
+        dialog.save(self, None, self._save_as_done)
+
+    def _save_as_done(self, dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:
+        try:
+            gfile = dialog.save_finish(result)
+            dest = Path(gfile.get_path())
+            import shutil
+            shutil.copy2(self._last_path, dest)
+        except Exception:
+            pass
+
+    def _on_copy(self, _btn: Gtk.Button) -> None:
+        if self._last_path:
+            _wl_copy(self._last_path)
+            self._show_banner("Copied to clipboard!")
+
+    def _on_open(self, _btn: Gtk.Button) -> None:
+        if self._last_path:
+            try:
+                subprocess.Popen(
+                    ["loupe", str(self._last_path)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            except FileNotFoundError:
+                subprocess.Popen(
+                    ["xdg-open", str(self._last_path)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+
+
+# ── application ───────────────────────────────────────────────────────────────
+
+class ScreenshotApp(Adw.Application):
+    def __init__(self) -> None:
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
+        self.connect("activate", self._on_activate)
+
+    def _on_activate(self, _app: Adw.Application) -> None:
+        win = ScreenshotWindow(self)
+        win.present()
+
+
+def main() -> int:
+    app = ScreenshotApp()
+    return app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

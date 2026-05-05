@@ -1,0 +1,49 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-tools
+pkgver=0.4.0
+pkgrel=1
+pkgdesc="TorrentOS GUI tools: screenshot, system update, and help reference"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=(
+    'python'
+    'python-gobject'
+    'gtk4'
+    'libadwaita'
+    'vte4'          # VTE terminal widget for update GUI
+    'grim'          # screenshot backend
+    'slurp'         # region selection for screenshots
+    'wl-clipboard'  # wl-copy / wl-paste
+    'pacman'        # paru/pacman for update runner
+)
+optdepends=(
+    'paru: AUR helper used by system update'
+    'loupe: image viewer for screenshot preview'
+    'libnotify: desktop notifications after screenshot'
+    'hyprctl: window geometry for window-mode screenshot'
+)
+source=(
+    'torrentos-update-gui'
+    'torrentos-update-gui.desktop'
+    'torrentos-screenshot'
+    'torrentos-screenshot.desktop'
+    'torrentos-help'
+    'torrentos-help.desktop'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    # Executables
+    install -Dm755 "$srcdir/torrentos-update-gui"    "$pkgdir/usr/local/bin/torrentos-update-gui"
+    install -Dm755 "$srcdir/torrentos-screenshot"    "$pkgdir/usr/local/bin/torrentos-screenshot"
+    install -Dm755 "$srcdir/torrentos-help"          "$pkgdir/usr/local/bin/torrentos-help"
+
+    # Desktop entries
+    install -Dm644 "$srcdir/torrentos-update-gui.desktop"  \
+        "$pkgdir/usr/share/applications/torrentos-update.desktop"
+    install -Dm644 "$srcdir/torrentos-screenshot.desktop"  \
+        "$pkgdir/usr/share/applications/torrentos-screenshot.desktop"
+    install -Dm644 "$srcdir/torrentos-help.desktop"        \
+        "$pkgdir/usr/share/applications/torrentos-help.desktop"
+}

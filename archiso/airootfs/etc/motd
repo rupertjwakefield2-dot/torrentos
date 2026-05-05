@@ -5,15 +5,18 @@
       ██    ██    ██ ██   ██ ██   ██ ██      ██  ██ ██    ██    ██    ██      ██
       ██     ██████  ██   ██ ██   ██ ███████ ██   ████    ██     ██████  ███████
 
-   TorrentOS 0.4 · riptide                           torrentos.github.io
+   TorrentOS 0.4 · riptide                              https://torrentos.org
 
    Quick start:
      • Desktop              already launching — wait a moment
      • nmtui                connect to Wi-Fi from this terminal
      • torrentos-install    install to disk (text mode)
-     • Super + Space        Spotlight launcher (in desktop)
+     • torrentos-help       keyboard shortcuts & alias reference
+     • Super + Space        app launcher (in desktop)
      • Super + Return       open a terminal (in desktop)
      • Super + ,            TorrentOS Settings
+     • Super + Shift + S    screenshot (region select)
+     • Super + P            colour picker (hyprpicker)
 
    Live image — changes don't persist. Run torrentos-install to keep them.
 

@@ -64,21 +64,35 @@ stage_hyprland_config() {
     require_file "$skel/ghostty/config"
     require_file "$skel/starship.toml"
     require_file "$AIROOT/etc/skel/.zshrc"
+    require_file "$skel/nwg-dock-hyprland/style.css"
+    require_file "$skel/gtk-3.0/settings.ini"
+    require_file "$skel/gtk-4.0/settings.ini"
+    require_file "$skel/fontconfig/fonts.conf"
+    require_file "$skel/mimeapps.list"
+    require_file "$skel/user-dirs.dirs"
+    require_file "$skel/qt6ct/qt6ct.conf"
 
-    cp "$skel/hypr/hyprland.conf"      "$pkg/hyprland.conf"
-    cp "$skel/hypr/user.conf"          "$pkg/user.conf"
-    cp "$skel/hypr/hyprpaper.conf"     "$pkg/hyprpaper.conf"
-    cp "$skel/hypr/hyprlock.conf"      "$pkg/hyprlock.conf"
-    cp "$skel/hypr/hypridle.conf"      "$pkg/hypridle.conf"
-    cp "$skel/waybar/config.jsonc"     "$pkg/waybar-config.jsonc"
-    cp "$skel/waybar/style.css"        "$pkg/waybar-style.css"
-    cp "$skel/swaync/config.json"      "$pkg/swaync-config.json"
-    cp "$skel/swaync/style.css"        "$pkg/swaync-style.css"
-    cp "$skel/rofi/torrentos.rasi"     "$pkg/rofi-torrentos.rasi"
-    cp "$skel/rofi/power-menu.sh"      "$pkg/rofi-power-menu.sh"
-    cp "$skel/ghostty/config"          "$pkg/ghostty-config"
-    cp "$skel/starship.toml"           "$pkg/starship.toml"
-    cp "$AIROOT/etc/skel/.zshrc"       "$pkg/zshrc"
+    cp "$skel/hypr/hyprland.conf"                 "$pkg/hyprland.conf"
+    cp "$skel/hypr/user.conf"                     "$pkg/user.conf"
+    cp "$skel/hypr/hyprpaper.conf"                "$pkg/hyprpaper.conf"
+    cp "$skel/hypr/hyprlock.conf"                 "$pkg/hyprlock.conf"
+    cp "$skel/hypr/hypridle.conf"                 "$pkg/hypridle.conf"
+    cp "$skel/waybar/config.jsonc"                "$pkg/waybar-config.jsonc"
+    cp "$skel/waybar/style.css"                   "$pkg/waybar-style.css"
+    cp "$skel/swaync/config.json"                 "$pkg/swaync-config.json"
+    cp "$skel/swaync/style.css"                   "$pkg/swaync-style.css"
+    cp "$skel/rofi/torrentos.rasi"                "$pkg/rofi-torrentos.rasi"
+    cp "$skel/rofi/power-menu.sh"                 "$pkg/rofi-power-menu.sh"
+    cp "$skel/ghostty/config"                     "$pkg/ghostty-config"
+    cp "$skel/starship.toml"                      "$pkg/starship.toml"
+    cp "$AIROOT/etc/skel/.zshrc"                  "$pkg/zshrc"
+    cp "$skel/nwg-dock-hyprland/style.css"        "$pkg/nwg-dock-style.css"
+    cp "$skel/gtk-3.0/settings.ini"               "$pkg/gtk3-settings.ini"
+    cp "$skel/gtk-4.0/settings.ini"               "$pkg/gtk4-settings.ini"
+    cp "$skel/fontconfig/fonts.conf"              "$pkg/fonts.conf"
+    cp "$skel/mimeapps.list"                      "$pkg/mimeapps.list"
+    cp "$skel/user-dirs.dirs"                     "$pkg/user-dirs.dirs"
+    cp "$skel/qt6ct/qt6ct.conf"                   "$pkg/qt6ct.conf"
 }
 
 # 3. torrentos-settings: stage Python package, launcher, and assets.
@@ -100,7 +114,29 @@ stage_settings() {
     [[ -s "$pkg/torrentos_settings.tar.gz" ]] || err "Failed to create torrentos_settings.tar.gz"
 }
 
-# 4. torrentos-theme: ensure wallpaper.png exists.
+# 4. torrentos-tools: stage GUI tool scripts and desktop entries.
+stage_tools() {
+    local pkg="$ROOT/packages/torrentos-tools"
+    local bin="$AIROOT/usr/local/bin"
+    local apps="$AIROOT/usr/share/applications"
+    log "Staging torrentos-tools sources"
+
+    require_file "$bin/torrentos-update-gui"
+    require_file "$bin/torrentos-screenshot"
+    require_file "$bin/torrentos-help"
+    require_file "$apps/torrentos-update.desktop"
+    require_file "$apps/torrentos-screenshot.desktop"
+    require_file "$apps/torrentos-help.desktop"
+
+    cp "$bin/torrentos-update-gui"           "$pkg/torrentos-update-gui"
+    cp "$bin/torrentos-screenshot"           "$pkg/torrentos-screenshot"
+    cp "$bin/torrentos-help"                 "$pkg/torrentos-help"
+    cp "$apps/torrentos-update.desktop"      "$pkg/torrentos-update-gui.desktop"
+    cp "$apps/torrentos-screenshot.desktop"  "$pkg/torrentos-screenshot.desktop"
+    cp "$apps/torrentos-help.desktop"        "$pkg/torrentos-help.desktop"
+}
+
+# 5. torrentos-theme: ensure wallpaper.png exists.
 check_theme() {
     local pkg="$ROOT/packages/torrentos-theme"
     if [[ ! -f "$pkg/wallpaper.png" ]]; then
@@ -135,6 +171,7 @@ build_one() {
 stage_base
 stage_hyprland_config
 stage_settings
+stage_tools
 check_theme
 
 build_one torrentos-base
@@ -142,6 +179,7 @@ build_one torrentos-theme
 build_one torrentos-hyprland-config
 build_one torrentos-first-boot
 build_one torrentos-settings
+build_one torrentos-tools
 
 log "Indexing local repo at $REPO_DIR"
 rm -f "$REPO_DIR"/torrentos.db* "$REPO_DIR"/torrentos.files*

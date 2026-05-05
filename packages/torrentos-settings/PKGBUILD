@@ -1,8 +1,8 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-settings
-pkgver=0.3.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc="TorrentOS Settings — appearance, accessibility, display, dev mode"
+pkgdesc="TorrentOS Settings — appearance, display, keyboard, network, accessibility, dev mode"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
@@ -12,11 +12,15 @@ depends=(
     'python-tomli-w'
     'gtk4'
     'libadwaita'
+    'networkmanager'   # nmcli for Network page WiFi scanning
 )
 optdepends=(
     'orca: screen reader (toggleable from Accessibility)'
-    'gammastep: night light'
+    'gammastep: night light / colour temperature'
     'ghostty: terminal used by Dev Mode installer'
+    'torrentos-update-gui: Check for Updates button in About page'
+    'qt6ct: Qt6 app theming (applied via Appearance page)'
+    'kvantum: Qt6 dark theme engine'
 )
 source=(
     'torrentos-settings'

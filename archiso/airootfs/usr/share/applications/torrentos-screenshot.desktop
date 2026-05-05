@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Screenshot
+GenericName=Screenshot Tool
+Comment=Capture your screen — region, full, or window
+Exec=torrentos-screenshot
+Icon=camera-photo
+Terminal=false
+Type=Application
+Categories=Graphics;Utility;
+Keywords=screenshot;screen;capture;region;photo;snap;
+StartupNotify=true
+StartupWMClass=org.torrentos.Screenshot
