@@ -3,7 +3,7 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 30,
+    "height": 32,
     "spacing": 4,
     "margin-top": 6,
     "margin-left": 10,
@@ -11,7 +11,7 @@
 
     "modules-left":   ["custom/logo", "hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right":  ["mpris", "tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
+    "modules-right":  ["mpris", "cpu", "memory", "tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
 
     // ── Left ────────────────────────────────────────────────────────────
     "custom/logo": {
@@ -23,14 +23,14 @@
     "hyprland/workspaces": {
         "format": "{icon}",
         "format-icons": {
-            "1": "󰖟",   // Web
-            "2": "󰨞",   // Code
-            "3": "",    // Terminal
-            "4": "󰉋",   // Files
-            "5": "󰎄",   // Media
-            "6": "󰭹",   // Chat
-            "7": "󰒱",   // Torrent
-            "8": "",    // Settings
+            "1": "󰖟",
+            "2": "󰨞",
+            "3": "",
+            "4": "󰉋",
+            "5": "󰎄",
+            "6": "󰭹",
+            "7": "󰒱",
+            "8": "",
             "urgent":  "󱈸",
             "default": "○",
             "active":  "●"
@@ -45,19 +45,15 @@
 
     "hyprland/window": {
         "format": "{}",
-        "max-length": 55,
+        "max-length": 48,
         "separate-outputs": true,
         "rewrite": {
-            // Strip " — Mozilla Firefox" / " - Google Chrome" suffixes
             "(.*) — Mozilla Firefox": "$1",
-            "(.*) - Google Chrome": "$1",
-            "(.*) - Chromium": "$1",
-            // Hide "Linux" from terminal titles like "zsh — rupert@torrentos"
-            "(.*)\\s+—\\s+.*@.*": "$1",
-            // Ghostty default
-            "Ghostty": "Terminal",
-            // qBittorrent
-            "qBittorrent (.*)": "Torrents — $1"
+            "(.*) - Google Chrome":  "$1",
+            "(.*) - Chromium":       "$1",
+            "(.*)\\s+—\\s+.*@.*":   "$1",
+            "Ghostty":               "Terminal",
+            "qBittorrent (.*)":      "Torrents — $1"
         }
     },
 
@@ -75,7 +71,8 @@
                 "weekdays": "<span color='#7AADFF'><b>{}</b></span>",
                 "today":    "<span color='#1E6FFF'><b><u>{}</u></b></span>"
             }
-        }
+        },
+        "on-click": "swaync-client -t -sw"
     },
 
     // ── Right ────────────────────────────────────────────────────────────
@@ -92,8 +89,32 @@
         "status-icons": {
             "paused": "⏸"
         },
-        "max-length": 32,
+        "max-length": 28,
         "ignored-players": ["firefox"]
+    },
+
+    "cpu": {
+        "interval": 5,
+        "format": "󰻠  {usage}%",
+        "format-alt": "󰻠  {avg_frequency} GHz",
+        "tooltip-format": "CPU usage: {usage}%\nFrequency: {avg_frequency} GHz\nTemperature: {max_frequency}",
+        "states": {
+            "warning":  70,
+            "critical": 90
+        },
+        "on-click": "ghostty -e btop"
+    },
+
+    "memory": {
+        "interval": 10,
+        "format": "󰾅  {percentage}%",
+        "format-alt": "󰾅  {used:0.1f}G / {total:0.1f}G",
+        "tooltip-format": "RAM: {used:0.1f} GB used of {total:0.1f} GB\nSwap: {swapUsed:0.1f} GB / {swapTotal:0.1f} GB",
+        "states": {
+            "warning":  75,
+            "critical": 90
+        },
+        "on-click": "ghostty -e btop"
     },
 
     "tray": {
@@ -102,54 +123,83 @@
     },
 
     "network": {
-        "format-wifi":       "󰤨  {essid}",
-        "format-ethernet":   "󰈀  Wired",
-        "format-disconnected":"󰤭  No Network",
-        "tooltip-format":    "{essid}  {signalStrength}%\n{ipaddr}",
-        "on-click":          "nm-connection-editor"
+        "format-wifi":        "󰤨  {essid}",
+        "format-ethernet":    "󰈀  Wired",
+        "format-disconnected": "󰤭  No Network",
+        "format-linked":      "󰈀  {ifname} (no IP)",
+        "tooltip-format-wifi": "󰤨  {essid}\nSignal: {signalStrength}%\nIP: {ipaddr}\nSpeed: {bandwidthDownBits} ↓ {bandwidthUpBits} ↑",
+        "tooltip-format-ethernet": "󰈀  {ifname}\nIP: {ipaddr}\nSpeed: {bandwidthDownBits} ↓ {bandwidthUpBits} ↑",
+        "on-click": "nm-connection-editor",
+        "on-click-right": "ghostty -e nmtui"
     },
 
     "bluetooth": {
         "format":           "󰂯",
         "format-disabled":  "󰂲",
         "format-connected": "󰂱  {num_connections}",
-        "tooltip-format":   "Bluetooth: {controller_alias}\n{num_connections} device(s) connected",
-        "on-click":         "blueman-manager"
+        "format-connected-battery": "󰂱  {device_battery_percentage}%",
+        "tooltip-format": "Bluetooth: {controller_alias}\n{num_connections} device(s) connected",
+        "tooltip-format-connected": "{controller_alias}\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}  {device_battery_percentage}%",
+        "on-click": "blueman-manager"
     },
 
     "pulseaudio": {
         "format":       "{icon}  {volume}%",
         "format-muted": "󰝟  Muted",
+        "format-bluetooth": "󰂰  {volume}%",
+        "format-bluetooth-muted": "󰂲  Muted",
         "format-icons": {
             "headphone": "󰋋",
             "headset":   "󰋎",
             "default":   ["󰕿", "󰖀", "󰕾"]
         },
         "scroll-step": 5,
-        "on-click":    "pavucontrol"
+        "on-click":       "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip-format": "Volume: {volume}%\nDevice: {desc}"
     },
 
     "battery": {
         "format":          "{icon}  {capacity}%",
         "format-charging": "󰂄  {capacity}%",
         "format-plugged":  "󰚥  {capacity}%",
+        "format-full":     "󰁹  Full",
         "format-icons":    ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
         "states": {
+            "full":     100,
+            "good":     80,
             "warning":  25,
             "critical": 10
         },
-        "tooltip-format": "Battery: {capacity}%  {timeTo}"
+        "tooltip-format": "Battery: {capacity}%  {timeTo}\nCycles: {cycles}  Health: {health}%"
     },
 
     "custom/notifications": {
-        "format": "󰂚",
-        "tooltip": false,
-        "on-click": "swaync-client -t -sw"
+        "format": "󰂚{icon}",
+        "format-icons": {
+            "notification": "<span foreground='#FF6B6B'><sup></sup></span>",
+            "none":         "",
+            "dnd-notification": "<span foreground='#FFB454'><sup></sup></span>",
+            "dnd-none":     "󰂛",
+            "inhibited-notification": "<span foreground='#FF6B6B'><sup></sup></span>",
+            "inhibited-none": "",
+            "dnd-inhibited-notification": "<span foreground='#FF6B6B'><sup></sup></span>",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true
     },
 
     "custom/power": {
         "format": "⏻",
-        "tooltip": false,
-        "on-click": "rofi -show power-menu -modi 'power-menu:~/.config/rofi/power-menu.sh' -theme ~/.config/rofi/torrentos.rasi || hyprctl dispatch exit"
+        "tooltip": true,
+        "tooltip-format": "Power menu",
+        "on-click": "~/.config/rofi/power-menu.sh --rofi",
+        "on-click-right": "hyprlock"
     }
 }
