@@ -1,8 +1,8 @@
 name: Build TorrentOS ISO
 
 on:
-  push:
-    branches: [main]
+  # Only run manually or on releases — NOT on every push.
+  # The ISO build takes 60-90 min and requires a local Arch Docker environment.
   workflow_dispatch:
   release:
     types: [created]
