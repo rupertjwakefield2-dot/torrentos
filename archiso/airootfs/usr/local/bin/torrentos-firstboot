@@ -1,28 +1,105 @@
-#!/usr/bin/env bash
-#
-# TorrentOS — first-boot welcome wizard (stub).
-# A full GTK4/libadwaita wizard ships in torrentos-first-boot; this is the
-# shell fallback used on the live ISO.
-#
-set -euo pipefail
+#!/bin/bash
+# TorrentOS first-boot setup wizard
+# Runs once on first Hyprland start to configure keyboard layout and timezone.
 
-MARKER="$HOME/.config/torrentos/first-boot-done"
-mkdir -p "$(dirname "$MARKER")"
+DONE_FLAG="$HOME/.config/torrentos/.firstboot-done"
+USER_CONF="$HOME/.config/hypr/user.conf"
 
-[[ -f "$MARKER" ]] && exit 0
+[ -f "$DONE_FLAG" ] && exit 0
 
-cat <<'EOF'
+mkdir -p "$HOME/.config/torrentos"
+mkdir -p "$HOME/.config/hypr"
+touch "$USER_CONF" 2>/dev/null
 
-   ████████  ████████  ████████  ████████  ████████  ██████   ██████  ██████
-      ██     ██     ██ ██     ██ ██     ██ ██        ██   ██ ██    ██ ██
-      ██     ██     ██ ██████   ██████   ████      ██   ██ ██    ██ ██████
-      ██     ██     ██ ██   ██   ██   ██   ██        ██   ██ ██    ██     ██
-      ██      ████████  ██    ██  ██    ██  ████████  ██   ██  ██████  ██████
+clear
+echo ""
+echo "  ████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗ ██████╗ ███████╗"
+echo "     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔════╝"
+echo "     ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   ██║   ██║███████╗"
+echo "     ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ██║   ██║╚════██║"
+echo "     ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ╚██████╔╝███████║"
+echo "     ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝"
+echo ""
+echo "  Welcome to TorrentOS v0.4  -  riptide"
+echo "  -----------------------------------------------------------------------"
+echo ""
+echo "  Let's get you set up. This will only take a moment."
+echo ""
 
-                              Welcome to TorrentOS
+# Keyboard layout
+echo "  Keyboard layout"
+echo "  -----------------------------------------------------------------------"
+echo ""
+echo "   1) United Kingdom (gb)     6) Italian (it)"
+echo "   2) United States (us)      7) Portuguese (pt)"
+echo "   3) German (de)             8) Dutch (nl)"
+echo "   4) French (fr)             9) Swedish (se)"
+echo "   5) Spanish (es)           10) Other (type manually)"
+echo ""
+printf "  Your choice [1]: "
+read -r KB_CHOICE
 
-EOF
+case "$KB_CHOICE" in
+    2)  KB="us" ;;
+    3)  KB="de" ;;
+    4)  KB="fr" ;;
+    5)  KB="es" ;;
+    6)  KB="it" ;;
+    7)  KB="pt" ;;
+    8)  KB="nl" ;;
+    9)  KB="se" ;;
+    10) printf "  Layout code (e.g. pl, ru, jp): "; read -r KB; KB="${KB:-us}" ;;
+    *)  KB="gb" ;;
+esac
 
-echo "First-boot setup will run in the graphical wizard the first time you log in."
-echo "(Run 'torrentos-firstboot' again later to re-trigger.)"
-touch "$MARKER"
+echo ""
+echo "  Keyboard set to: $KB"
+localectl set-keymap "$KB" 2>/dev/null || true
+
+# Timezone
+echo ""
+echo "  Timezone"
+echo "  -----------------------------------------------------------------------"
+echo ""
+echo "   1) London (Europe/London)     5) Berlin (Europe/Berlin)"
+echo "   2) New York (America/New_York) 6) Paris (Europe/Paris)"
+echo "   3) Los Angeles (America/LA)   7) Tokyo (Asia/Tokyo)"
+echo "   4) Chicago (America/Chicago)  8) Sydney (Australia/Sydney)"
+echo "   9) Other (type manually)"
+echo ""
+printf "  Your choice [1]: "
+read -r TZ_CHOICE
+
+case "$TZ_CHOICE" in
+    2)  TZ="America/New_York" ;;
+    3)  TZ="America/Los_Angeles" ;;
+    4)  TZ="America/Chicago" ;;
+    5)  TZ="Europe/Berlin" ;;
+    6)  TZ="Europe/Paris" ;;
+    7)  TZ="Asia/Tokyo" ;;
+    8)  TZ="Australia/Sydney" ;;
+    9)  printf "  Timezone (e.g. Europe/Warsaw): "; read -r TZ; TZ="${TZ:-Europe/London}" ;;
+    *)  TZ="Europe/London" ;;
+esac
+
+echo ""
+echo "  Timezone set to: $TZ"
+timedatectl set-timezone "$TZ" 2>/dev/null || ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime 2>/dev/null || true
+
+# Write user.conf
+{
+    echo "# TorrentOS user config - generated by first-boot setup"
+    echo "# Edit this file to customise your desktop."
+    echo ""
+    echo "input {"
+    echo "    kb_layout = $KB"
+    echo "}"
+} > "$USER_CONF"
+
+touch "$DONE_FLAG"
+
+echo ""
+echo "  -----------------------------------------------------------------------"
+echo "  All done. Starting the desktop now..."
+echo ""
+sleep 1
