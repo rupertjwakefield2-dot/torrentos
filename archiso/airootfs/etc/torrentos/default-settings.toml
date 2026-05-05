@@ -6,8 +6,12 @@
 theme = "dark"          # "light" | "dark" | "auto"
 accent = "#1E6FFF"
 wallpaper = "/usr/share/torrentos/branding/wallpaper.png"
-icon-theme = "Torrent-Icons"
+icon-theme = "Papirus-Dark"
 cursor-theme = "Bibata-Modern-Classic"
+font-size = 11
+animations = true
+blur = true
+rounding = 12
 
 [accessibility]
 high-contrast = false
@@ -20,9 +24,21 @@ mouse-keys = false
 live-captions = false
 color-filter = "none"   # "none" | "protanopia" | "deuteranopia" | "tritanopia"
 
+[keyboard]
+layout = "gb"
+repeat-delay = 300
+repeat-rate = 50
+numlock = true
+natural-scroll = true
+tap-to-click = true
+mouse-sensitivity = 0.0
+
 [display]
 night-light = false
 night-light-temp = 4000
+refresh-rate = 0       # 0 = auto
+vrr = false
+scale = 1.0
 
 [dev-mode]
 enabled = false
