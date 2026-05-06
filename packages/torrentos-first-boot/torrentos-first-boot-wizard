@@ -180,19 +180,23 @@ ACCENT_COLOURS = [
 ]
 
 SHORTCUTS = [
-    ("Super + Space",   "Open app launcher"),
-    ("Super + Return",  "Open terminal"),
-    ("Super + Q",       "Close window"),
-    ("Super + F",       "Fullscreen"),
-    ("Super + E",       "File manager"),
-    ("Super + V",       "Clipboard history"),
-    ("Super + L",       "Lock screen"),
-    ("Super + ,",       "Settings"),
-    ("Super + 1 – 8",   "Switch workspace"),
-    ("Super + Shift + 1 – 8", "Move window to workspace"),
-    ("Print",           "Screenshot to clipboard"),
-    ("Shift + Print",   "Screenshot region"),
-    ("Alt + Tab",       "Cycle windows"),
+    ("Super + Space",         "Open app launcher"),
+    ("Super + Return",        "Open terminal"),
+    ("Super + Q",             "Close window"),
+    ("Super + F",             "Fullscreen"),
+    ("Super + E",             "File manager"),
+    ("Super + B",             "Browser"),
+    ("Super + V",             "Clipboard history"),
+    ("Super + L",             "Lock screen"),
+    ("Super + ,",             "Settings"),
+    ("Super + Tab",           "Window switcher"),
+    ("Super + 1 – 9",         "Switch workspace"),
+    ("Super + Shift + 1 – 9", "Move window to workspace"),
+    ("Super + Shift + S",     "Screenshot — region, save + copy"),
+    ("Super + Ctrl + S",      "Screenshot GUI — choose mode & delay"),
+    ("Print",                 "Full screen to clipboard"),
+    ("Super + P",             "Colour picker"),
+    ("Super + Ctrl + Q",      "Power menu"),
 ]
 
 def run(cmd, **kw):
@@ -275,7 +279,8 @@ class WelcomePage(Gtk.Box):
             ("🖥️", "Beautiful desktop",    "Hyprland with blur, animations, rounded corners and a macOS-style dock"),
             ("🌊", "Built for torrents",    "qBittorrent pre-installed and ready to go"),
             ("⚡", "Dev tools included",    "Git, Docker, Neovim, Ghostty terminal — configured out of the box"),
-            ("♿", "Accessibility first",   "Screen reader, magnifier and high-contrast all work from first boot"),
+            ("📸", "Screenshot & settings", "Region/full/window capture tool and a full GTK4 settings app"),
+            ("♿", "Accessibility first",   "Screen reader, magnifier and high-contrast all available from day one"),
             ("🌐", "Both browsers",         "Firefox and Google Chrome ship together"),
         ]
         for emoji, label, desc in features:
@@ -763,10 +768,12 @@ class FinishPage(Gtk.Box):
         btn_row.set_halign(Gtk.Align.CENTER)
 
         for icon_name, label, cmd, style in [
-            ("utilities-terminal-symbolic",    "Terminal",  ["ghostty"],              "suggested-action"),
-            ("system-file-manager-symbolic",   "Files",     ["nautilus"],             ""),
-            ("preferences-system-symbolic",    "Settings",  ["torrentos-settings"],   ""),
-            ("org.qbittorrent.qBittorrent",    "Torrents",  ["qbittorrent"],          ""),
+            ("utilities-terminal-symbolic",    "Terminal",  ["ghostty"],                       "suggested-action"),
+            ("system-file-manager-symbolic",   "Files",     ["nautilus"],                      ""),
+            ("preferences-system-symbolic",    "Settings",  ["torrentos-settings"],            ""),
+            ("firefox",                        "Firefox",   ["firefox"],                       ""),
+            ("org.qbittorrent.qBittorrent",    "Torrents",  ["qbittorrent"],                   ""),
+            ("camera-photo-symbolic",          "Screenshot",["torrentos-screenshot"],          ""),
         ]:
             vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
             vbox.set_halign(Gtk.Align.CENTER)

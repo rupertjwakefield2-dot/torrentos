@@ -90,13 +90,13 @@ alias cp='cp -i'
 # ---- TorrentOS helpers ----
 # System update
 alias update='if command -v paru >/dev/null; then paru -Syu; else sudo pacman -Syu; fi'
-alias torrentos-update='update'
-alias toros-version='cat /etc/torrentos/version 2>/dev/null || grep VERSION_ID /etc/os-release | cut -d= -f2'
+alias toros-version='grep TORRENTOS_VERSION /etc/torrentos/version 2>/dev/null | cut -d= -f2'
 
 # Quick open
-alias settings='torrentos-settings &'
+alias settings='torrentos-settings & disown'
 alias files='nautilus & disown'
 alias browser='firefox & disown'
+alias screenshot='torrentos-screenshot & disown'
 
 # Clipboard
 alias pbcopy='wl-copy'
@@ -143,7 +143,7 @@ help() {
     printf "${_dim}    toros-version       ${_rst}${_white}Show OS version${_rst}\n"
     printf "${_dim}    myip                ${_rst}${_white}Show public IP address${_rst}\n"
     echo
-    printf "${_dim}  Site: torrentos.github.io  ·  Wiki: github.com/rupertjohnw/torrentos/wiki${_rst}\n"
+    printf "${_dim}  Run ${_rst}${_white}torrentos-help${_dim} for the full reference.  Site: torrentos.org${_rst}\n"
     echo
 }
 
@@ -154,7 +154,7 @@ if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null; then
     _white='\033[1;37m'
     _dim='\033[2;37m'
     _rst='\033[0m'
-    _ver="$(cat /etc/torrentos/version 2>/dev/null || echo 0.4)"
+    _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 || echo 0.4)"
     printf "\n${_blue}  TorrentOS${_rst}  ${_dim}v${_ver}${_rst}"
     printf "   ${_dim}$(uname -r | cut -d- -f1) kernel${_rst}\n"
     printf "${_dim}  Type ${_rst}${_white}help${_dim} for a quick reference.${_rst}\n\n"

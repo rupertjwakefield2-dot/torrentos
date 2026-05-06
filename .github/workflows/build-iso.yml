@@ -60,7 +60,7 @@ jobs:
 
               echo "::group::Pre-installing AUR build deps"
               pacman -S --needed --noconfirm \
-                libinput python-gobject hicolor-icon-theme xdotool gtk4 libadwaita
+                libinput python-gobject hicolor-icon-theme xdotool gtk4 libadwaita vte4
 
               echo "::group::Building custom packages"
               sudo -u builder ./scripts/build-pkgs.sh

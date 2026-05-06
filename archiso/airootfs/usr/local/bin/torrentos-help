@@ -111,7 +111,9 @@ topic_wifi() {
 
 topic_update() {
     header "System updates"
-    printf "${C}  Full upgrade${N}\n"
+    printf "${C}  GUI updater${N}\n"
+    printf "${D}  %-40s${N}\n  %s\n\n" "Open the update GUI:" "torrentos-update-gui"
+    printf "${C}  Terminal upgrade${N}\n"
     printf "${D}  %s${N}\n\n"  "  update"
     printf "${D}  or manually:${N}\n"
     printf "${D}  %s${N}\n\n"  "  sudo pacman -Syu"
@@ -157,15 +159,17 @@ topic_apps() {
     printf "${D}  %-24s${N} %s\n" "Docker"              "Container runtime"
     echo
     printf "${C}  System${N}\n"
-    printf "${D}  %-24s${N} %s\n" "Nautilus"        "File manager"
-    printf "${D}  %-24s${N} %s\n" "btop"            "System monitor"
-    printf "${D}  %-24s${N} %s\n" "pavucontrol"     "Audio control"
-    printf "${D}  %-24s${N} %s\n" "blueman"         "Bluetooth manager"
-    printf "${D}  %-24s${N} %s\n" "TorrentOS Settings" "System preferences"
+    printf "${D}  %-24s${N} %s\n" "Nautilus"           "File manager"
+    printf "${D}  %-24s${N} %s\n" "TorrentOS Settings" "System preferences (Super+,)"
+    printf "${D}  %-24s${N} %s\n" "Screenshot tool"    "Region/full/window capture (Super+Ctrl+S)"
+    printf "${D}  %-24s${N} %s\n" "System Update"      "torrentos-update-gui"
+    printf "${D}  %-24s${N} %s\n" "btop"               "System monitor"
+    printf "${D}  %-24s${N} %s\n" "pavucontrol"        "Audio mixer"
+    printf "${D}  %-24s${N} %s\n" "blueman"            "Bluetooth manager"
     echo
     printf "${C}  Media${N}\n"
-    printf "${D}  %-24s${N} %s\n" "mpv"             "Video player"
-    printf "${D}  %-24s${N} %s\n" "eog / Loupe"     "Image viewer"
+    printf "${D}  %-24s${N} %s\n" "mpv"             "Video/audio player"
+    printf "${D}  %-24s${N} %s\n" "Loupe"           "Image viewer"
     echo
 }
 
@@ -179,8 +183,7 @@ topic_main() {
     printf "${D}  %-12s${N} %s\n" "update"  "Package management"
     printf "${D}  %-12s${N} %s\n" "install" "Install TorrentOS to disk"
     echo
-    printf "${D}  Site: ${W}torrentos.github.io${N}\n"
-    printf "${D}  Wiki: ${W}github.com/rupertjohnw/torrentos/wiki${N}\n"
+    printf "${D}  Site: ${W}torrentos.org${N}  ·  Source: ${W}github.com/rupertjwakefield2-dot/torrentos${N}\n"
     echo
 }
 

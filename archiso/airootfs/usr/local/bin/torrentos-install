@@ -19,7 +19,7 @@ cat << 'BANNER'
      ██     ██     ██ ██   ██   ██   ██   ██        ██   ██ ██    ██      ██
      ██      ████████ ██    ██  ██    ██  ████████  ██████   ██████  ███████
 
-                     Install TorrentOS to Disk — v0.3.0
+                     Install TorrentOS to Disk — v0.4.0
 
 BANNER
 
@@ -33,21 +33,26 @@ fi
 log "Checking internet connection..."
 if curl -s --max-time 5 https://archlinux.org >/dev/null 2>&1; then
     ok "Internet reachable."
+elif curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; then
+    ok "Internet reachable (via IP)."
 else
     warn "No internet detected. archinstall needs internet to download packages."
+    warn "Connect via WiFi first:  nmtui"
+    echo
     echo -n "  Continue anyway? [y/N] "
     read -r ans
     [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 fi
 
-log "Available disks:"
-lsblk -o NAME,SIZE,TYPE,MOUNTPOINTS | grep -E "disk|NAME"
+echo
+log "Available block devices:"
+lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS -e 7,11 | grep -v "^loop"
 echo
 
-echo -e "${YLW}WARNING: Installation will ERASE the selected disk.${RST}"
-echo -e "${YLW}         Back up any data before continuing.${RST}"
+echo -e "${YLW}  ⚠  WARNING: Installation will PERMANENTLY ERASE the selected disk.${RST}"
+echo -e "${YLW}     Back up all important data before continuing.${RST}"
 echo
-echo -n "Ready to launch the installer? [y/N] "
+echo -n "  Ready to launch the guided installer? [y/N] "
 read -r ans
 [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
@@ -88,10 +93,16 @@ JSON
 log "Launching archinstall with TorrentOS defaults..."
 echo
 
-archinstall \
-    --config "$CONF_DIR/user_configuration.json" \
-    --silent
+log "Launching archinstall with TorrentOS defaults..."
+log "(You will be prompted to choose your disk, user, and password.)"
+echo
+
+# Pass pre-filled config but let archinstall run interactively so the user
+# can choose their disk, create a user, set a password, etc.
+archinstall --config "$CONF_DIR/user_configuration.json"
 
 echo
-ok "Installation complete! Remove the live media and reboot."
+ok "Installation complete!"
+echo -e "  ${GRN}➜${RST}  Remove the live media and reboot to your new system."
+echo
 echo -e "   ${BLU}reboot${RST}"

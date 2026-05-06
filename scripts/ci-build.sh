@@ -113,7 +113,8 @@ echo torrentos > /workspace/archiso/airootfs/etc/hostname
 
 log "Building custom packages (as builder)"
 cd /workspace
-EXPECTED_PKGS=5
+# 6 packages: base, theme, hyprland-config, first-boot, settings, tools
+EXPECTED_PKGS=6
 if [[ -f /workspace/repo/x86_64/torrentos.db.tar.gz ]] && \
    [[ $(ls /workspace/repo/x86_64/torrentos-*-*-*-any.pkg.tar.zst 2>/dev/null | wc -l) -ge $EXPECTED_PKGS ]]; then
     log "Skipping torrentos-* — local repo already populated with all $EXPECTED_PKGS packages."
@@ -124,7 +125,7 @@ fi
 log "Pre-installing AUR build deps as root (makepkg -s can't use sudo on nosuid NTFS mount)"
 pacman -S --needed --noconfirm \
     libinput python-gobject hicolor-icon-theme xdotool \
-    gtk4 libadwaita >/dev/null
+    gtk4 libadwaita vte4 >/dev/null
 
 log "Building AUR packages (paru-bin, libinput-gestures, magnus, bibata, google-chrome) (as builder)"
 sudo -u builder ./scripts/build-aur.sh
@@ -143,18 +144,39 @@ PROFILE_STAGED=/tmp/torrentos-profile
 rm -rf "$PROFILE_STAGED"
 cp -a /workspace/archiso "$PROFILE_STAGED"
 cd "$PROFILE_STAGED/airootfs"
-# torrentos-hyprland-config owns these:
-rm -rf etc/skel/.config/hypr etc/skel/.config/waybar etc/skel/.config/swaync \
-       etc/skel/.config/rofi etc/skel/.config/ghostty \
-       etc/skel/.config/starship.toml etc/skel/.zshrc
+# torrentos-hyprland-config owns these skel dotfiles:
+rm -rf etc/skel/.config/hypr \
+       etc/skel/.config/waybar \
+       etc/skel/.config/swaync \
+       etc/skel/.config/rofi \
+       etc/skel/.config/ghostty \
+       etc/skel/.config/starship.toml \
+       etc/skel/.config/nwg-dock-hyprland \
+       etc/skel/.config/gtk-3.0 \
+       etc/skel/.config/gtk-4.0 \
+       etc/skel/.config/fontconfig \
+       etc/skel/.config/mimeapps.list \
+       etc/skel/.config/user-dirs.dirs \
+       etc/skel/.config/qt6ct \
+       etc/skel/.zshrc
 # torrentos-base owns these:
-rm -rf etc/torrentos etc/systemd/system/torrentos-settingsd.service \
-       usr/lib/torrentos usr/local/bin/torrentos-firstboot \
+rm -rf etc/torrentos \
+       etc/systemd/system/torrentos-settingsd.service \
+       usr/lib/torrentos \
+       usr/local/bin/torrentos-firstboot \
        usr/share/torrentos/branding/os-release
-# Clean empty parents
+# torrentos-tools owns these GUI scripts and desktop entries:
+rm -f  usr/local/bin/torrentos-update-gui \
+       usr/local/bin/torrentos-screenshot \
+       usr/local/bin/torrentos-help \
+       usr/share/applications/torrentos-update.desktop \
+       usr/share/applications/torrentos-screenshot.desktop \
+       usr/share/applications/torrentos-help.desktop
+# Clean up empty parent directories
 find etc/skel -type d -empty -delete 2>/dev/null || true
 find etc/systemd -type d -empty -delete 2>/dev/null || true
 find usr/share/torrentos -type d -empty -delete 2>/dev/null || true
+find usr/local/bin -type d -empty -delete 2>/dev/null || true
 cd /workspace
 
 log "Building ISO (as root)"
