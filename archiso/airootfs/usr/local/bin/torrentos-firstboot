@@ -5,7 +5,7 @@
 
 DONE_FLAG="$HOME/.config/torrentos/.firstboot-done"
 USER_CONF="$HOME/.config/hypr/user.conf"
-VERSION="$(cat /etc/torrentos/version 2>/dev/null || echo 0.4)"
+VERSION="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
 
 # ── Try the GTK wizard first ─────────────────────────────────────────────────
 if command -v torrentos-first-boot-wizard >/dev/null 2>&1; then
