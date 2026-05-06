@@ -65,7 +65,7 @@ The ISO lands in `./out/torrentos-YYYY.MM.DD-x86_64.iso`.
 | Stage | Script | Output |
 |-------|--------|--------|
 | Custom packages | `build-pkgs.sh` | `./repo/x86_64/torrentos-*.pkg.tar.zst` — indexed as a local pacman repo |
-| AUR packages | `build-aur.sh` | `./repo/x86_64/paru-bin-*.pkg.tar.zst` and friends |
+| AUR packages | `build-aur.sh` | `paru-bin`, `libinput-gestures`, `magnus`, `bibata-cursor-theme-bin`, `google-chrome` |
 | Live ISO | `build-iso.sh` | `./out/torrentos-*.iso` |
 | Smoke test | `test-iso.sh` | Boots the newest ISO in QEMU |
 
@@ -90,8 +90,20 @@ works, then copy the final changes back to `archiso/airootfs/etc/skel/.config/..
 and rebuild.
 
 For Python settings-app changes: edit files under
-`packages/torrentos-settings/src/torrentos_settings/`, then run
-`./scripts/build-pkgs.sh` (which rebuilds `torrentos_settings.tar.gz` from source).
+`packages/torrentos-settings/src/torrentos_settings/`, then rebuild the
+tracked tarball and re-run the package build:
+
+```bash
+# From the repo root:
+cd packages/torrentos-settings
+rm -f torrentos_settings.tar.gz
+(cd src && tar -czf ../torrentos_settings.tar.gz torrentos_settings)
+git add torrentos_settings.tar.gz
+cd ../..
+./scripts/build-pkgs.sh
+```
+
+The `src/` directory is gitignored; only `torrentos_settings.tar.gz` is tracked.
 
 ---
 

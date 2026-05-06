@@ -9,6 +9,8 @@ amd-ucode
 mkinitcpio
 mkinitcpio-archiso
 mkinitcpio-nfs-utils
+# Console font (referenced by /etc/vconsole.conf FONT=ter-v16n)
+terminus-font
 
 # --- bootloader / live ---
 syslinux
