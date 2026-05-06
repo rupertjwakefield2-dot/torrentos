@@ -217,6 +217,14 @@ class ScreenshotWindow(Adw.ApplicationWindow):
         cursor = self._cursor_switch.get_active()
         cursor_flags = ["--cursor"] if cursor else []
 
+        # For full-screen and window captures, hide the settings window first
+        # so it does not appear in the screenshot (even when a delay was set).
+        if mode in ("full", "window") and self.get_visible():
+            self.set_visible(False)
+            # Re-schedule with 200 ms compositor settle time
+            GLib.timeout_add(200, self._do_capture)
+            return GLib.SOURCE_REMOVE
+
         try:
             if mode == "region":
                 # grim + slurp for region select
