@@ -154,7 +154,7 @@ if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null; then
     _white='\033[1;37m'
     _dim='\033[2;37m'
     _rst='\033[0m'
-    _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 || echo 0.4)"
+    _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
     printf "\n${_blue}  TorrentOS${_rst}  ${_dim}v${_ver}${_rst}"
     printf "   ${_dim}$(uname -r | cut -d- -f1) kernel${_rst}\n"
     printf "${_dim}  Type ${_rst}${_white}help${_dim} for a quick reference.${_rst}\n\n"

@@ -122,19 +122,33 @@ class UpdateWindow(Adw.ApplicationWindow):
     def _start_update(self):
         self._pulse_id = GLib.timeout_add(80, self._pulse)
         if self._use_vte:
+            # child-exited fires with the waitpid status when the process ends
+            self._term.connect("child-exited", self._on_child_exited)
             self._term.spawn_async(
                 Vte.PtyFlags.DEFAULT,
                 None, UPDATE_CMD, [],
                 GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                 None, None, -1, None,
-                self._on_vte_done, None,
+                self._on_vte_spawned, None,
             )
         else:
             t = threading.Thread(target=self._run_update, daemon=True)
             t.start()
 
-    def _on_vte_done(self, terminal, pid, err, user_data):
-        GLib.idle_add(self._finish, err is None or str(err) == "")
+    def _on_vte_spawned(self, terminal, pid, err, user_data):
+        """Called when the child process has been spawned (not when it exits).
+        Only handle spawn failure here; normal completion is handled by child-exited."""
+        if err is not None:
+            GLib.idle_add(self._finish, False)
+
+    def _on_child_exited(self, terminal, status):
+        """Called when the update process actually exits."""
+        import os
+        try:
+            exitcode = os.waitstatus_to_exitcode(status)
+        except (AttributeError, ValueError):
+            exitcode = (status >> 8) & 0xFF
+        GLib.idle_add(self._finish, exitcode == 0)
 
     def _run_update(self):
         try:
