@@ -9,6 +9,7 @@ import gi
 import subprocess
 import sys
 import shutil
+import threading
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -113,7 +114,7 @@ class InstallerWindow(Adw.ApplicationWindow):
         self._net_row.add_prefix(self._net_icon)
         self._net_row.set_subtitle("Checking…")
         content.append(self._net_row)
-        GLib.idle_add(self._check_net)
+        threading.Thread(target=self._check_net_thread, daemon=True).start()
 
         # ── Disk list ────────────────────────────────────────────────────────
         disk_group = Adw.PreferencesGroup()
@@ -159,8 +160,12 @@ class InstallerWindow(Adw.ApplicationWindow):
 
         self.present()
 
-    def _check_net(self):
+    def _check_net_thread(self):
+        """Run curl check off the UI thread, then schedule a UI update."""
         ok = _check_internet()
+        GLib.idle_add(self._update_net_status, ok)
+
+    def _update_net_status(self, ok: bool):
         if ok:
             self._net_icon.set_from_icon_name("network-transmit-receive-symbolic")
             self._net_row.set_subtitle("Connected")
