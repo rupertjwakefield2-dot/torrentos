@@ -97,7 +97,7 @@
         "interval": 5,
         "format": "󰻠  {usage}%",
         "format-alt": "󰻠  {avg_frequency} GHz",
-        "tooltip-format": "CPU usage: {usage}%\nFrequency: {avg_frequency} GHz\nTemperature: {max_frequency}",
+        "tooltip-format": "CPU usage: {usage}%\nAvg frequency: {avg_frequency} GHz\nLoad: {load}",
         "states": {
             "warning":  70,
             "critical": 90
