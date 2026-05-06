@@ -34,6 +34,7 @@ stage_base() {
     require_file "$AIROOT/usr/lib/torrentos/settingsd"
     require_file "$AIROOT/usr/local/bin/torrentos-firstboot"
     require_file "$AIROOT/etc/systemd/system/torrentos-settingsd.service"
+    require_file "$AIROOT/etc/greetd/config.toml"
 
     cp "$AIROOT/etc/torrentos/version"                          "$pkg/version"
     cp "$AIROOT/etc/torrentos/default-settings.toml"            "$pkg/default-settings.toml"
@@ -42,6 +43,7 @@ stage_base() {
     cp "$AIROOT/usr/lib/torrentos/settingsd"                    "$pkg/settingsd"
     cp "$AIROOT/usr/local/bin/torrentos-firstboot"              "$pkg/firstboot"
     cp "$AIROOT/etc/systemd/system/torrentos-settingsd.service" "$pkg/torrentos-settingsd.service"
+    cp "$AIROOT/etc/greetd/config.toml"                         "$pkg/greetd-config.toml"
 }
 
 # 2. torrentos-hyprland-config: stage configs from airootfs.

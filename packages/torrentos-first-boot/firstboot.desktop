@@ -1,8 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=TorrentOS Welcome
-Comment=First-boot setup wizard
+Comment=First-boot setup wizard for TorrentOS
+Icon=torrentos-settings
 Exec=/usr/lib/torrentos/firstboot-autostart
 OnlyShowIn=Hyprland;
 X-GNOME-Autostart-enabled=true
 NoDisplay=false
+StartupNotify=false

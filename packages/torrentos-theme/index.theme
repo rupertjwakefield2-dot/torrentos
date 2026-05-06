@@ -7,6 +7,6 @@ Encoding=UTF-8
 [X-GNOME-Metatheme]
 GtkTheme=TorrentOS-Dark
 MetacityTheme=TorrentOS-Dark
-IconTheme=Torrent-Icons
+IconTheme=Papirus-Dark
 CursorTheme=Bibata-Modern-Classic
 ButtonLayout=close,minimize,maximize:menu
