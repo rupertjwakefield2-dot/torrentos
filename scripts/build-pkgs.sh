@@ -73,6 +73,7 @@ stage_hyprland_config() {
     require_file "$skel/mimeapps.list"
     require_file "$skel/user-dirs.dirs"
     require_file "$skel/qt6ct/qt6ct.conf"
+    require_file "$skel/libinput-gestures.conf"
 
     cp "$skel/hypr/hyprland.conf"                 "$pkg/hyprland.conf"
     cp "$skel/hypr/user.conf"                     "$pkg/user.conf"
@@ -95,6 +96,7 @@ stage_hyprland_config() {
     cp "$skel/mimeapps.list"                      "$pkg/mimeapps.list"
     cp "$skel/user-dirs.dirs"                     "$pkg/user-dirs.dirs"
     cp "$skel/qt6ct/qt6ct.conf"                   "$pkg/qt6ct.conf"
+    cp "$skel/libinput-gestures.conf"             "$pkg/libinput-gestures.conf"
 }
 
 # 3. torrentos-settings: stage Python package, launcher, and assets.

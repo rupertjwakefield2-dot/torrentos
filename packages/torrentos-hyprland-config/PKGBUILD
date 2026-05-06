@@ -36,8 +36,9 @@ source=(
     'mimeapps.list'
     'user-dirs.dirs'
     'qt6ct.conf'
+    'libinput-gestures.conf'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     local skel="$pkgdir/etc/skel/.config"
@@ -68,7 +69,8 @@ package() {
     install -Dm644 "$srcdir/fonts.conf"           "$skel/fontconfig/fonts.conf"
     install -Dm644 "$srcdir/mimeapps.list"        "$skel/mimeapps.list"
     install -Dm644 "$srcdir/user-dirs.dirs"       "$skel/user-dirs.dirs"
-    install -Dm644 "$srcdir/qt6ct.conf"           "$skel/qt6ct/qt6ct.conf"
+    install -Dm644 "$srcdir/qt6ct.conf"                "$skel/qt6ct/qt6ct.conf"
+    install -Dm644 "$srcdir/libinput-gestures.conf"    "$skel/libinput-gestures.conf"
 
-    install -Dm644 "$srcdir/zshrc"                "$pkgdir/etc/skel/.zshrc"
+    install -Dm644 "$srcdir/zshrc"                     "$pkgdir/etc/skel/.zshrc"
 }
