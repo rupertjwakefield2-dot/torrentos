@@ -36,9 +36,15 @@ mouse-sensitivity = 0.0
 [display]
 night-light = false
 night-light-temp = 4000
-refresh-rate = 0       # 0 = auto
+scale = "1"             # string — "1", "1.25", "1.5", "1.75", "2", "2.5", "3"
+custom-scale = 0.0      # 0.0 = use preset above
+refresh-rate = "auto"
 vrr = false
-scale = 1.0
+overscan = 0
+
+[network]
+proxy-enabled = false
+proxy = ""
 
 [dev-mode]
 enabled = false

@@ -7,6 +7,7 @@ arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
 depends=(
+    # Compositor & shell
     'hyprland'
     'waybar'
     'swaync'
@@ -15,13 +16,38 @@ depends=(
     'hyprlock'
     'hypridle'
     'hyprpaper'
+    'hyprpicker'
     'ghostty'
+    # Networking
     'networkmanager'
+    'network-manager-applet'
+    'bluez'
+    'bluez-utils'
+    'blueman'
+    # Audio
     'pipewire'
     'pipewire-pulse'
     'wireplumber'
-    'bluez'
+    'pavucontrol'
+    # Media / accessibility
+    'playerctl'
+    'orca'
+    'at-spi2-core'
+    # Screen capture
+    'grim'
+    'slurp'
+    'wl-clipboard'
+    'cliphist'
+    'wl-clip-persist'
+    # Night light
+    'gammastep'
+    # System tools
     'flatpak'
+    'brightnessctl'
+    'xdg-utils'
+    'xdg-user-dirs'
+    'polkit-gnome'
+    # Shell & terminal tools
     'zsh'
     'starship'
     'fzf'
@@ -30,19 +56,16 @@ depends=(
     'bat'
     'eza'
     'zoxide'
-    'orca'
-    'at-spi2-core'
-    'grim'
-    'slurp'
-    'wl-clipboard'
-    'xdg-user-dirs'
-    'playerctl'
-    'brightnessctl'
-    'xdg-utils'
+    'btop'
+    'jq'
+    # Qt / theming
     'qt6ct'
     'kvantum'
+    # Fonts
+    'inter-font'
     'papirus-icon-theme'
     'noto-fonts'
+    'noto-fonts-emoji'
     'ttf-jetbrains-mono-nerd'
 )
 backup=(
