@@ -453,6 +453,7 @@ class AppearancePage(Gtk.Box):
         self.set_margin_start(32); self.set_margin_end(32)
         self.set_margin_top(24);   self.set_margin_bottom(24)
         self._accent = ACCENT_COLOURS[0][0]
+        self._theme  = "dark"
         self._active_swatch = None
 
         self.append(make_page_header(
@@ -544,8 +545,10 @@ class AppearancePage(Gtk.Box):
     def _on_style(self, btn):
         mgr = Adw.StyleManager.get_default()
         if self._dark_btn.get_active():
+            self._theme = "dark"
             mgr.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
         else:
+            self._theme = "light"
             mgr.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
 
     def _on_swatch(self, btn, colour, widget):
@@ -554,6 +557,15 @@ class AppearancePage(Gtk.Box):
             self._active_swatch.remove_css_class("active")
         widget.add_css_class("active")
         self._active_swatch = widget
+        # Live-preview the accent on the Hyprland border
+        h = colour.lstrip("#").lower()
+        run(["hyprctl", "keyword", "general:col.active_border",
+             f"rgba({h}ff) rgba({h}aa) 45deg"])
+
+    def get_theme(self)      -> str:  return self._theme
+    def get_accent(self)     -> str:  return self._accent
+    def get_font_size(self)  -> int:  return int(self._font_adj.get_value())
+    def get_animations(self) -> bool: return self._anim_switch.get_active()
 
 
 class WiFiPage(Gtk.Box):
@@ -909,9 +921,57 @@ class FirstBootWindow(Adw.ApplicationWindow):
         self._step_label.set_label(f"{i + 1} of {n}")
 
     def _finish(self):
+        self._persist_appearance()
         MARKER.parent.mkdir(parents=True, exist_ok=True)
         MARKER.touch()
         self.get_application().quit()
+
+    def _persist_appearance(self):
+        """Write appearance choices to settings.toml and apply live."""
+        ap      = self._app_page
+        theme   = ap.get_theme()
+        accent  = ap.get_accent()
+        fsize   = ap.get_font_size()
+        animate = ap.get_animations()
+
+        # Apply live via gsettings / hyprctl
+        pref = "prefer-dark" if theme == "dark" else "prefer-light"
+        gtk_theme = f"TorrentOS-{'Light' if theme == 'light' else 'Dark'}"
+        run(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", pref])
+        run(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", gtk_theme])
+        run(["gsettings", "set", "org.gnome.desktop.interface", "font-name", f"Inter {fsize}"])
+        run(["hyprctl", "keyword", "animations:enabled", "1" if animate else "0"])
+
+        # Persist to ~/.config/torrentos/settings.toml (minimal TOML)
+        settings_dir = Path.home() / ".config" / "torrentos"
+        settings_dir.mkdir(parents=True, exist_ok=True)
+        settings_file = settings_dir / "settings.toml"
+
+        existing_lines: list[str] = []
+        in_appearance = False
+        if settings_file.exists():
+            for line in settings_file.read_text().splitlines():
+                stripped = line.strip()
+                if stripped == "[appearance]":
+                    in_appearance = True
+                    continue
+                if stripped.startswith("[") and stripped.endswith("]"):
+                    in_appearance = False
+                if not in_appearance:
+                    existing_lines.append(line)
+
+        appearance_block = (
+            "[appearance]\n"
+            f'theme = "{theme}"\n'
+            f'accent = "{accent}"\n'
+            f"font-size = {fsize}\n"
+            f"animations = {'true' if animate else 'false'}\n"
+        )
+        content = "\n".join(existing_lines).rstrip("\n")
+        if content:
+            content += "\n\n"
+        content += appearance_block
+        settings_file.write_text(content)
 
 
 class FirstBootApp(Adw.Application):

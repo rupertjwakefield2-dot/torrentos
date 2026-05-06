@@ -91,9 +91,6 @@ JSON
 # ── Launch archinstall ────────────────────────────────────────────────────────
 
 log "Launching archinstall with TorrentOS defaults..."
-echo
-
-log "Launching archinstall with TorrentOS defaults..."
 log "(You will be prompted to choose your disk, user, and password.)"
 echo
 
