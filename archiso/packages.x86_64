@@ -131,6 +131,11 @@ unzip
 unrar
 p7zip
 
+# --- media players (referenced in mimeapps.list) ---
+mpv
+evince
+gnome-text-editor
+
 # --- accessibility ---
 orca
 at-spi2-core
