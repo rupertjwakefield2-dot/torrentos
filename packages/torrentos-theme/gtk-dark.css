@@ -1,23 +1,83 @@
-/* TorrentOS Dark — minimal libadwaita override.
- * Real theme would be a full GTK CSS tree; this sets only the accent
- * + window surface so the rest inherits Adwaita-dark. */
+/* TorrentOS Dark — libadwaita color token override.
+ * All non-overridden tokens fall through to Adwaita-dark.
+ * https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/css-variables.html */
 
+/* ── Accent ──────────────────────────────────────────────────────────────── */
 @define-color accent_bg_color           #1E6FFF;
 @define-color accent_fg_color           #FFFFFF;
-@define-color accent_color              #5BC0EB;
+@define-color accent_color              #5B9BFF;
 
+/* ── Window surfaces ─────────────────────────────────────────────────────── */
 @define-color window_bg_color           #0A1628;
 @define-color window_fg_color           #F4F7FB;
+
 @define-color view_bg_color             #0E1C36;
 @define-color view_fg_color             #F4F7FB;
-@define-color headerbar_bg_color        rgba(10, 22, 40, 0.85);
+
+@define-color headerbar_bg_color        rgba(7, 15, 29, 0.90);
 @define-color headerbar_fg_color        #F4F7FB;
-@define-color card_bg_color             rgba(255, 255, 255, 0.04);
+@define-color headerbar_border_color    rgba(30, 111, 255, 0.12);
+@define-color headerbar_backdrop_color  #0A1628;
 
+/* ── Cards / popovers ────────────────────────────────────────────────────── */
+@define-color card_bg_color             rgba(255, 255, 255, 0.045);
+@define-color card_fg_color             #F4F7FB;
+@define-color card_shade_color          rgba(0, 0, 0, 0.28);
+
+@define-color popover_bg_color          #0E1C36;
+@define-color popover_fg_color          #F4F7FB;
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+@define-color sidebar_bg_color          #07101E;
+@define-color sidebar_fg_color          #F4F7FB;
+@define-color sidebar_backdrop_color    #060E1A;
+@define-color sidebar_border_color      rgba(255, 255, 255, 0.06);
+
+/* ── Status colours ─────────────────────────────────────────────────────── */
 @define-color destructive_bg_color      #FF6B6B;
-@define-color success_bg_color          #5BC0EB;
-@define-color warning_bg_color          #FFB454;
+@define-color destructive_fg_color      #FFFFFF;
+@define-color destructive_color         #FF8585;
 
+@define-color success_bg_color          #5BC0EB;
+@define-color success_fg_color          #FFFFFF;
+@define-color success_color             #7AD3F2;
+
+@define-color warning_bg_color          #FFB454;
+@define-color warning_fg_color          #1A1A1A;
+@define-color warning_color             #FFCC80;
+
+@define-color error_bg_color            #FF6B6B;
+@define-color error_fg_color            #FFFFFF;
+@define-color error_color               #FF8585;
+
+/* ── Miscellaneous ───────────────────────────────────────────────────────── */
+@define-color shade_color               rgba(0, 0, 0, 0.35);
+@define-color scrollbar_outline_color   rgba(0, 0, 0, 0.50);
+
+/* ── Widget tweaks ───────────────────────────────────────────────────────── */
 window {
     border-radius: 12px;
+}
+
+/* Sidebar rows — matching the TorrentOS navy */
+.navigation-sidebar > row:selected {
+    background-color: rgba(30, 111, 255, 0.18);
+}
+.navigation-sidebar > row:selected:focus {
+    background-color: rgba(30, 111, 255, 0.22);
+}
+
+/* Pill buttons */
+button.pill {
+    border-radius: 9999px;
+    padding: 8px 20px;
+}
+
+/* Suggested-action uses the full electric-blue accent */
+button.suggested-action {
+    background-color: #1E6FFF;
+    color: #FFFFFF;
+}
+button.suggested-action:hover {
+    background-color: #3A83FF;
 }

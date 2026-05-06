@@ -2,10 +2,11 @@
 Type=Application
 Name=TorrentOS Settings
 GenericName=System Settings
-Comment=Configure appearance, accessibility, display, and developer mode
+Comment=Configure appearance, display, keyboard, network, accessibility, and dev mode
 Exec=torrentos-settings
 Icon=torrentos-settings
 Terminal=false
 Categories=Settings;DesktopSettings;GTK;
 StartupNotify=true
-Keywords=settings;preferences;theme;accessibility;dev mode;
+StartupWMClass=org.torrentos.Settings
+Keywords=settings;preferences;theme;appearance;display;keyboard;network;accessibility;dev mode;

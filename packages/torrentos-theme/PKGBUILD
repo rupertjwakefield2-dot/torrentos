@@ -1,8 +1,8 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-theme
-pkgver=0.3.0
+pkgver=0.4.0
 pkgrel=1
-pkgdesc="TorrentOS GTK + Qt theme, icon set, cursor, wallpapers, sounds"
+pkgdesc="TorrentOS GTK/libadwaita theme, icon set, cursor, and wallpaper"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
