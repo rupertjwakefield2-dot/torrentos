@@ -375,11 +375,16 @@ class KeyboardPage(Gtk.Box):
         if row is None:
             return
         self._selected = row._kb_code
-        run(["localectl", "set-keymap", self._selected])
+        # Apply localectl off the UI thread — it talks to systemd-localed via
+        # D-Bus and can take ~500 ms, which would freeze the wizard.
+        threading.Thread(target=self._apply_layout, args=(self._selected,), daemon=True).start()
         write_user_conf("kb_layout", self._selected, "input")
         self._status.set_text(f"✓  Layout set to {self._selected}")
         self._status.remove_css_class("status-err")
         self._status.add_css_class("status-ok")
+
+    def _apply_layout(self, layout: str) -> None:
+        run(["localectl", "set-keymap", layout])
 
     def get_selected(self):
         return self._selected
@@ -588,7 +593,7 @@ class WiFiPage(Gtk.Box):
         self._scan_status.set_halign(Gtk.Align.START)
         self._rescan_btn = Gtk.Button(label="Rescan")
         self._rescan_btn.add_css_class("flat")
-        self._rescan_btn.connect("clicked", lambda _: self._scan())
+        self._rescan_btn.connect("clicked", lambda _: threading.Thread(target=self._scan, daemon=True).start())
         top_row.append(self._scan_status)
         top_row.append(self._rescan_btn)
         self.append(top_row)
