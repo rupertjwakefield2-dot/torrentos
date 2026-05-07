@@ -1,0 +1,3 @@
+TorrentOS user systemd units.
+These are copied to each new user's home by the adduser/useradd process (from /etc/skel).
+The build script (scripts/build-iso.sh) creates .wants/ symlinks on the Linux build host.

@@ -199,6 +199,13 @@ firefox
 # --- torrent client (on-brand for TorrentOS) ---
 qbittorrent
 
+# --- desktop notifications ---
+libnotify
+
+# --- pacman helpers ---
+# checkupdates (from pacman-contrib) is used by torrentos-update-check
+pacman-contrib
+
 # --- python (required by torrentos-settings) ---
 python
 python-gobject

@@ -1,8 +1,248 @@
-#!/usr/bin/env bash
-#
-# torrentos-settingsd — STUB.
-# The real daemon (Rust + zbus + GTK4 applier modules) lives in a separate
-# crate. This stub keeps the unit file functional during the v0 boot test.
-#
-set -euo pipefail
-exec sleep infinity
+#!/usr/bin/env python3
+"""
+torrentos-settingsd — TorrentOS Settings Daemon
+================================================
+Applies user settings at login and re-applies them whenever
+~/.config/torrentos/settings.toml changes.
+
+Lifecycle
+---------
+1. Wait until Hyprland is ready (HYPRLAND_INSTANCE_SIGNATURE is set).
+2. Apply ALL settings from the merged defaults + user TOML on first run.
+3. Poll the user TOML every 3 s for mtime changes; re-apply changed keys.
+4. SIGHUP → force a full re-apply (useful after manual TOML edits).
+5. SIGTERM/SIGINT → clean shutdown.
+"""
+
+from __future__ import annotations
+
+import os
+import signal
+import sys
+import time
+import logging
+from pathlib import Path
+from typing import Any
+
+# ── Bootstrap: add the settings library to the import path ──────────────────
+_LIB = Path("/usr/share/torrentos-settings")
+if _LIB.is_dir() and str(_LIB) not in sys.path:
+    sys.path.insert(0, str(_LIB))
+
+# ── Logging: systemd picks up stdout/stderr automatically ───────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="[settingsd] %(levelname)s: %(message)s",
+    stream=sys.stdout,
+)
+log = logging.getLogger("settingsd")
+
+# ── Constants ────────────────────────────────────────────────────────────────
+HYPRLAND_TIMEOUT   = 60      # seconds to wait for Hyprland socket
+POLL_INTERVAL      = 3.0     # seconds between mtime checks
+USER_SETTINGS_PATH = Path.home() / ".config" / "torrentos" / "settings.toml"
+DEFAULT_PATH       = Path("/etc/torrentos/default-settings.toml")
+
+# ── Runtime state ────────────────────────────────────────────────────────────
+_reload_flag  = False   # set by SIGHUP
+_running      = True    # cleared by SIGTERM/SIGINT
+
+
+def _handle_sighup(sig, frame) -> None:
+    global _reload_flag
+    _reload_flag = True
+    log.info("SIGHUP received — will force full re-apply")
+
+
+def _handle_sigterm(sig, frame) -> None:
+    global _running
+    _running = False
+    log.info("SIGTERM received — shutting down")
+
+
+signal.signal(signal.SIGHUP,  _handle_sighup)
+signal.signal(signal.SIGTERM, _handle_sigterm)
+signal.signal(signal.SIGINT,  _handle_sigterm)
+
+
+# ── TOML helpers (inline, no external lib needed for reading) ────────────────
+
+def _read_toml(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        try:
+            import tomllib  # Python 3.11+
+        except ImportError:
+            import tomli as tomllib  # type: ignore[no-reuse-ignoring]
+        with path.open("rb") as f:
+            return tomllib.load(f)
+    except Exception as exc:
+        log.warning("Failed to parse %s: %s", path, exc)
+        return {}
+
+
+def _deep_merge(base: dict, over: dict) -> dict:
+    out = dict(base)
+    for k, v in over.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _deep_merge(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+
+def _flatten(d: dict, prefix: str = "") -> dict[str, Any]:
+    """Flatten {'appearance': {'theme': 'dark'}} → {'appearance.theme': 'dark'}."""
+    out: dict[str, Any] = {}
+    for k, v in d.items():
+        key = f"{prefix}.{k}" if prefix else k
+        if isinstance(v, dict):
+            out.update(_flatten(v, key))
+        else:
+            out[key] = v
+    return out
+
+
+def _merged_flat() -> dict[str, Any]:
+    defaults = _read_toml(DEFAULT_PATH)
+    user     = _read_toml(USER_SETTINGS_PATH)
+    return _flatten(_deep_merge(defaults, user))
+
+
+def _mtime(path: Path) -> float:
+    try:
+        return path.stat().st_mtime
+    except FileNotFoundError:
+        return 0.0
+
+
+# ── Core apply logic ─────────────────────────────────────────────────────────
+
+def _import_applier():
+    """Import the applier module; return None on failure (graceful degrade)."""
+    try:
+        from torrentos_settings import applier
+        return applier
+    except ImportError as exc:
+        log.warning("torrentos_settings not installed yet: %s", exc)
+        return None
+
+
+def _apply_all(applier, flat: dict[str, Any]) -> None:
+    log.info("Applying %d settings", len(flat))
+    for key, value in flat.items():
+        try:
+            applier.apply(key, value)
+        except Exception as exc:
+            log.warning("apply(%s) failed: %s", key, exc)
+
+
+def _apply_changed(applier, old: dict[str, Any], new: dict[str, Any]) -> int:
+    changed = {k: v for k, v in new.items() if old.get(k) != v}
+    if not changed:
+        return 0
+    log.info("Detected %d changed key(s): %s", len(changed), list(changed.keys()))
+    for key, value in changed.items():
+        try:
+            applier.apply(key, value)
+        except Exception as exc:
+            log.warning("apply(%s) failed: %s", key, exc)
+    return len(changed)
+
+
+# ── Wait for Hyprland ────────────────────────────────────────────────────────
+
+def _wait_for_hyprland() -> bool:
+    """
+    Block until HYPRLAND_INSTANCE_SIGNATURE is set in the environment
+    (written by Hyprland to $XDG_RUNTIME_DIR/hypr/<sig>/hyprland.lock).
+    Returns True when ready, False on timeout.
+    """
+    runtime = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    hypr_dir = Path(runtime) / "hypr"
+    deadline = time.monotonic() + HYPRLAND_TIMEOUT
+
+    log.info("Waiting for Hyprland (up to %ds)…", HYPRLAND_TIMEOUT)
+    while time.monotonic() < deadline and _running:
+        # Hyprland sets HYPRLAND_INSTANCE_SIGNATURE in child processes, but
+        # this daemon is launched by systemd. Check the lock file instead.
+        if hypr_dir.exists() and any(hypr_dir.iterdir()):
+            sig = next(hypr_dir.iterdir()).name
+            os.environ.setdefault("HYPRLAND_INSTANCE_SIGNATURE", sig)
+            log.info("Hyprland ready: %s", sig)
+            return True
+        # Also accept if var was inherited (e.g. launched from shell for testing)
+        if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+            log.info("Hyprland ready (env): %s", os.environ["HYPRLAND_INSTANCE_SIGNATURE"])
+            return True
+        time.sleep(1)
+
+    if not _running:
+        return False
+    log.warning("Hyprland did not appear within %ds — applying anyway", HYPRLAND_TIMEOUT)
+    return True   # still try; hyprctl calls will fail gracefully
+
+
+# ── Main loop ────────────────────────────────────────────────────────────────
+
+def main() -> None:
+    log.info("TorrentOS Settings Daemon starting (pid=%d)", os.getpid())
+
+    if not _wait_for_hyprland():
+        log.info("Exiting before Hyprland appeared")
+        return
+
+    # Give Hyprland a moment to finish initialising before we hammer it with
+    # keyword commands.
+    time.sleep(2)
+
+    applier = _import_applier()
+    if applier is None:
+        log.warning("Running in no-op mode — will retry on next file change")
+
+    # Initial full apply
+    current_flat = _merged_flat()
+    if applier:
+        _apply_all(applier, current_flat)
+
+    last_mtime = _mtime(USER_SETTINGS_PATH)
+    global _reload_flag
+
+    log.info("Entering watch loop (poll every %.0fs)", POLL_INTERVAL)
+
+    while _running:
+        time.sleep(POLL_INTERVAL)
+
+        if not _running:
+            break
+
+        # Retry importing applier if it wasn't available at start
+        if applier is None:
+            applier = _import_applier()
+
+        # SIGHUP → full re-apply
+        if _reload_flag:
+            _reload_flag = False
+            log.info("Force full re-apply")
+            current_flat = _merged_flat()
+            if applier:
+                _apply_all(applier, current_flat)
+            last_mtime = _mtime(USER_SETTINGS_PATH)
+            continue
+
+        # mtime check → partial re-apply
+        mtime = _mtime(USER_SETTINGS_PATH)
+        if mtime != last_mtime:
+            log.info("Settings file changed (mtime %s → %s)", last_mtime, mtime)
+            last_mtime = mtime
+            new_flat = _merged_flat()
+            if applier:
+                _apply_changed(applier, current_flat, new_flat)
+            current_flat = new_flat
+
+    log.info("TorrentOS Settings Daemon stopped")
+
+
+if __name__ == "__main__":
+    main()

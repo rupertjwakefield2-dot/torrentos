@@ -1,8 +1,8 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-tools
-pkgver=0.4.0
+pkgver=0.5.0
 pkgrel=1
-pkgdesc="TorrentOS GUI tools: screenshot, system update, and help reference"
+pkgdesc="TorrentOS GUI tools: screenshot, system update, help reference, update notifier, and health check"
 arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
@@ -18,9 +18,10 @@ depends=(
     'pacman'        # paru/pacman for update runner
 )
 optdepends=(
-    'paru: AUR helper used by system update'
+    'paru: AUR helper used by system update and update notifier'
+    'pacman-contrib: checkupdates (used by update notifier)'
     'loupe: image viewer for screenshot preview'
-    'libnotify: desktop notifications after screenshot'
+    'libnotify: desktop notifications (screenshots, update notifier)'
     'hyprctl: window geometry for window-mode screenshot'
 )
 source=(
@@ -30,14 +31,18 @@ source=(
     'torrentos-screenshot.desktop'
     'torrentos-help'
     'torrentos-help.desktop'
+    'torrentos-update-check'
+    'torrentos-doctor'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     # Executables
-    install -Dm755 "$srcdir/torrentos-update-gui"    "$pkgdir/usr/local/bin/torrentos-update-gui"
-    install -Dm755 "$srcdir/torrentos-screenshot"    "$pkgdir/usr/local/bin/torrentos-screenshot"
-    install -Dm755 "$srcdir/torrentos-help"          "$pkgdir/usr/local/bin/torrentos-help"
+    install -Dm755 "$srcdir/torrentos-update-gui"      "$pkgdir/usr/local/bin/torrentos-update-gui"
+    install -Dm755 "$srcdir/torrentos-screenshot"      "$pkgdir/usr/local/bin/torrentos-screenshot"
+    install -Dm755 "$srcdir/torrentos-help"            "$pkgdir/usr/local/bin/torrentos-help"
+    install -Dm755 "$srcdir/torrentos-update-check"    "$pkgdir/usr/local/bin/torrentos-update-check"
+    install -Dm755 "$srcdir/torrentos-doctor"          "$pkgdir/usr/local/bin/torrentos-doctor"
 
     # Desktop entries
     install -Dm644 "$srcdir/torrentos-update-gui.desktop"  \

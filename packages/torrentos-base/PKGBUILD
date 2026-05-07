@@ -1,6 +1,6 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-base
-pkgver=0.4.0
+pkgver=0.5.0
 pkgrel=1
 pkgdesc="TorrentOS base meta-package — branding, version file, defaults, and core tools"
 arch=('any')
@@ -91,8 +91,9 @@ package() {
     install -Dm755 "$srcdir/devmode"               "$pkgdir/usr/lib/torrentos/devmode"
     install -Dm755 "$srcdir/settingsd"             "$pkgdir/usr/lib/torrentos/settingsd"
     install -Dm755 "$srcdir/firstboot"             "$pkgdir/usr/local/bin/torrentos-firstboot"
+    # Install as a USER unit (daemon runs per-user, needs access to ~/.config and hyprctl)
     install -Dm644 "$srcdir/torrentos-settingsd.service" \
-        "$pkgdir/usr/lib/systemd/system/torrentos-settingsd.service"
+        "$pkgdir/usr/lib/systemd/user/torrentos-settingsd.service"
 
     # greetd login screen — installed systems only (live ISO keeps getty autologin)
     install -Dm644 "$srcdir/greetd-config.toml" \

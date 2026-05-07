@@ -1,0 +1,15 @@
+[Unit]
+Description=TorrentOS Update Checker
+Documentation=https://torrentos.org/docs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/torrentos-update-check
+# Inherit the user's graphical session env so notify-send works
+Environment="DISPLAY=:0"
+PassEnvironment=DBUS_SESSION_BUS_ADDRESS DISPLAY WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_CACHE_HOME
+
+[Install]
+WantedBy=default.target

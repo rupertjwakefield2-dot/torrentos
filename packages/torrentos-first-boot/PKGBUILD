@@ -1,6 +1,6 @@
 # Maintainer: TorrentOS <packages@torrentos.org>
 pkgname=torrentos-first-boot
-pkgver=0.4.0
+pkgver=0.5.0
 pkgrel=1
 pkgdesc="TorrentOS first-boot welcome wizard (GTK4/libadwaita)"
 arch=('any')

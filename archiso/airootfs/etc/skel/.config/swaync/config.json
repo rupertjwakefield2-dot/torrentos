@@ -68,6 +68,10 @@
                 {
                     "label": "󰐥 Settings",
                     "command": "torrentos-settings"
+                },
+                {
+                    "label": "󰚰 Update",
+                    "command": "torrentos-update-gui"
                 }
             ]
         },
@@ -79,7 +83,6 @@
         },
         "backlight": {
             "label": "󰃟",
-            "device": "intel_backlight",
             "subsystem": "backlight"
         },
         "mpris": {

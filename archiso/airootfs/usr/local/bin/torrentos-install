@@ -2,16 +2,23 @@
 #
 # TorrentOS Disk Installer
 # Wraps archinstall with TorrentOS defaults and a guided pre-flight check.
+# Also copies the local TorrentOS package repo into the installed system so
+# TorrentOS-specific packages (settings, tools, hyprland-config, etc.) are
+# available on first boot.
 #
 set -euo pipefail
 
-RED='\033[1;31m'; GRN='\033[1;32m'; BLU='\033[1;34m'; YLW='\033[1;33m'; RST='\033[0m'
+RED='\033[1;31m'; GRN='\033[1;32m'; BLU='\033[1;34m'; YLW='\033[1;33m'
+CYN='\033[38;2;91;192;235m'; RST='\033[0m'
+
 log()  { printf "${BLU}[install]${RST} %s\n" "$*"; }
 ok()   { printf "${GRN}[  ok  ]${RST} %s\n" "$*"; }
 warn() { printf "${YLW}[ warn ]${RST} %s\n" "$*"; }
 err()  { printf "${RED}[ err  ]${RST} %s\n" "$*" >&2; }
 
-cat << 'BANNER'
+_ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
+
+cat << BANNER
 
   ████████  ████████  ████████  ████████  ████████  ██████   ██████  ██████
      ██     ██     ██ ██     ██ ██     ██ ██        ██   ██ ██    ██ ██
@@ -19,7 +26,7 @@ cat << 'BANNER'
      ██     ██     ██ ██   ██   ██   ██   ██        ██   ██ ██    ██      ██
      ██      ████████ ██    ██  ██    ██  ████████  ██████   ██████  ███████
 
-                     Install TorrentOS to Disk — v0.4.0
+                     Install TorrentOS to Disk — v${_ver}
 
 BANNER
 
@@ -39,7 +46,7 @@ else
     warn "No internet detected. archinstall needs internet to download packages."
     warn "Connect via WiFi first:  nmtui"
     echo
-    echo -n "  Continue anyway? [y/N] "
+    printf "  Continue anyway? [y/N] "
     read -r ans
     [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 fi
@@ -49,23 +56,101 @@ log "Available block devices:"
 lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS -e 7,11 | grep -v "^loop"
 echo
 
-echo -e "${YLW}  ⚠  WARNING: Installation will PERMANENTLY ERASE the selected disk.${RST}"
-echo -e "${YLW}     Back up all important data before continuing.${RST}"
+printf "${YLW}  ⚠  WARNING: Installation will PERMANENTLY ERASE the selected disk.${RST}\n"
+printf "${YLW}     Back up all important data before continuing.${RST}\n"
 echo
-echo -n "  Ready to launch the guided installer? [y/N] "
+printf "  Ready to launch the guided installer? [y/N] "
 read -r ans
 [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
-# ── Write archinstall config ─────────────────────────────────────────────────
+# ── Locate local TorrentOS repo ───────────────────────────────────────────────
+# Try common locations where the repo might be on the live ISO.
+LOCAL_REPO=""
+for candidate in \
+    "/run/archiso/bootmnt/repo/x86_64" \
+    "/run/archiso/airootfs/repo/x86_64" \
+    "/repo/x86_64" \
+    "/opt/torrentos-repo/x86_64"
+do
+    if [[ -d "$candidate" ]] && ls "$candidate"/torrentos.db* >/dev/null 2>&1; then
+        LOCAL_REPO="$candidate"
+        break
+    fi
+done
 
+# ── Write archinstall config ─────────────────────────────────────────────────
 CONF_DIR=$(mktemp -d /tmp/torrentos-install.XXXXX)
 trap 'rm -rf "$CONF_DIR"' EXIT
 
-# Pre-fill archinstall with TorrentOS defaults.
-# User still picks the disk and username interactively.
-cat > "$CONF_DIR/user_configuration.json" << 'JSON'
+# Additional packages to install on the new system (on top of Desktop/Hyprland)
+# The list matches packages.x86_64 minus those already pulled by the profile.
+EXTRA_PACKAGES=(
+    # TorrentOS custom packages
+    torrentos-base
+    torrentos-theme
+    torrentos-hyprland-config
+    torrentos-first-boot
+    torrentos-settings
+    torrentos-tools
+    # Essentials that archinstall might skip
+    python
+    python-gobject
+    python-tomli-w
+    libnotify
+    pacman-contrib
+    papirus-icon-theme
+    inter-font
+    ttf-jetbrains-mono-nerd
+    btop
+    bat
+    eza
+    fzf
+    zoxide
+    ripgrep
+    zsh
+    starship
+    ghostty
+    gammastep
+    wl-clip-persist
+    cliphist
+    nwg-dock-hyprland
+    swaync
+    rofi-wayland
+    hyprpicker
+    pavucontrol
+    blueman
+    playerctl
+    brightnessctl
+    qt6ct
+    kvantum
+    vte4
+    flatpak
+)
+
+# Build additional-repositories JSON block (include local repo if found)
+ADD_REPOS="[]"
+if [[ -n "$LOCAL_REPO" ]]; then
+    ok "Found local TorrentOS repo: $LOCAL_REPO"
+    ADD_REPOS="[{\"name\":\"torrentos\",\"url\":\"file://$LOCAL_REPO\",\"sign_check\":\"Never\",\"sign_option\":\"Never\"}]"
+else
+    warn "Local TorrentOS package repo not found."
+    warn "After installation, the TorrentOS packages will need to be installed manually."
+    warn "  sudo pacman -S torrentos-base torrentos-settings torrentos-tools ..."
+fi
+
+PKG_JSON="$(printf '%s\n' "${EXTRA_PACKAGES[@]}" | jq -R . | jq -s .)"
+
+# Post-install custom commands (run inside the new system chroot)
+# Enable zsh for the primary user and set up user services.
+CUSTOM_CMDS='[
+  "chsh -s /usr/bin/zsh $(getent passwd 1000 | cut -d: -f1) 2>/dev/null || true",
+  "systemctl enable NetworkManager 2>/dev/null || true",
+  "systemctl enable bluetooth 2>/dev/null || true"
+]'
+
+cat > "$CONF_DIR/user_configuration.json" << JSON
 {
-  "additional-repositories": [],
+  "additional-repositories": $ADD_REPOS,
   "archinstall-language": "English",
   "bootloader": "Grub",
   "hostname": "torrentos",
@@ -75,6 +160,7 @@ cat > "$CONF_DIR/user_configuration.json" << 'JSON'
     "sys_enc": "UTF-8",
     "sys_lang": "en_US"
   },
+  "packages": $PKG_JSON,
   "profile_config": {
     "profile": {
       "custom_settings": {},
@@ -83,6 +169,7 @@ cat > "$CONF_DIR/user_configuration.json" << 'JSON'
     },
     "gfx_driver": "All open-source (default)"
   },
+  "custom-commands": $CUSTOM_CMDS,
   "swap": true,
   "timezone": "UTC"
 }
@@ -94,12 +181,12 @@ log "Launching archinstall with TorrentOS defaults..."
 log "(You will be prompted to choose your disk, user, and password.)"
 echo
 
-# Pass pre-filled config but let archinstall run interactively so the user
-# can choose their disk, create a user, set a password, etc.
 archinstall --config "$CONF_DIR/user_configuration.json"
 
 echo
 ok "Installation complete!"
-echo -e "  ${GRN}➜${RST}  Remove the live media and reboot to your new system."
-echo
-echo -e "   ${BLU}reboot${RST}"
+printf "  ${GRN}➜${RST}  Remove the live media and reboot to your new system.\n"
+printf "\n   ${BLU}reboot${RST}\n\n"
+
+printf "${CYN}  After first login, the TorrentOS first-boot wizard will guide you\n"
+printf "  through personalisation (keyboard, WiFi, user account).${RST}\n\n"

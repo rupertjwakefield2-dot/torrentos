@@ -20,6 +20,20 @@ login-shell = true
 copy-on-select = clipboard
 confirm-close-surface = false
 
+# Mouse
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 3
+
+# URL handling — click to open in browser
+link-url = true
+
+# Tabs / splits
+tab-bar-style = auto
+window-new-tab-position = end
+
+# Scrollback
+scrollback-limit = 10000
+
 # ── TorrentOS colour palette ──────────────────────────────────────────────────
 background             = 0A1628
 foreground             = F4F7FB

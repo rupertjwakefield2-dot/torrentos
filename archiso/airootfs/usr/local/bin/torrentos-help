@@ -33,7 +33,10 @@ topic_keys() {
     printf "${D}  %-30s${N} %s\n" "Super + E"           "File manager"
     printf "${D}  %-30s${N} %s\n" "Super + B"           "Browser"
     printf "${D}  %-30s${N} %s\n" "Super + T"           "Torrents"
+    printf "${D}  %-30s${N} %s\n" "Super + C"           "Code editor (VS Code)"
+    printf "${D}  %-30s${N} %s\n" "Super + U"           "System update GUI"
     printf "${D}  %-30s${N} %s\n" "Super + comma"       "Settings"
+    printf "${D}  %-30s${N} %s\n" "Super + equal"       "Magnifier (Magnus) toggle"
     printf "${D}  %-30s${N} %s\n" "Super + L"           "Lock screen"
     printf "${D}  %-30s${N} %s\n" "Super + Ctrl + Q"    "Power menu"
     printf "${D}  %-30s${N} %s\n" "Super + Q"           "Close window"
@@ -93,6 +96,10 @@ topic_aliases() {
     printf "${C}  Dev${N}\n"
     printf "${D}  %-18s${N} %s\n" "dc"        "docker compose"
     printf "${D}  %-18s${N} %s\n" "k"         "kubectl"
+    echo
+    printf "${C}  TorrentOS${N}\n"
+    printf "${D}  %-18s${N} %s\n" "doctor"    "System health check (torrentos-doctor)"
+    printf "${D}  %-18s${N} %s\n" "help"      "This help viewer"
     echo
 }
 
@@ -163,7 +170,9 @@ topic_apps() {
     printf "${D}  %-24s${N} %s\n" "Nautilus"           "File manager"
     printf "${D}  %-24s${N} %s\n" "TorrentOS Settings" "System preferences (Super+,)"
     printf "${D}  %-24s${N} %s\n" "Screenshot tool"    "Region/full/window capture (Super+Ctrl+S)"
-    printf "${D}  %-24s${N} %s\n" "System Update"      "torrentos-update-gui"
+    printf "${D}  %-24s${N} %s\n" "System Update"      "torrentos-update-gui  (Super+U)"
+    printf "${D}  %-24s${N} %s\n" "Doctor"             "torrentos-doctor  (health check)"
+    printf "${D}  %-24s${N} %s\n" "Magnus"             "Pixel magnifier  (Super+=)"
     printf "${D}  %-24s${N} %s\n" "btop"               "System monitor"
     printf "${D}  %-24s${N} %s\n" "pavucontrol"        "Audio mixer"
     printf "${D}  %-24s${N} %s\n" "blueman"            "Bluetooth manager"

@@ -1,0 +1,242 @@
+#!/usr/bin/env bash
+# torrentos-doctor — TorrentOS system health check
+# Runs a series of quick diagnostic checks and reports pass/fail with hints.
+# Usage: torrentos-doctor [--quiet]
+
+set -euo pipefail
+
+QUIET=0
+[[ "${1:-}" == "--quiet" ]] && QUIET=1
+
+B='\033[38;2;30;111;255m'
+G='\033[38;2;91;235;161m'
+Y='\033[38;2;255;180;84m'
+R='\033[38;2;255;107;107m'
+W='\033[1;37m'
+D='\033[2;37m'
+N='\033[0m'
+
+PASS=0
+WARN=0
+FAIL=0
+
+header() {
+    [[ $QUIET -eq 1 ]] && return
+    echo
+    printf "${B}  TorrentOS Doctor${N}\n"
+    printf "${D}  ─────────────────────────────────────────────────${N}\n"
+    echo
+}
+
+ok()   { PASS=$(( PASS + 1 )); [[ $QUIET -eq 0 ]] && printf "${G}  ✔${N}  %s\n" "$1"; }
+warn() { WARN=$(( WARN + 1 )); printf "${Y}  ⚠${N}  %s\n" "$1"; }
+fail() { FAIL=$(( FAIL + 1 )); printf "${R}  ✘${N}  %s\n" "$1"; }
+hint() { [[ $QUIET -eq 0 ]] && printf "${D}     ↳ %s${N}\n" "$1"; }
+
+# ── checks ────────────────────────────────────────────────────────────────────
+
+check_cmd() {
+    local cmd="$1" label="${2:-$1}" fix="${3:-}"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        ok "$label is installed"
+    else
+        fail "$label not found"
+        [[ -n "$fix" ]] && hint "$fix"
+    fi
+}
+
+check_service_active() {
+    local unit="$1" label="${2:-$1}"
+    if systemctl is-active --quiet "$unit" 2>/dev/null; then
+        ok "$label is running"
+    else
+        warn "$label is not active"
+        hint "sudo systemctl start $unit"
+    fi
+}
+
+check_user_service() {
+    local unit="$1" label="${2:-$1}"
+    if systemctl --user is-active --quiet "$unit" 2>/dev/null; then
+        ok "$label (user) is running"
+    else
+        warn "$label (user) is not active"
+        hint "systemctl --user start $unit"
+    fi
+}
+
+check_file() {
+    local path="$1" label="$2" fix="${3:-}"
+    if [[ -e "$path" ]]; then
+        ok "$label exists"
+    else
+        fail "$label missing: $path"
+        [[ -n "$fix" ]] && hint "$fix"
+    fi
+}
+
+check_writable() {
+    local path="$1" label="$2"
+    if [[ -w "$path" ]]; then
+        ok "$label is writable"
+    else
+        fail "$label is not writable: $path"
+        hint "Check permissions with: ls -la $(dirname "$path")"
+    fi
+}
+
+check_internet() {
+    if ping -c 1 -W 3 1.1.1.1 >/dev/null 2>&1; then
+        ok "Internet reachable"
+    else
+        warn "No internet connection"
+        hint "Use nmtui or nm-connection-editor to connect"
+    fi
+}
+
+check_disk_space() {
+    local threshold=10  # warn if < 10 GB free on /
+    local free_kb
+    free_kb=$(df --output=avail / | tail -1)
+    local free_gb=$(( free_kb / 1024 / 1024 ))
+    if (( free_gb >= threshold )); then
+        ok "Disk space OK (${free_gb} GB free on /)"
+    else
+        warn "Low disk space: ${free_gb} GB free on /"
+        hint "sudo pacman -Sc  # clean package cache"
+    fi
+}
+
+check_gpu() {
+    if command -v glxinfo >/dev/null 2>&1; then
+        local renderer
+        renderer="$(glxinfo 2>/dev/null | grep 'OpenGL renderer' | cut -d: -f2 | xargs || echo '?')"
+        ok "GPU: ${renderer}"
+    elif command -v vulkaninfo >/dev/null 2>&1; then
+        ok "Vulkan GPU info available"
+    else
+        warn "glxinfo / vulkaninfo not found — cannot confirm GPU"
+        hint "sudo pacman -S mesa-utils"
+    fi
+}
+
+check_audio() {
+    if command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1; then
+        ok "PipeWire/PulseAudio audio server running"
+    else
+        warn "Audio server not responding"
+        hint "systemctl --user restart pipewire pipewire-pulse"
+    fi
+}
+
+check_hyprland_socket() {
+    local rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    if ls "${rt}/hypr/"*"/hyprland.lock" >/dev/null 2>&1; then
+        ok "Hyprland socket present"
+    else
+        warn "Hyprland socket not found"
+        hint "Are you running inside Hyprland?"
+    fi
+}
+
+check_settings_file() {
+    local path="$HOME/.config/torrentos/settings.toml"
+    if [[ -f "$path" ]]; then
+        ok "User settings file exists"
+        # Basic TOML parse check
+        if python3 -c "
+import sys
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+with open('$path','rb') as f: tomllib.load(f)
+" 2>/dev/null; then
+            ok "User settings TOML is valid"
+        else
+            fail "User settings TOML is malformed"
+            hint "Edit or delete: $path"
+        fi
+    else
+        ok "No user overrides (using defaults)"
+    fi
+}
+
+check_pacman_lock() {
+    if [[ -f /var/lib/pacman/db.lck ]]; then
+        warn "pacman DB lock exists — another pacman may be running"
+        hint "If no pacman is running: sudo rm /var/lib/pacman/db.lck"
+    else
+        ok "pacman DB not locked"
+    fi
+}
+
+check_failed_units() {
+    local failed
+    failed="$(systemctl --failed --no-legend 2>/dev/null | awk '{print $1}' | paste -sd ' ' || true)"
+    if [[ -z "$failed" ]]; then
+        ok "No failed system units"
+    else
+        warn "Failed units: $failed"
+        hint "systemctl status $failed"
+    fi
+}
+
+# ── run all checks ────────────────────────────────────────────────────────────
+
+header
+
+printf "${W}  Core tools${N}\n"
+check_cmd hyprctl "Hyprland CLI (hyprctl)"
+check_cmd nmcli   "NetworkManager CLI (nmcli)"
+check_cmd pacman  "pacman package manager"
+check_cmd python3 "Python 3"
+check_cmd git     "Git"
+echo
+
+printf "${W}  TorrentOS components${N}\n"
+check_file /etc/torrentos/version           "Version file"
+check_file /etc/torrentos/default-settings.toml "Default settings"
+check_file /usr/share/torrentos-settings/torrentos_settings/__init__.py \
+    "torrentos-settings Python package" \
+    "sudo pacman -S torrentos-settings"
+check_file /usr/local/bin/torrentos-firstboot "firstboot launcher"
+check_file /usr/local/bin/torrentos-update-gui "update GUI launcher"
+check_settings_file
+echo
+
+printf "${W}  Services${N}\n"
+check_service_active NetworkManager "NetworkManager"
+check_user_service   torrentos-settingsd "torrentos-settingsd"
+check_failed_units
+echo
+
+printf "${W}  Hardware${N}\n"
+check_internet
+check_disk_space
+check_gpu
+check_audio
+check_hyprland_socket
+echo
+
+printf "${W}  Pacman${N}\n"
+check_pacman_lock
+check_writable "$HOME/.config" "~/.config"
+echo
+
+# ── summary ───────────────────────────────────────────────────────────────────
+
+total=$(( PASS + WARN + FAIL ))
+printf "${D}  ─────────────────────────────────────────────────${N}\n"
+printf "  ${G}✔ %d passed${N}  " "$PASS"
+if (( WARN > 0 )); then printf "${Y}⚠ %d warning(s)${N}  " "$WARN"; fi
+if (( FAIL > 0 )); then printf "${R}✘ %d failed${N}"      "$FAIL"; fi
+echo
+echo
+
+if (( FAIL > 0 )); then
+    exit 2
+elif (( WARN > 0 )); then
+    exit 1
+fi
+exit 0

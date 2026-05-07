@@ -97,6 +97,7 @@ alias settings='torrentos-settings & disown'
 alias files='nautilus & disown'
 alias browser='firefox & disown'
 alias screenshot='torrentos-screenshot & disown'
+alias doctor='torrentos-doctor'
 
 # Clipboard
 alias pbcopy='wl-copy'
@@ -105,6 +106,11 @@ alias pbpaste='wl-paste'
 # Network
 alias ip='ip --color=auto'
 alias myip='curl -s https://api.ipify.org && echo'
+
+# Quick package search / info
+alias pkgs='pacman -Ss'
+alias pkgi='pacman -Qi'
+alias pkgf='pacman -Ql'
 
 # ---- help command ----
 help() {
@@ -139,7 +145,8 @@ help() {
     echo
     printf "${_cyan}  System:${_rst}\n"
     printf "${_dim}    settings            ${_rst}${_white}Open TorrentOS Settings${_rst}\n"
-    printf "${_dim}    torrentos-update    ${_rst}${_white}Full system upgrade${_rst}\n"
+    printf "${_dim}    update              ${_rst}${_white}Full system upgrade${_rst}\n"
+    printf "${_dim}    doctor              ${_rst}${_white}System health check${_rst}\n"
     printf "${_dim}    toros-version       ${_rst}${_white}Show OS version${_rst}\n"
     printf "${_dim}    myip                ${_rst}${_white}Show public IP address${_rst}\n"
     echo

@@ -33,6 +33,17 @@ sed "s|file:///\$repo|file://$REPO|g" \
     "$PROFILE/pacman.conf" > "$RENDERED_CONF"
 
 mkdir -p "$WORK" "$OUT"
+
+# Create user systemd .wants symlinks in skel — must be done on a Linux host
+# because Windows git checkouts can't store proper symlinks.
+SKEL_SYSTEMD="$PROFILE/airootfs/etc/skel/.config/systemd/user"
+log "Creating skel user systemd .wants symlinks"
+mkdir -p "$SKEL_SYSTEMD/graphical-session.target.wants"
+ln -sf ../torrentos-settingsd.service \
+    "$SKEL_SYSTEMD/graphical-session.target.wants/torrentos-settingsd.service" 2>/dev/null || true
+ln -sf ../torrentos-update-check.timer \
+    "$SKEL_SYSTEMD/graphical-session.target.wants/torrentos-update-check.timer" 2>/dev/null || true
+
 log "Building ISO... (this takes 5-15 min on first run)"
 
 # -C is the pacman.conf flag. Do not use -p here; that means extra packages.
