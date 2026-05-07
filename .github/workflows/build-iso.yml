@@ -1,18 +1,23 @@
 name: Build TorrentOS ISO
 
 on:
-  # Only run manually or on releases — NOT on every push.
-  # The ISO build takes 60-90 min and requires a local Arch Docker environment.
-  workflow_dispatch:
+  workflow_dispatch:        # manual trigger from GitHub Actions tab
+  push:
+    branches: [main]
+    paths:                  # only rebuild when source actually changes
+      - 'archiso/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - '.github/workflows/build-iso.yml'
   release:
     types: [created]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
+    runs-on: ubuntu-latest   # x86_64 — required for Arch Linux / mkarchiso
+    timeout-minutes: 120
     permissions:
-      contents: write
+      contents: write        # needed to attach files to a Release
 
     steps:
       - name: Checkout
@@ -20,64 +25,37 @@ jobs:
 
       - name: Read version
         id: version
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          ver=$(grep '^TORRENTOS_VERSION=' archiso/airootfs/etc/torrentos/version \
+                | cut -d= -f2 | tr -d '"')
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+          echo "Building TorrentOS v${ver}"
 
-      - name: Build inside Arch container
-        uses: docker://archlinux:latest
-        with:
-          entrypoint: bash
-          args: |
-            -ec '
-              set -euo pipefail
+      # Pull the Arch Linux image once so the timer doesn't count against the build
+      - name: Pull Arch Linux image
+        run: docker pull archlinux:latest
 
-              echo "::group::Disabling pacman sandbox (QEMU compat)"
-              grep -q "^DisableSandbox" /etc/pacman.conf \
-                || sed -i "/^\[options\]/a DisableSandbox" /etc/pacman.conf
+      # Run the entire build inside an Arch Linux container with --privileged
+      # (mkarchiso needs loop devices to mount the squashfs image).
+      - name: Build ISO inside Arch Linux container
+        run: |
+          docker run --rm \
+            --privileged \
+            --volume "${{ github.workspace }}:/workspace" \
+            --workdir /workspace \
+            archlinux:latest \
+            bash /workspace/scripts/ci-build.sh
 
-              echo "::group::Installing build deps"
-              pacman-key --init
-              pacman -Sy --noconfirm archlinux-keyring
-              pacman -Syu --noconfirm
-              pacman -S --needed --noconfirm \
-                archiso base-devel git sudo imagemagick which file \
-                grub edk2-shell mtools dosfstools libisoburn squashfs-tools \
-                erofs-utils python
-
-              echo "::group::Creating builder user (makepkg refuses root)"
-              useradd -m -G wheel builder
-              echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-              chown -R builder:builder /github/workspace
-
-              echo "::group::Generating wallpaper"
-              cd /github/workspace
-              if [ ! -f packages/torrentos-theme/wallpaper.png ] || \
-                 [ "$(stat -c%s packages/torrentos-theme/wallpaper.png 2>/dev/null)" -lt 1000 ]; then
-                convert -size 3840x2160 \
-                  gradient:"#0A1628-#1E6FFF" -blur 0x80 \
-                  packages/torrentos-theme/wallpaper.png || true
-                chown builder:builder packages/torrentos-theme/wallpaper.png
-              fi
-
-              echo "::group::Pre-installing AUR build deps"
-              pacman -S --needed --noconfirm \
-                libinput python-gobject hicolor-icon-theme xdotool gtk4 libadwaita vte4
-
-              echo "::group::Building custom packages"
-              sudo -u builder ./scripts/build-pkgs.sh
-
-              echo "::group::Building AUR packages"
-              sudo -u builder ./scripts/build-aur.sh
-
-              echo "::group::Building ISO"
-              bash ./scripts/ci-build.sh
-            '
-
-      - name: List artifacts
+      - name: List built artifacts
         run: ls -lh out/
 
       - name: Compute checksums
-        run: cd out && sha256sum *.iso > SHA256SUMS && cat SHA256SUMS
+        run: |
+          cd out
+          sha256sum *.iso > SHA256SUMS
+          cat SHA256SUMS
 
+      # Upload ISO as a workflow artifact (downloadable from the Actions tab)
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
@@ -87,8 +65,10 @@ jobs:
             out/SHA256SUMS
           if-no-files-found: error
           retention-days: 30
+          compression-level: 0   # ISO is already compressed; skip re-compression
 
-      - name: Attach to GitHub Release
+      # Also attach to a GitHub Release if this run was triggered by one
+      - name: Attach ISO to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
