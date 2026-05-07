@@ -80,9 +80,8 @@ source=(
     'settingsd'
     'firstboot'
     'torrentos-settingsd.service'
-    'greetd-config.toml'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     install -Dm644 "$srcdir/version"               "$pkgdir/etc/torrentos/version"
@@ -95,10 +94,9 @@ package() {
     install -Dm644 "$srcdir/torrentos-settingsd.service" \
         "$pkgdir/usr/lib/systemd/user/torrentos-settingsd.service"
 
-    # greetd login screen — installed systems only (live ISO keeps getty autologin)
-    install -Dm644 "$srcdir/greetd-config.toml" \
-        "$pkgdir/etc/greetd/config.toml"
     # Enable greetd at boot on installed system
+    # (greetd config is owned by the 'greetd' package; the live ISO airootfs
+    #  overlay applies our custom config on top after pacstrap.)
     install -dm755 "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
     ln -sf /usr/lib/systemd/system/greetd.service \
         "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/greetd.service"
