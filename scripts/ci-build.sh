@@ -112,14 +112,14 @@ cp -rn "$RELENG_AIROOTFS/root/.gnupg"                          /workspace/archis
 echo torrentos > /workspace/archiso/airootfs/etc/hostname
 
 log "Building custom packages (as builder)"
-cd /workspace
-# 6 packages: base, theme, hyprland-config, first-boot, settings, tools
+# Use absolute paths — sudo doesn't preserve cwd so relative paths fail
+chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh
 EXPECTED_PKGS=6
 if [[ -f /workspace/repo/x86_64/torrentos.db.tar.gz ]] && \
    [[ $(ls /workspace/repo/x86_64/torrentos-*-*-*-any.pkg.tar.zst 2>/dev/null | wc -l) -ge $EXPECTED_PKGS ]]; then
     log "Skipping torrentos-* — local repo already populated with all $EXPECTED_PKGS packages."
 else
-    sudo -u builder ./scripts/build-pkgs.sh
+    sudo -u builder bash /workspace/scripts/build-pkgs.sh
 fi
 
 log "Pre-installing AUR build deps as root (makepkg -s can't use sudo on nosuid NTFS mount)"
@@ -128,12 +128,12 @@ pacman -S --needed --noconfirm \
     gtk4 libadwaita vte4 >/dev/null
 
 log "Building AUR packages (paru-bin, libinput-gestures, magnus, bibata, google-chrome) (as builder)"
-sudo -u builder ./scripts/build-aur.sh
+sudo -u builder bash /workspace/scripts/build-aur.sh
 
 log "Re-indexing local repo (defends against stale db.tar.gz)"
 cd /workspace/repo/x86_64
 rm -f torrentos.db* torrentos.files*
-sudo -u builder repo-add torrentos.db.tar.gz *.pkg.tar.zst
+repo-add torrentos.db.tar.gz *.pkg.tar.zst
 cd /workspace
 
 log "Staging profile and pruning package-owned paths from airootfs"
