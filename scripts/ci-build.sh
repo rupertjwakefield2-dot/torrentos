@@ -200,3 +200,8 @@ bash -c '
 
 log "Done. Artifacts:"
 ls -lh /workspace/out/
+
+# Allow the GitHub Actions runner (non-root) to read/write the output directory.
+# The Docker container runs as root; without this the post-build steps that run
+# outside the container (checksum, upload) get "Permission denied".
+chmod -R a+rwX /workspace/out
