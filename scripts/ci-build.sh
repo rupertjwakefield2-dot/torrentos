@@ -184,9 +184,11 @@ find usr/local/bin -type d -empty -delete 2>/dev/null || true
 cd /workspace
 
 log "Building ISO (as root)"
-# Patch build-iso.sh's PROFILE pointer for this run
+# Use /tmp for the work directory — mkarchiso needs to chmod/chown airootfs files,
+# and the Docker bind-mount of /workspace from the host runner blocks permission changes.
+# /tmp is local to the container and has no such restriction.
 PROFILE="$PROFILE_STAGED" \
-WORK=/workspace/work \
+WORK=/tmp/torrentos-work \
 OUT=/workspace/out \
 REPO=/workspace/repo/x86_64 \
 bash -c '
