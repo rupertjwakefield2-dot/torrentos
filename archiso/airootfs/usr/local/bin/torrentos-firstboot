@@ -19,6 +19,11 @@ fi
 mkdir -p "$HOME/.config/torrentos" "$HOME/.config/hypr"
 touch "$USER_CONF" 2>/dev/null
 
+# ── Fix terminal state (autologin via agetty can leave stty in a bad state) ──
+# This ensures backspace, Ctrl+C, etc. all work correctly in the prompts below.
+stty sane 2>/dev/null || true
+stty erase '^?' 2>/dev/null || true   # DEL (127) = backspace in modern terminals
+
 # ── Colours ──────────────────────────────────────────────────────────────────
 B='\033[38;2;30;111;255m'
 C='\033[38;2;91;192;235m'

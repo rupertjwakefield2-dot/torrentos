@@ -12,6 +12,10 @@ window-padding-x = 12
 window-padding-y = 10
 window-padding-balance = true
 
+# Use xterm-256color for maximum app compatibility.
+# Ghostty's native term (xterm-ghostty) isn't in many terminfo DBs yet.
+term = xterm-256color
+
 cursor-style = block
 cursor-style-blink = false
 shell-integration = zsh

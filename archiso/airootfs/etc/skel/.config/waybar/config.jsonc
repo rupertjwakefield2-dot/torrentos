@@ -15,8 +15,8 @@
 
     // ── Left ────────────────────────────────────────────────────────────
     "custom/logo": {
-        "format": "  TorrentOS",
-        "tooltip": false,
+        "format": " ",
+        "tooltip": "TorrentOS — Super+Space to open launcher",
         "on-click": "rofi -show drun -theme ~/.config/rofi/torrentos.rasi"
     },
 

@@ -1,6 +1,14 @@
 # TorrentOS — default Zsh config
 # Override anything in ~/.zshrc.local (sourced at the bottom).
 
+# ---- terminal key fixes ----
+# Ensure backspace (DEL ^? and BS ^H) always work regardless of terminal type.
+# This is needed because agetty autologin can leave stty erase in an odd state.
+[[ -t 0 ]] && stty erase '^?' 2>/dev/null || true
+bindkey "^?"  backward-delete-char   # DEL  (127) — standard backspace
+bindkey "^H"  backward-delete-char   # BS   (8)   — Ctrl+H / some terminals
+bindkey "^[[3~" delete-char          # Del key (forward delete)
+
 # ---- history ----
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=20000

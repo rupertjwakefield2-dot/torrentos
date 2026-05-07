@@ -281,7 +281,7 @@ class WelcomePage(Gtk.Box):
             ("⚡", "Dev tools included",    "Git, Docker, Neovim, Ghostty terminal — configured out of the box"),
             ("📸", "Screenshot & settings", "Region/full/window capture tool and a full GTK4 settings app"),
             ("♿", "Accessibility first",   "Screen reader, magnifier and high-contrast all available from day one"),
-            ("🌐", "Both browsers",         "Firefox and Google Chrome ship together"),
+            ("🌐", "Your browser, your choice", "Firefox pre-installed; Chrome available via Flatpak on the final setup page"),
         ]
         for emoji, label, desc in features:
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
@@ -811,6 +811,91 @@ class FinishPage(Gtk.Box):
             btn_row.append(vbox)
 
         self.append(btn_row)
+
+        # Chrome install offer (only if not already installed)
+        self._chrome_installed = self._check_chrome()
+        if not self._chrome_installed:
+            chrome_sep = Gtk.Separator()
+            chrome_sep.set_margin_top(12); chrome_sep.set_margin_bottom(4)
+            self.append(chrome_sep)
+
+            chrome_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            chrome_row.set_margin_start(8); chrome_row.set_margin_end(8)
+            chrome_row.set_margin_bottom(4)
+
+            chrome_lbl = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            chrome_lbl.set_hexpand(True)
+            t = Gtk.Label(label="Google Chrome not detected")
+            t.set_halign(Gtk.Align.START)
+            t.add_css_class("heading")
+            s = Gtk.Label(label="Install it now via Flatpak (requires internet)")
+            s.set_halign(Gtk.Align.START)
+            s.add_css_class("dim-label")
+            chrome_lbl.append(t)
+            chrome_lbl.append(s)
+            chrome_row.append(chrome_lbl)
+
+            self._chrome_btn = Gtk.Button(label="Install Chrome")
+            self._chrome_btn.add_css_class("pill")
+            self._chrome_btn.connect("clicked", self._install_chrome)
+            chrome_row.append(self._chrome_btn)
+            self.append(chrome_row)
+
+            self._chrome_status = Gtk.Label(label="")
+            self._chrome_status.set_halign(Gtk.Align.CENTER)
+            self._chrome_status.add_css_class("dim-label")
+            self.append(self._chrome_status)
+
+    def _check_chrome(self) -> bool:
+        import shutil
+        # Check pacman, flatpak, or PATH
+        if shutil.which("google-chrome-stable") or shutil.which("google-chrome"):
+            return True
+        try:
+            r = subprocess.run(
+                ["flatpak", "list", "--app", "--columns=application"],
+                capture_output=True, text=True
+            )
+            if "com.google.Chrome" in r.stdout:
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _install_chrome(self, btn):
+        btn.set_sensitive(False)
+        btn.set_label("Installing…")
+        self._chrome_status.set_text("Adding Flathub and downloading Chrome (this may take a few minutes)…")
+        threading.Thread(target=self._do_install_chrome, daemon=True).start()
+
+    def _do_install_chrome(self):
+        try:
+            # Add Flathub remote if not present
+            subprocess.run(
+                ["flatpak", "remote-add", "--if-not-exists", "--user",
+                 "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo"],
+                capture_output=True
+            )
+            # Install Chrome
+            r = subprocess.run(
+                ["flatpak", "install", "--user", "-y", "flathub", "com.google.Chrome"],
+                capture_output=True, text=True
+            )
+            if r.returncode == 0:
+                GLib.idle_add(self._chrome_done, True)
+            else:
+                GLib.idle_add(self._chrome_done, False, r.stderr[:120])
+        except Exception as e:
+            GLib.idle_add(self._chrome_done, False, str(e))
+
+    def _chrome_done(self, success, msg=""):
+        if success:
+            self._chrome_status.set_text("✓ Google Chrome installed! Find it in the app launcher.")
+            self._chrome_btn.set_label("Installed ✓")
+        else:
+            self._chrome_status.set_text(f"✗ Install failed: {msg}")
+            self._chrome_btn.set_label("Retry")
+            self._chrome_btn.set_sensitive(True)
 
 
 # ── Window ────────────────────────────────────────────────────────────────────
