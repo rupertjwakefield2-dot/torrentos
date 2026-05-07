@@ -23,13 +23,10 @@ file_permissions=(
     ["/root"]="0:0:750"
     ["/root/.automated_script.sh"]="0:0:755"
     ["/root/.gnupg"]="0:0:700"
-    # TorrentOS scripts — must be executable
-    ["/usr/local/bin/torrentos-firstboot"]="0:0:755"
+    # TorrentOS installer scripts (live in airootfs, not in packages)
     ["/usr/local/bin/torrentos-install"]="0:0:755"
     ["/usr/local/bin/torrentos-install-gui"]="0:0:755"
-    ["/usr/local/bin/torrentos-update-gui"]="0:0:755"
-    ["/usr/local/bin/torrentos-screenshot"]="0:0:755"
-    ["/usr/local/bin/torrentos-help"]="0:0:755"
-    # Rofi power-menu must be executable
-    ["/etc/skel/.config/rofi/power-menu.sh"]="0:0:755"
+    # NOTE: torrentos-firstboot, torrentos-update-gui, torrentos-screenshot,
+    # torrentos-help, and rofi/power-menu.sh are owned by torrentos-* packages
+    # and pruned from airootfs before mkarchiso runs — do NOT list them here.
 )
