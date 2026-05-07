@@ -107,14 +107,16 @@ stage_settings() {
     require_file "$pkg/bin/torrentos-settings"
     require_file "$pkg/data/torrentos-settings.desktop"
     require_file "$pkg/data/torrentos-settings.svg"
-    [[ -d "$pkg/src/torrentos_settings" ]] || err "Missing staged source directory: $pkg/src/torrentos_settings"
+    # The Python package source lives at $pkg/torrentos_settings/ (tracked by git).
+    [[ -d "$pkg/torrentos_settings" ]] || err "Missing Python source directory: $pkg/torrentos_settings"
 
     cp -f "$pkg/bin/torrentos-settings"          "$pkg/torrentos-settings"
     cp -f "$pkg/data/torrentos-settings.desktop" "$pkg/torrentos-settings.desktop"
     cp -f "$pkg/data/torrentos-settings.svg"     "$pkg/torrentos-settings.svg"
 
+    # (Re-)create the tarball from the tracked source directory.
     rm -f "$pkg/torrentos_settings.tar" "$pkg/torrentos_settings.tar.gz"
-    (cd "$pkg/src" && tar -czf "$pkg/torrentos_settings.tar.gz" torrentos_settings)
+    (cd "$pkg" && tar -czf "$pkg/torrentos_settings.tar.gz" torrentos_settings)
     [[ -s "$pkg/torrentos_settings.tar.gz" ]] || err "Failed to create torrentos_settings.tar.gz"
 }
 
