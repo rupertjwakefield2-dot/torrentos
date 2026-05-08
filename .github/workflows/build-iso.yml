@@ -55,7 +55,7 @@ jobs:
           sha256sum *.iso > SHA256SUMS
           cat SHA256SUMS
 
-      # Upload ISO as a workflow artifact (downloadable from the Actions tab)
+      # Upload ISO as a workflow artifact (downloadable from the Actions tab for 30 days)
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
@@ -67,11 +67,79 @@ jobs:
           retention-days: 30
           compression-level: 0   # ISO is already compressed; skip re-compression
 
-      # Also attach to a GitHub Release if this run was triggered by one
-      - name: Attach ISO to GitHub Release
+      # -----------------------------------------------------------------------
+      # Upload to Internet Archive for permanent, free, direct-download hosting.
+      # Requires two GitHub secrets:
+      #   IA_ACCESS_KEY  — your archive.org S3 access key
+      #   IA_SECRET_KEY  — your archive.org S3 secret key
+      # Get them at: https://archive.org/account/s3.php  (free account required)
+      # Add them at: GitHub repo → Settings → Secrets → Actions
+      # -----------------------------------------------------------------------
+      - name: Upload ISO to Internet Archive
+        if: github.event_name == 'release' && env.IA_ACCESS_KEY != ''
+        env:
+          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
+          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          pip install --quiet internetarchive
+          ITEM="torrentos-${VERSION}-x86_64"
+          ia upload "$ITEM" \
+            out/torrentos-${VERSION}-x86_64.iso \
+            out/SHA256SUMS \
+            --access-key "$IA_ACCESS_KEY" \
+            --secret-key "$IA_SECRET_KEY" \
+            --metadata="mediatype:software" \
+            --metadata="title:TorrentOS ${VERSION} (x86_64 ISO)" \
+            --metadata="description:TorrentOS ${VERSION} — Arch-based Linux with Hyprland, built for downloading. Direct ISO download." \
+            --metadata="subject:linux;operating system;arch linux;hyprland;wayland;torrentos" \
+            --metadata="licenseurl:https://www.gnu.org/licenses/gpl-3.0.html" \
+            --metadata="creator:TorrentOS" \
+            --no-derive
+          echo "✅ ISO uploaded → https://archive.org/download/${ITEM}/torrentos-${VERSION}-x86_64.iso"
+
+      # Split ISO into <1.9 GB chunks and attach both to the GitHub Release.
+      # Users reassemble with: cat torrentos-*.part* > torrentos.iso
+      # (GitHub's release asset limit is 2 GB; the ISO is ~3.9 GB)
+      - name: Split ISO and attach to GitHub Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            out/*.iso
-            out/SHA256SUMS
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd out
+          ISO="torrentos-${VERSION}-x86_64.iso"
+
+          # Split into 1900 MB chunks
+          split -b 1900m "$ISO" "${ISO}.part"
+          ls -lh ${ISO}.part*
+
+          # Rename to friendly names: .partaa → .part1, .partab → .part2, etc.
+          i=1
+          for f in $(ls ${ISO}.part* | sort); do
+            mv "$f" "${ISO}.part${i}"
+            i=$((i+1))
+          done
+
+          # Write reassembly readme
+          PARTS=$(ls ${ISO}.part* | wc -l)
+          cat > REASSEMBLE.txt <<EOF
+          TorrentOS ${VERSION} ISO — split download
+          ==========================================
+          The ISO was split into ${PARTS} parts due to GitHub's 2 GB file limit.
+
+          To reassemble on Linux / macOS:
+            cat ${ISO}.part* > ${ISO}
+            sha256sum -c SHA256SUMS
+
+          To reassemble on Windows (PowerShell):
+            Get-Content ${ISO}.part1,${ISO}.part2 -Raw | Set-Content ${ISO} -AsByteStream
+
+          Then flash with Rufus (DD mode) or Balena Etcher.
+          EOF
+
+          gh release upload "${{ github.ref_name }}" \
+            ${ISO}.part* \
+            SHA256SUMS \
+            REASSEMBLE.txt \
+            --clobber
