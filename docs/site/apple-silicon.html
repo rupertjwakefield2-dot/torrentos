@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Silicon (M1/M2/M3) — TorrentOS</title>
-  <meta name="description" content="How to run TorrentOS on Apple Silicon Macs — M1, M2, and M3 — using Asahi Linux." />
+  <title>Apple Silicon (M1/M2/M3/M4/M5) — TorrentOS</title>
+  <meta name="description" content="How to run TorrentOS on Apple Silicon Macs — M1, M2, M3, M4, and M5 — using Asahi Linux." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -374,8 +374,8 @@
   <!-- Hero -->
   <div class="page-hero">
     <div class="hero-badge">🍎 Apple Silicon</div>
-    <h1>TorrentOS on M1, M2 &amp; M3</h1>
-    <p>Run TorrentOS on your MacBook or Mac Mini with Apple Silicon — powered by the open-source Asahi Linux project.</p>
+    <h1>TorrentOS on Apple Silicon</h1>
+    <p>Run TorrentOS on any Apple Silicon Mac — M1 through M5 — powered by the open-source Asahi Linux project.</p>
   </div>
 
   <!-- How it works -->
@@ -423,9 +423,15 @@
           <span class="soc-status status-partial">GPU partially supported</span>
         </div>
         <div class="soc-card reveal reveal-delay-4">
+          <div class="soc-chip">🟡</div>
+          <h4>M4 / M4 Pro / M4 Max</h4>
+          <p>MacBook Pro, Mac Mini, iMac (2024–2025)</p>
+          <span class="soc-status status-partial">Early / partial support</span>
+        </div>
+        <div class="soc-card reveal reveal-delay-5">
           <div class="soc-chip">🔵</div>
-          <h4>M4 series</h4>
-          <p>MacBook Pro, Mac Mini, iPad Pro (2024+)</p>
+          <h4>M5 / M5 Pro / M5 Max</h4>
+          <p>MacBook Pro (2025+)</p>
           <span class="soc-status status-coming-soon">Coming soon</span>
         </div>
       </div>
@@ -524,6 +530,11 @@
               <td>GPU acceleration (M3)</td>
               <td><span class="badge-part">◑ Partial</span></td>
               <td>Asahi driver in progress; basic OpenGL works</td>
+            </tr>
+            <tr>
+              <td>GPU acceleration (M4/M4 Pro/M4 Max)</td>
+              <td><span class="badge-part">◑ Early</span></td>
+              <td>Asahi support in early development; basic display works</td>
             </tr>
             <tr>
               <td>WiFi</td>

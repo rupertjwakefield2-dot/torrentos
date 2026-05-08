@@ -595,11 +595,11 @@
 
         <details class="faq-item">
           <summary>
-            <span class="faq-q-text">Does TorrentOS support Apple Silicon (M1, M2, M3)?</span>
+            <span class="faq-q-text">Does TorrentOS support Apple Silicon (M1, M2, M3, M4, M5)?</span>
             <span class="faq-chevron">+</span>
           </summary>
           <div class="faq-body">
-            Yes! TorrentOS supports Apple Silicon via the <strong style="color:var(--white)">Asahi Linux project</strong>. The ISO is x86_64 only, but you can run TorrentOS on any M1/M2/M3 Mac by first installing Arch Linux (Asahi), then running our one-command bootstrap script. The whole process takes about 20 minutes. <a href="apple-silicon.html">Read the full Apple Silicon guide →</a>
+            Yes! TorrentOS supports Apple Silicon via the <strong style="color:var(--white)">Asahi Linux project</strong>. The ISO is x86_64 only, but you can run TorrentOS on M1/M2/M3/M4 Macs by first installing Arch Linux (Asahi), then running our one-command bootstrap script. M4 Pro/Max have early support; M5 is coming soon. The whole process takes about 20 minutes. <a href="apple-silicon.html">Read the full Apple Silicon guide →</a>
           </div>
         </details>
 
@@ -797,8 +797,8 @@
         answer: 'Run <code>torrentos-doctor</code> in the terminal after first boot — it auto-detects your NVIDIA GPU and guides you. Or manually run: <code>sudo pacman -S nvidia nvidia-utils</code> then reboot. This is required for Wayland compositing on NVIDIA hardware.'
       },
       {
-        keys: ['apple', 'silicon', 'm1', 'm2', 'm3', 'macbook', 'mac', 'asahi', 'arm', 'aarch64'],
-        answer: 'Yes! TorrentOS supports Apple Silicon (M1, M2, M3) via Asahi Linux. Install Arch Linux (Asahi) on your Mac first, then run: <code>bash &lt;(curl -fsSL https://torrentos.org/install-asahi.sh)</code> — done in ~20 minutes. <a href="apple-silicon.html">Full guide →</a>'
+        keys: ['apple', 'silicon', 'm1', 'm2', 'm3', 'm4', 'm5', 'macbook', 'mac', 'asahi', 'arm', 'aarch64'],
+        answer: 'Yes! TorrentOS supports Apple Silicon (M1–M4) via Asahi Linux. M4 Pro/Max have early support; M5 is coming soon. Install Arch Linux (Asahi) on your Mac first, then run: <code>bash &lt;(curl -fsSL https://torrentos.org/install-asahi.sh)</code> — done in ~20 minutes. <a href="apple-silicon.html">Full guide →</a>'
       },
       {
         keys: ['trackpad', 'gesture', 'multitouch', 'touchpad', 'swipe'],
