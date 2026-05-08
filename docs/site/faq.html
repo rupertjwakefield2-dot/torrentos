@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ — TorrentOS</title>
+  <meta name="description" content="Everything you need to know about TorrentOS. Installation, hardware, updates, gaming, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #04080f;
+      --bg2:     #080f1d;
+      --glass:   rgba(12, 20, 40, 0.7);
+      --border:  rgba(255, 255, 255, 0.07);
+      --blue:    #2f7fff;
+      --blue2:   #5599ff;
+      --glow:    rgba(47, 127, 255, 0.35);
+      --text:    #7a9cbf;
+      --white:   #eef4ff;
+      --radius:  16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Scroll animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
+    .reveal-delay-4 { transition-delay: 0.32s; }
+    .reveal-delay-5 { transition-delay: 0.40s; }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 56px;
+      background: rgba(4, 8, 15, 0.75);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      text-decoration: none;
+    }
+    .logo-dot { color: var(--blue); }
+    nav ul { list-style: none; display: flex; gap: 1.8rem; align-items: center; }
+    nav a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: color 0.15s; }
+    nav a:hover { color: var(--white); }
+    nav a.active { color: var(--white); }
+    .nav-cta {
+      background: var(--blue);
+      color: var(--white) !important;
+      padding: 0.38rem 1.05rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.15s, box-shadow 0.15s !important;
+    }
+    .nav-cta:hover { background: var(--blue2) !important; box-shadow: 0 0 20px var(--glow); }
+
+    /* Page hero */
+    .page-hero {
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 1.5rem;
+      padding-top: 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 80% at 50% 0%, rgba(47,127,255,0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 80% 100%, rgba(47,127,255,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .page-hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.055em;
+      line-height: 1;
+      margin-bottom: 0.85rem;
+      position: relative;
+    }
+    .page-hero .subtitle {
+      font-size: 1rem;
+      color: var(--text);
+      max-width: 400px;
+      position: relative;
+    }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* Container */
+    section { padding: 5rem 1.5rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .section-eyebrow {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      margin-bottom: 0.8rem;
+      line-height: 1.15;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--text);
+      max-width: 440px;
+      margin: 0 auto 2.5rem;
+      font-size: 0.93rem;
+      line-height: 1.75;
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text);
+      opacity: 0.5;
+      pointer-events: none;
+      width: 18px; height: 18px;
+    }
+    #faq-search {
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.8rem 1rem 0.8rem 2.8rem;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.95rem;
+      backdrop-filter: blur(16px);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #faq-search::placeholder { color: rgba(122,156,191,0.45); }
+    #faq-search:focus {
+      border-color: rgba(47,127,255,0.4);
+      box-shadow: 0 0 0 3px rgba(47,127,255,0.1);
+    }
+    #no-results {
+      text-align: center;
+      color: var(--text);
+      opacity: 0.5;
+      font-size: 0.9rem;
+      padding: 2rem 0;
+      display: none;
+    }
+
+    /* FAQ accordion */
+    .faq-list { display: flex; flex-direction: column; max-width: 720px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:first-child { border-top: 1px solid var(--border); }
+    .faq-item.hidden { display: none; }
+
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 1.15rem 0;
+      color: var(--white);
+      font-size: 0.975rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary:hover { color: var(--blue2); }
+    .faq-chevron {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(47,127,255,0.08);
+      border: 1px solid rgba(47,127,255,0.18);
+      flex-shrink: 0;
+      margin-left: 1rem;
+      transition: background 0.2s, transform 0.25s cubic-bezier(.22,1,.36,1);
+      color: var(--blue);
+      font-size: 1.1rem;
+      font-weight: 300;
+      line-height: 1;
+    }
+    .faq-item[open] .faq-chevron {
+      transform: rotate(45deg);
+      background: rgba(47,127,255,0.18);
+    }
+    .faq-body {
+      color: var(--text);
+      font-size: 0.9rem;
+      line-height: 1.8;
+      padding-bottom: 1.25rem;
+      max-width: 640px;
+    }
+    .faq-body a { color: var(--blue); text-decoration: none; }
+    .faq-body a:hover { text-decoration: underline; }
+    .faq-body code {
+      background: rgba(47,127,255,0.1);
+      color: var(--blue2);
+      padding: 0.1em 0.45em;
+      border-radius: 5px;
+      font-size: 0.87em;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    /* Highlight match */
+    mark {
+      background: rgba(47,127,255,0.25);
+      color: var(--white);
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+
+    /* Chatbot section */
+    .chat-section {
+      padding: 5rem 1.5rem;
+      background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(47,127,255,0.07) 0%, transparent 70%);
+    }
+    .chat-card {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(47,127,255,0.08);
+    }
+    .chat-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(255,255,255,0.025);
+    }
+    .chat-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #5bc0eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .chat-header-info strong {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .chat-header-info span {
+      font-size: 0.75rem;
+      color: var(--text);
+    }
+    .chat-online-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #28c840;
+      display: inline-block;
+      margin-right: 4px;
+      animation: onlineBlink 3s ease-in-out infinite;
+    }
+    @keyframes onlineBlink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .chat-messages {
+      height: 380px;
+      overflow-y: auto;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+    .msg {
+      display: flex;
+      gap: 0.6rem;
+      max-width: 82%;
+      animation: msgIn 0.3s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .msg-bot { align-self: flex-start; }
+    .msg-user { align-self: flex-end; flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #5bc0eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    .msg-bubble {
+      padding: 0.65rem 1rem;
+      border-radius: 16px;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    .msg-bot .msg-bubble {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--white);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-user .msg-bubble {
+      background: var(--blue);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-bubble code {
+      background: rgba(0,0,0,0.3);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      font-size: 0.82em;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      align-self: flex-start;
+    }
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      padding: 0.65rem 1rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+    }
+    .typing-dots span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text);
+      animation: typingBounce 1.2s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* Chat input */
+    .chat-input-wrap {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.6rem;
+      background: rgba(255,255,255,0.02);
+    }
+    .chat-suggestions {
+      padding: 0.5rem 1.25rem 0;
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid var(--border);
+    }
+    .suggestion-chip {
+      background: rgba(47,127,255,0.08);
+      border: 1px solid rgba(47,127,255,0.18);
+      color: var(--blue2);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: inherit;
+    }
+    .suggestion-chip:hover {
+      background: rgba(47,127,255,0.18);
+      border-color: rgba(47,127,255,0.4);
+      color: var(--white);
+    }
+    #chat-input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 1rem;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #chat-input::placeholder { color: rgba(122,156,191,0.4); }
+    #chat-input:focus { border-color: rgba(47,127,255,0.4); }
+    #chat-send {
+      background: var(--blue);
+      border: none;
+      border-radius: 10px;
+      padding: 0.65rem 1rem;
+      color: white;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    #chat-send:hover { background: var(--blue2); transform: translateY(-1px); }
+    #chat-send svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: rgba(122,156,191,0.38);
+    }
+    footer a { color: rgba(122,156,191,0.5); text-decoration: none; transition: color 0.15s; }
+    footer a:hover { color: var(--white); }
+    .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    @media (max-width: 640px) {
+      nav ul { gap: 1rem; }
+      nav ul li:not(:last-child):not(:first-child) { display: none; }
+      footer { flex-direction: column; text-align: center; }
+      .chat-messages { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="logo">Torrent<span class="logo-dot">OS</span></a>
+    <ul>
+      <li><a href="index.html#features">Features</a></li>
+      <li><a href="index.html#install">Install</a></li>
+      <li><a href="faq.html" class="active">FAQ</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a></li>
+      <li><a href="recommend.html">Recommend</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/releases/latest" class="nav-cta">Download</a></li>
+    </ul>
+  </nav>
+
+  <!-- Page hero -->
+  <div class="page-hero">
+    <div class="page-hero-bg"></div>
+    <h1 class="reveal">FAQ</h1>
+    <p class="subtitle reveal reveal-delay-1">Everything you need to know about TorrentOS</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- FAQ section -->
+  <section>
+    <div class="container">
+      <div class="section-eyebrow reveal">Got questions?</div>
+      <h2 class="section-title reveal reveal-delay-1">We've got answers.</h2>
+      <p class="section-sub reveal reveal-delay-2">Search below or browse all topics. Can't find what you need? Ask the bot at the bottom of this page.</p>
+
+      <!-- Search -->
+      <div class="search-wrap reveal reveal-delay-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="faq-search" type="text" placeholder="Search questions…" autocomplete="off" />
+      </div>
+
+      <div id="no-results">No questions match your search. Try the bot below!</div>
+
+      <!-- Accordion -->
+      <div class="faq-list" id="faq-list">
+
+        <details class="faq-item reveal reveal-delay-1">
+          <summary>
+            <span class="faq-q-text">Is TorrentOS free?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Yes. TorrentOS is fully open source under the <strong style="color:var(--white)">GPL-3.0</strong> licence. You can use it, modify it, and share it for free. The source code is on <a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a>.
+          </div>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-2">
+          <summary>
+            <span class="faq-q-text">What are the system requirements?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Minimum: <strong style="color:var(--white)">8 GB RAM</strong> (16 GB recommended), a <strong style="color:var(--white)">4-core CPU</strong>, <strong style="color:var(--white)">50 GB storage</strong>, a <strong style="color:var(--white)">64-bit x86</strong> processor, and a <strong style="color:var(--white)">GPU with Vulkan support</strong>. Most hardware made in the last 5–6 years meets these requirements out of the box.
+          </div>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-3">
+          <summary>
+            <span class="faq-q-text">Can I install TorrentOS alongside Windows?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Yes — dual boot works. Run the TorrentOS installer, select your free disk space as the install target, and keep your existing EFI partition. The bootloader will give you a choice between TorrentOS and Windows on every startup. A full step-by-step guide is available on the <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">wiki</a>.
+          </div>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-4">
+          <summary>
+            <span class="faq-q-text">Does it work on a laptop?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Yes. WiFi (via NetworkManager), touchpad gestures (libinput), screen brightness, and suspend/resume all work out of the box on most laptops. NVIDIA discrete GPUs require one extra step after installation — see the NVIDIA question below.
+          </div>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-5">
+          <summary>
+            <span class="faq-q-text">How do I install NVIDIA drivers?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            The easiest way: open a terminal after first boot and run <code>torrentos-doctor</code>. It auto-detects your GPU and walks you through the driver install. Alternatively, run <code>sudo pacman -S nvidia nvidia-utils</code> and reboot. The proprietary driver is needed for Wayland compositing on NVIDIA hardware.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">How do I update TorrentOS?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Click the update icon in the taskbar to open <strong style="color:var(--white)">torrentos-update-gui</strong> — it shows available updates and applies them with one click. Or run <code>sudo pacman -Syu</code> in any terminal. TorrentOS is a rolling release, so updates are continuous rather than version-based.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">Can I use Flatpak apps?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Yes. Flatpak is pre-installed and Flathub is configured as the default remote. Install apps via GNOME Software, the Discover app, or from the terminal: <code>flatpak install flathub &lt;app-id&gt;</code>. Popular creative apps like DaVinci Resolve, Kdenlive, and Inkscape are all available this way.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">What desktop environment does it use?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            TorrentOS uses <strong style="color:var(--white)">Hyprland</strong> — a dynamic tiling Wayland compositor — with a macOS-style layout. The taskbar is <strong style="color:var(--white)">Waybar</strong>, the app launcher is <strong style="color:var(--white)">rofi</strong>, and notifications are handled by <strong style="color:var(--white)">swaync</strong>. The whole stack is Wayland-native and GPU-accelerated.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">Is gaming supported?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Yes. Install <strong style="color:var(--white)">Steam</strong> from the package manager (<code>sudo pacman -S steam</code>), then enable <strong style="color:var(--white)">Proton</strong> in Steam settings to play Windows games. Vulkan is set up by default. NVIDIA users should install the proprietary driver first via <code>torrentos-doctor</code> for the best performance.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">How do I report a bug?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            Open an issue on <a href="https://github.com/rupertjwakefield2-dot/torrentos/issues">github.com/rupertjwakefield2-dot/torrentos/issues</a>. Before you do, run <code>torrentos-doctor</code> from the terminal — it collects system info and outputs a report you can paste directly into the issue.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">What's the difference between v0.4 and v0.5?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            v0.5 adds the brand-new <strong style="color:var(--white)">TorrentOS Settings app</strong> (libadwaita, covers appearance, display, accessibility, and dev mode), a <strong style="color:var(--white)">Developer Mode installer</strong> that sets up Rust, Node, Docker, and VS Code in one click, significantly improved accessibility options, and a polished <strong style="color:var(--white)">first-boot setup wizard</strong>.
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span class="faq-q-text">Can I go back to Arch Linux defaults?</span>
+            <span class="faq-chevron">+</span>
+          </summary>
+          <div class="faq-body">
+            TorrentOS <em>is</em> Arch Linux — it's built directly on the Arch base without any forks or incompatible modifications. Every package from the official Arch repos and the AUR works normally. You can install or remove any package freely, and the system stays fully Arch-compatible.
+          </div>
+        </details>
+
+      </div><!-- /faq-list -->
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- Chatbot section -->
+  <div class="chat-section">
+    <div class="container" style="max-width:800px">
+      <div class="section-eyebrow reveal">AI assistant</div>
+      <h2 class="section-title reveal reveal-delay-1">Still have questions? Ask the bot.</h2>
+      <p class="section-sub reveal reveal-delay-2">Works fully offline — no API needed. Powered by a local keyword engine.</p>
+
+      <div class="chat-card reveal reveal-delay-3">
+        <div class="chat-header">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-header-info">
+            <strong>TorrentOS Assistant</strong>
+            <span><span class="chat-online-dot"></span>Online · Offline-capable</span>
+          </div>
+        </div>
+
+        <div class="chat-suggestions" id="suggestions-row">
+          <button class="suggestion-chip" onclick="sendSuggestion('How do I install it?')">How do I install it?</button>
+          <button class="suggestion-chip" onclick="sendSuggestion('NVIDIA drivers')">NVIDIA drivers</button>
+          <button class="suggestion-chip" onclick="sendSuggestion('What is Hyprland?')">What is Hyprland?</button>
+          <button class="suggestion-chip" onclick="sendSuggestion('Gaming on TorrentOS')">Gaming</button>
+          <button class="suggestion-chip" onclick="sendSuggestion('AUR and yay')">AUR / yay</button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <div class="chat-input-wrap">
+          <input id="chat-input" type="text" placeholder="Ask anything about TorrentOS…" autocomplete="off" />
+          <button id="chat-send">
+            <svg viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>2026 TorrentOS · <a href="https://torrentos.org">torrentos.org</a></div>
+    <div class="footer-links">
+      <a href="faq.html">FAQ</a>
+      <a href="recommend.html">Find my setup</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Installation">Install guide</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Changelog">Changelog</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/issues">Report a bug</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/releases">Releases</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    // ── Scroll reveal ──────────────────────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('.page-hero .reveal').forEach(el => {
+      setTimeout(() => el.classList.add('visible'), 80);
+    });
+
+    // ── FAQ search ─────────────────────────────────────────────────────────
+    const searchInput = document.getElementById('faq-search');
+    const faqItems = document.querySelectorAll('.faq-item');
+    const noResults = document.getElementById('no-results');
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      let visible = 0;
+
+      faqItems.forEach(item => {
+        const summaryText = item.querySelector('.faq-q-text').textContent.toLowerCase();
+        const bodyText = item.querySelector('.faq-body').textContent.toLowerCase();
+        const matches = !q || summaryText.includes(q) || bodyText.includes(q);
+        item.classList.toggle('hidden', !matches);
+        if (matches) visible++;
+
+        // Highlight term in question text
+        const qTextEl = item.querySelector('.faq-q-text');
+        if (q && matches) {
+          const raw = qTextEl.getAttribute('data-raw') || qTextEl.textContent;
+          qTextEl.setAttribute('data-raw', raw);
+          const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          qTextEl.innerHTML = raw.replace(re, '<mark>$1</mark>');
+        } else {
+          const raw = qTextEl.getAttribute('data-raw');
+          if (raw) qTextEl.textContent = raw;
+        }
+      });
+
+      noResults.style.display = visible === 0 ? 'block' : 'none';
+    });
+
+    // ── Chatbot ────────────────────────────────────────────────────────────
+    const kb = [
+      {
+        keys: ['install', 'installation', 'how to install', 'setup', 'get started', 'flash', 'usb', 'iso'],
+        answer: 'To install TorrentOS: 1) Download the ISO from the releases page. 2) Flash it to a USB drive using Rufus (DD mode on Windows) or Balena Etcher. 3) Boot from the USB and run the installer from the desktop. The full guide is on the <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Installation" target="_blank">wiki</a>.'
+      },
+      {
+        keys: ['require', 'requirements', 'specs', 'minimum', 'ram', 'cpu', 'storage', 'vulkan', 'hardware'],
+        answer: 'System requirements: <strong style="color:var(--white)">8 GB RAM</strong> (16 GB recommended), a <strong style="color:var(--white)">4-core CPU</strong>, <strong style="color:var(--white)">50 GB storage</strong>, a 64-bit x86 processor, and a GPU with Vulkan support. Most modern PCs qualify.'
+      },
+      {
+        keys: ['nvidia', 'gpu driver', 'proprietary', 'graphics driver'],
+        answer: 'Run <code>torrentos-doctor</code> in the terminal after first boot — it auto-detects your NVIDIA GPU and guides you. Or manually run: <code>sudo pacman -S nvidia nvidia-utils</code> then reboot. This is required for Wayland compositing on NVIDIA hardware.'
+      },
+      {
+        keys: ['update', 'upgrade', 'pacman -syu', 'updates', 'rolling'],
+        answer: 'Update TorrentOS by clicking the update icon in the Waybar taskbar (opens torrentos-update-gui), or run <code>sudo pacman -Syu</code> in a terminal. TorrentOS is a rolling release — you get updates continuously without reinstalling.'
+      },
+      {
+        keys: ['flatpak', 'flathub', 'app store', 'software centre', 'gnome software', 'discover'],
+        answer: 'Flatpak is pre-installed with Flathub configured. Install apps from GNOME Software, Discover, or the terminal: <code>flatpak install flathub &lt;app-id&gt;</code>. DaVinci Resolve, Kdenlive, GIMP, Inkscape, OBS, and thousands more are available.'
+      },
+      {
+        keys: ['gaming', 'steam', 'proton', 'wine', 'windows game', 'play'],
+        answer: 'Install Steam: <code>sudo pacman -S steam</code>, then enable Proton in Steam Settings → Steam Play. Vulkan is set up by default so most games work immediately. For best NVIDIA performance, install the proprietary driver first with <code>torrentos-doctor</code>.'
+      },
+      {
+        keys: ['hyprland', 'compositor', 'wayland', 'desktop', 'window manager', 'tiling'],
+        answer: 'TorrentOS uses Hyprland — a Wayland-native dynamic tiling compositor. It gives you smooth GPU-accelerated animations, blur, rounded corners, and both tiling and floating window modes. The taskbar is Waybar, the launcher is rofi, and notifications use swaync.'
+      },
+      {
+        keys: ['dual boot', 'alongside windows', 'efi', 'bootloader', 'grub', 'windows'],
+        answer: 'Dual boot with Windows works fine. During installation, choose your free disk space as the target partition and keep your existing EFI partition. The bootloader will show both TorrentOS and Windows at startup. Detailed steps are on the <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki" target="_blank">wiki</a>.'
+      },
+      {
+        keys: ['torrent', 'qbittorrent', 'download', 'seeding', 'p2p', 'bittorrent'],
+        answer: 'qBittorrent is pre-installed and pre-configured — just open it and start downloading. TorrentOS is literally named after this: torrenting is a first-class feature with no setup required.'
+      },
+      {
+        keys: ['greetd', 'login', 'login screen', 'display manager', 'tuigreet'],
+        answer: 'TorrentOS uses greetd with tuigreet as the login manager — a minimal, fast terminal-based greeter that launches Hyprland cleanly. You can configure it in <code>/etc/greetd/config.toml</code>.'
+      },
+      {
+        keys: ['dev mode', 'developer mode', 'development mode', 'developer tools', 'devtools'],
+        answer: 'Enable Dev Mode from the TorrentOS Settings app (or during first-boot setup). It installs Rust, Node.js, Docker, VS Code, and Go in one click, and configures your shell with useful developer aliases and plugins.'
+      },
+      {
+        keys: ['settings app', 'settings', 'control panel', 'appearance', 'libadwaita'],
+        answer: 'The TorrentOS Settings app (new in v0.5) is a full libadwaita control panel covering appearance, display scaling, keyboard layout, network, accessibility, and Dev Mode. Launch it from the app menu or press the Super key and search "Settings".'
+      },
+      {
+        keys: ['wifi', 'wireless', 'network', 'networkmanager', 'bluetooth'],
+        answer: 'WiFi is managed by NetworkManager and works on most laptops and adapters out of the box. Click the network icon in Waybar to connect. Bluetooth is supported via BlueZ — use the bluetooth icon in the taskbar or run <code>bluetoothctl</code> in the terminal.'
+      },
+      {
+        keys: ['aur', 'yay', 'paru', 'aur helper', 'user repository'],
+        answer: 'TorrentOS ships with paru as the AUR helper. Install any AUR package with: <code>paru -S &lt;package-name&gt;</code>. The AUR has tens of thousands of community packages not in the official repos.'
+      },
+      {
+        keys: ['theme', 'wallpaper', 'appearance', 'customise', 'customize', 'look', 'style'],
+        answer: 'Change themes, wallpaper, and colour accents from the TorrentOS Settings app under Appearance. Hyprland config lives at <code>~/.config/hypr/hyprland.conf</code> for deeper customisation. Waybar styles are in <code>~/.config/waybar/style.css</code>.'
+      },
+      {
+        keys: ['shortcut', 'keybinding', 'keyboard shortcut', 'hotkey', 'super key'],
+        answer: 'Key bindings: <code>Super+Enter</code> — terminal, <code>Super+Space</code> — rofi launcher, <code>Super+Q</code> — close window, <code>Super+1-9</code> — switch workspaces, <code>Super+Shift+1-9</code> — move window to workspace. Edit them in <code>~/.config/hypr/hyprland.conf</code>.'
+      },
+      {
+        keys: ['log', 'logs', 'journal', 'journalctl', 'debug', 'error', 'crash'],
+        answer: 'View system logs with <code>journalctl -b</code> (current boot) or <code>journalctl -xe</code> (recent errors). For Hyprland-specific logs, check <code>~/.local/share/hyprland/hyprland.log</code>. Run <code>torrentos-doctor</code> to collect a full diagnostic report.'
+      },
+      {
+        keys: ['performance', 'speed', 'slow', 'fast', 'optimise', 'optimize', 'memory'],
+        answer: 'TorrentOS is tuned for performance out of the box: Zram swap, IO scheduler tweaks, and systemd service trimming. If things feel slow, check running processes with <code>htop</code> and GPU memory usage with <code>nvtop</code> (NVIDIA) or <code>radeontop</code> (AMD).'
+      },
+      {
+        keys: ['free', 'cost', 'price', 'open source', 'licence', 'license', 'gpl'],
+        answer: 'TorrentOS is completely free — both as in freedom and as in price. It is published under the GPL-3.0 open source licence. Source code is on <a href="https://github.com/rupertjwakefield2-dot/torrentos" target="_blank">GitHub</a>.'
+      },
+      {
+        keys: ['laptop', 'battery', 'brightness', 'touchpad', 'suspend', 'hibernate', 'power'],
+        answer: 'TorrentOS works well on laptops. Touchpad gestures (libinput), brightness keys, function keys, suspend, and hibernate all work out of the box. Battery optimisation uses power-profiles-daemon — set to Power Saver in the Waybar system menu when you need longer runtime.'
+      },
+    ];
+
+    const fallback = "I'm not sure about that one! Try searching the <a href='https://github.com/rupertjwakefield2-dot/torrentos/wiki' target='_blank'>wiki</a> or opening a <a href='https://github.com/rupertjwakefield2-dot/torrentos/issues' target='_blank'>GitHub issue</a>.";
+
+    function getBotAnswer(text) {
+      const t = text.toLowerCase();
+      for (const entry of kb) {
+        if (entry.keys.some(k => t.includes(k))) return entry.answer;
+      }
+      return fallback;
+    }
+
+    const messagesEl = document.getElementById('chat-messages');
+    const chatInput  = document.getElementById('chat-input');
+
+    function appendMessage(html, type) {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg msg-' + type;
+
+      if (type === 'bot') {
+        const av = document.createElement('div');
+        av.className = 'msg-avatar';
+        av.textContent = '🤖';
+        wrap.appendChild(av);
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = html;
+      wrap.appendChild(bubble);
+
+      if (type === 'user') {
+        const av = document.createElement('div');
+        av.className = 'msg-avatar';
+        av.textContent = '👤';
+        wrap.appendChild(av);
+      }
+
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function showTyping() {
+      const wrap = document.createElement('div');
+      wrap.className = 'typing-indicator';
+      wrap.id = 'typing-indicator';
+
+      const av = document.createElement('div');
+      av.className = 'msg-avatar';
+      av.textContent = '🤖';
+
+      const dots = document.createElement('div');
+      dots.className = 'typing-dots';
+      dots.innerHTML = '<span></span><span></span><span></span>';
+
+      wrap.appendChild(av);
+      wrap.appendChild(dots);
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function hideTyping() {
+      const t = document.getElementById('typing-indicator');
+      if (t) t.remove();
+    }
+
+    function sendMessage(text) {
+      if (!text.trim()) return;
+      appendMessage(text, 'user');
+      showTyping();
+
+      const delay = 650 + Math.random() * 600;
+      setTimeout(() => {
+        hideTyping();
+        const answer = getBotAnswer(text);
+        appendMessage(answer, 'bot');
+      }, delay);
+    }
+
+    function sendSuggestion(text) {
+      chatInput.value = '';
+      sendMessage(text);
+    }
+
+    document.getElementById('chat-send').addEventListener('click', () => {
+      const val = chatInput.value.trim();
+      if (val) {
+        sendMessage(val);
+        chatInput.value = '';
+      }
+    });
+
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const val = chatInput.value.trim();
+        if (val) {
+          sendMessage(val);
+          chatInput.value = '';
+        }
+      }
+    });
+
+    // Greeting on load
+    setTimeout(() => {
+      appendMessage("Hey! I'm the TorrentOS assistant. Ask me anything about installation, setup, or features.", 'bot');
+    }, 400);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find Your Setup — TorrentOS</title>
+  <meta name="description" content="Answer a few questions and we'll tell you exactly how to set up TorrentOS for you." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #04080f;
+      --bg2:     #080f1d;
+      --glass:   rgba(12, 20, 40, 0.7);
+      --border:  rgba(255, 255, 255, 0.07);
+      --blue:    #2f7fff;
+      --blue2:   #5599ff;
+      --glow:    rgba(47, 127, 255, 0.35);
+      --text:    #7a9cbf;
+      --white:   #eef4ff;
+      --radius:  16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
+    .reveal-delay-4 { transition-delay: 0.32s; }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 56px;
+      background: rgba(4, 8, 15, 0.75);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      text-decoration: none;
+    }
+    .logo-dot { color: var(--blue); }
+    nav ul { list-style: none; display: flex; gap: 1.8rem; align-items: center; }
+    nav a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: color 0.15s; }
+    nav a:hover { color: var(--white); }
+    nav a.active { color: var(--white); }
+    .nav-cta {
+      background: var(--blue);
+      color: var(--white) !important;
+      padding: 0.38rem 1.05rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.15s, box-shadow 0.15s !important;
+    }
+    .nav-cta:hover { background: var(--blue2) !important; box-shadow: 0 0 20px var(--glow); }
+
+    /* Page hero */
+    .page-hero {
+      height: 310px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 1.5rem;
+      padding-top: 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 80% at 50% 0%, rgba(47,127,255,0.14) 0%, transparent 65%),
+        radial-gradient(ellipse 30% 40% at 20% 100%, rgba(47,127,255,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 40% at 80% 100%, rgba(91,192,235,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .page-hero h1 {
+      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.055em;
+      line-height: 1.05;
+      margin-bottom: 0.85rem;
+      position: relative;
+    }
+    .page-hero h1 span { color: var(--blue); }
+    .page-hero .subtitle {
+      font-size: 1rem;
+      color: var(--text);
+      max-width: 440px;
+      position: relative;
+      line-height: 1.7;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* Quiz section */
+    .quiz-section {
+      padding: 5rem 1.5rem 6rem;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+
+    /* Progress bar */
+    .quiz-progress {
+      max-width: 600px;
+      margin: 0 auto 3rem;
+    }
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+    }
+    .progress-track {
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--blue2));
+      border-radius: 999px;
+      transition: width 0.4s cubic-bezier(.22,1,.36,1);
+    }
+
+    /* Step container */
+    .step-outer {
+      position: relative;
+      min-height: 340px;
+    }
+    .quiz-step {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .quiz-step.active {
+      display: flex;
+      animation: stepIn 0.38s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .step-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 0.6rem;
+    }
+    .step-question {
+      font-size: clamp(1.3rem, 3vw, 1.75rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      margin-bottom: 2.25rem;
+      max-width: 520px;
+      line-height: 1.2;
+    }
+
+    /* Option cards */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+      width: 100%;
+      max-width: 580px;
+    }
+    .options-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .option-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.22s cubic-bezier(.22,1,.36,1), box-shadow 0.2s, background 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+    .option-card:hover {
+      border-color: rgba(47,127,255,0.45);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(47,127,255,0.2);
+      background: rgba(47,127,255,0.07);
+    }
+    .option-card.selected {
+      border-color: var(--blue);
+      background: rgba(47,127,255,0.14);
+      box-shadow: 0 0 0 2px rgba(47,127,255,0.3), 0 12px 40px rgba(47,127,255,0.2);
+    }
+    .option-emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .option-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .option-hint {
+      font-size: 0.75rem;
+      color: var(--text);
+      line-height: 1.4;
+      opacity: 0.8;
+    }
+
+    /* Results */
+    .results-step {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      animation: stepIn 0.4s cubic-bezier(.22,1,.36,1);
+    }
+    .results-step.active { display: flex; }
+
+    .result-card {
+      max-width: 580px;
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid rgba(47,127,255,0.25);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 0 1px rgba(47,127,255,0.1), 0 24px 64px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    }
+    .result-emoji { font-size: 3rem; margin-bottom: 0.75rem; }
+    .result-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      margin-bottom: 1.25rem;
+    }
+    .result-tips {
+      list-style: none;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-bottom: 1.75rem;
+    }
+    .result-tips li {
+      display: flex;
+      gap: 0.65rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      line-height: 1.6;
+      align-items: flex-start;
+    }
+    .result-tips li::before {
+      content: '→';
+      color: var(--blue);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .result-tips li strong { color: var(--white); }
+    .result-btns {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.72rem 1.4rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.18s cubic-bezier(.22,1,.36,1), box-shadow 0.18s, background 0.15s;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+      box-shadow: 0 0 0 1px rgba(47,127,255,0.5), 0 4px 20px rgba(47,127,255,0.3);
+    }
+    .btn-primary:hover { background: var(--blue2); box-shadow: 0 0 0 1px rgba(85,153,255,0.6), 0 8px 28px rgba(47,127,255,0.5); }
+    .btn-outline {
+      border: 1px solid var(--border) !important;
+      color: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.22) !important; background: rgba(255,255,255,0.08); color: var(--white); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+
+    .restart-btn {
+      margin-top: 0.5rem;
+    }
+
+    /* Unsupported result */
+    .result-unsupported .result-card {
+      border-color: rgba(255,80,80,0.3);
+      box-shadow: 0 0 0 1px rgba(255,80,80,0.1), 0 24px 64px rgba(0,0,0,0.4);
+    }
+    .result-unsupported .result-card::before {
+      background: linear-gradient(90deg, transparent, rgba(255,80,80,0.5), transparent);
+    }
+
+    /* Section */
+    section { padding: 5rem 1.5rem; }
+    .section-eyebrow {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      margin-bottom: 0.8rem;
+      line-height: 1.15;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--text);
+      max-width: 440px;
+      margin: 0 auto 3rem;
+      font-size: 0.9rem;
+      line-height: 1.75;
+    }
+
+    /* Testimonials */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .testimonial-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      transition: border-color 0.25s, transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s;
+    }
+    .testimonial-card:hover {
+      border-color: rgba(47,127,255,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(47,127,255,0.15);
+    }
+    .testimonial-quote {
+      font-size: 0.875rem;
+      color: var(--white);
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 1.25rem;
+      opacity: 0.9;
+    }
+    .testimonial-quote::before { content: '"'; }
+    .testimonial-quote::after  { content: '"'; }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .author-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: rgba(47,127,255,0.1);
+      border: 1px solid rgba(47,127,255,0.18);
+      flex-shrink: 0;
+    }
+    .author-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .author-desc {
+      font-size: 0.75rem;
+      color: var(--text);
+      opacity: 0.65;
+    }
+    .star-row {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 0.8rem;
+    }
+    .star-row span {
+      color: #fbbf24;
+      font-size: 0.85rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: rgba(122,156,191,0.38);
+    }
+    footer a { color: rgba(122,156,191,0.5); text-decoration: none; transition: color 0.15s; }
+    footer a:hover { color: var(--white); }
+    .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    @media (max-width: 640px) {
+      nav ul { gap: 1rem; }
+      nav ul li:not(:last-child):not(:first-child) { display: none; }
+      footer { flex-direction: column; text-align: center; }
+      .options-grid { grid-template-columns: 1fr 1fr; }
+      .options-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .result-btns { flex-direction: column; }
+    }
+    @media (max-width: 420px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="logo">Torrent<span class="logo-dot">OS</span></a>
+    <ul>
+      <li><a href="index.html#features">Features</a></li>
+      <li><a href="index.html#install">Install</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a></li>
+      <li><a href="recommend.html" class="active">Recommend</a></li>
+      <li><a href="https://github.com/rupertjwakefield2-dot/torrentos/releases/latest" class="nav-cta">Download</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <div class="page-hero">
+    <div class="page-hero-bg"></div>
+    <h1 class="reveal">Find Your <span>Perfect</span> Setup</h1>
+    <p class="subtitle reveal reveal-delay-1">Answer a few questions and we'll tell you exactly how to set up TorrentOS for you.</p>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Quiz -->
+  <div class="quiz-section">
+    <div class="container">
+
+      <!-- Progress -->
+      <div class="quiz-progress reveal" id="quiz-progress">
+        <div class="progress-labels">
+          <span id="step-label">Step 1 of 4</span>
+          <span id="step-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Steps wrapper -->
+      <div class="step-outer reveal reveal-delay-1">
+
+        <!-- Step 1: Use case -->
+        <div class="quiz-step active" id="step-1">
+          <div class="step-label">Step 1 of 4</div>
+          <div class="step-question">What will you mainly use this computer for?</div>
+          <div class="options-grid cols-4">
+            <div class="option-card" data-step="1" data-value="gaming" onclick="selectOption(this)">
+              <div class="option-emoji">🎮</div>
+              <div class="option-label">Gaming</div>
+              <div class="option-hint">Steam, Proton, native Linux games</div>
+            </div>
+            <div class="option-card" data-step="1" data-value="dev" onclick="selectOption(this)">
+              <div class="option-emoji">💻</div>
+              <div class="option-label">Development</div>
+              <div class="option-hint">Code, Docker, terminals, servers</div>
+            </div>
+            <div class="option-card" data-step="1" data-value="creative" onclick="selectOption(this)">
+              <div class="option-emoji">🎬</div>
+              <div class="option-label">Creative Work</div>
+              <div class="option-hint">Video, design, music, photo</div>
+            </div>
+            <div class="option-card" data-step="1" data-value="general" onclick="selectOption(this)">
+              <div class="option-emoji">📚</div>
+              <div class="option-label">General Use</div>
+              <div class="option-hint">Browsing, productivity, everyday tasks</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Linux experience -->
+        <div class="quiz-step" id="step-2">
+          <div class="step-label">Step 2 of 4</div>
+          <div class="step-question">What's your Linux experience?</div>
+          <div class="options-grid">
+            <div class="option-card" data-step="2" data-value="beginner" onclick="selectOption(this)">
+              <div class="option-emoji">🌱</div>
+              <div class="option-label">Complete beginner</div>
+              <div class="option-hint">Never used Linux before, or just a few times</div>
+            </div>
+            <div class="option-card" data-step="2" data-value="intermediate" onclick="selectOption(this)">
+              <div class="option-emoji">🔧</div>
+              <div class="option-label">Comfortable with terminals</div>
+              <div class="option-hint">I know basic commands and have used Linux a bit</div>
+            </div>
+            <div class="option-card" data-step="2" data-value="expert" onclick="selectOption(this)">
+              <div class="option-emoji">🚀</div>
+              <div class="option-label">Experienced Linux user</div>
+              <div class="option-hint">Arch, Gentoo, NixOS, or similar — no hand-holding needed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: GPU -->
+        <div class="quiz-step" id="step-3">
+          <div class="step-label">Step 3 of 4</div>
+          <div class="step-question">What hardware do you have?</div>
+          <div class="options-grid cols-4">
+            <div class="option-card" data-step="3" data-value="nvidia" onclick="selectOption(this)">
+              <div class="option-emoji">🟢</div>
+              <div class="option-label">NVIDIA GPU</div>
+              <div class="option-hint">GeForce GTX / RTX</div>
+            </div>
+            <div class="option-card" data-step="3" data-value="amd" onclick="selectOption(this)">
+              <div class="option-emoji">🔵</div>
+              <div class="option-label">AMD GPU</div>
+              <div class="option-hint">Radeon RX series</div>
+            </div>
+            <div class="option-card" data-step="3" data-value="intel" onclick="selectOption(this)">
+              <div class="option-emoji">⚪</div>
+              <div class="option-label">Intel / No dedicated GPU</div>
+              <div class="option-hint">Intel Iris / integrated only</div>
+            </div>
+            <div class="option-card" data-step="3" data-value="mac" onclick="selectOption(this)">
+              <div class="option-emoji">💻</div>
+              <div class="option-label">MacBook / Apple Silicon</div>
+              <div class="option-hint">M1, M2, M3, or Intel Mac</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Dev tools -->
+        <div class="quiz-step" id="step-4">
+          <div class="step-label">Step 4 of 4</div>
+          <div class="step-question">Do you want developer tools pre-installed?</div>
+          <div class="options-grid">
+            <div class="option-card" data-step="4" data-value="yes" onclick="selectOption(this)">
+              <div class="option-emoji">✅</div>
+              <div class="option-label">Yes, set up everything</div>
+              <div class="option-hint">Rust, Node, Docker, VS Code, Go — all in one click via Dev Mode</div>
+            </div>
+            <div class="option-card" data-step="4" data-value="no" onclick="selectOption(this)">
+              <div class="option-emoji">❌</div>
+              <div class="option-label">No, keep it minimal</div>
+              <div class="option-hint">I'll install what I need manually from the repos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-step" id="step-results">
+          <div class="result-card" id="result-card">
+            <div class="result-emoji" id="result-emoji">🎯</div>
+            <div class="result-title" id="result-title">You're a Perfect Fit!</div>
+            <ul class="result-tips" id="result-tips"></ul>
+            <div class="result-btns">
+              <a href="https://github.com/rupertjwakefield2-dot/torrentos/releases/latest" class="btn btn-primary" target="_blank">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 12l-4.5-4.5 1.06-1.06L7 8.88V2h2v6.88l2.44-2.44L12.5 7.5 8 12zM2 14h12v-2H2v2z"/></svg>
+                Download TorrentOS
+              </a>
+              <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Installation" class="btn btn-outline" target="_blank">
+                Read the Install Guide
+              </a>
+            </div>
+          </div>
+          <button class="btn btn-ghost restart-btn" onclick="restartQuiz()">
+            ← Start over
+          </button>
+        </div>
+
+      </div><!-- /step-outer -->
+    </div>
+  </div><!-- /quiz-section -->
+
+  <hr class="divider" />
+
+  <!-- Testimonials -->
+  <section>
+    <div class="container" style="max-width:900px">
+      <div class="section-eyebrow reveal">Community</div>
+      <h2 class="section-title reveal reveal-delay-1">What others are saying</h2>
+      <p class="section-sub reveal reveal-delay-2">Real users who made the switch to TorrentOS.</p>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card reveal reveal-delay-1">
+          <div class="star-row">
+            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+          </div>
+          <div class="testimonial-quote">
+            I switched from Windows after 15 years and genuinely never looked back. The first boot wizard held my hand through everything. I was up and running in under 20 minutes.
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">🧑</div>
+            <div>
+              <div class="author-name">Marcus T.</div>
+              <div class="author-desc">Switched from Windows 11 · Gaming setup</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-2">
+          <div class="star-row">
+            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+          </div>
+          <div class="testimonial-quote">
+            Best Arch-based distro I've used, and I've tried most of them. It doesn't try to hide that it's Arch — everything is still accessible — but the defaults are genuinely excellent.
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">👩</div>
+            <div>
+              <div class="author-name">Priya K.</div>
+              <div class="author-desc">Former Manjaro user · Backend developer</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal reveal-delay-3">
+          <div class="star-row">
+            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+          </div>
+          <div class="testimonial-quote">
+            The new Settings app in v0.5 is incredibly polished. It actually feels native — like something GNOME or KDE would ship. I've never seen this level of fit-and-finish on an indie distro.
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">🧔</div>
+            <div>
+              <div class="author-name">Léo D.</div>
+              <div class="author-desc">UI designer · Daily driver since v0.3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>2026 TorrentOS · <a href="https://torrentos.org">torrentos.org</a></div>
+    <div class="footer-links">
+      <a href="faq.html">FAQ</a>
+      <a href="recommend.html">Find my setup</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki">Wiki</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Installation">Install guide</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/wiki/Changelog">Changelog</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/issues">Report a bug</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos/releases">Releases</a>
+      <a href="https://github.com/rupertjwakefield2-dot/torrentos">GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    // ── Scroll reveal ──────────────────────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('.page-hero .reveal').forEach(el => {
+      setTimeout(() => el.classList.add('visible'), 80);
+    });
+
+    // ── Quiz state machine ─────────────────────────────────────────────────
+    const answers = { use: null, experience: null, gpu: null, devtools: null };
+    const stepKeys = ['use', 'experience', 'gpu', 'devtools'];
+    let currentStep = 1;
+    const TOTAL_STEPS = 4;
+
+    function updateProgress(step) {
+      const pct = Math.round(((step - 1) / TOTAL_STEPS) * 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('step-label').textContent = step <= TOTAL_STEPS
+        ? `Step ${step} of ${TOTAL_STEPS}`
+        : 'Complete!';
+      document.getElementById('step-pct').textContent = step <= TOTAL_STEPS ? pct + '%' : '100%';
+    }
+
+    function showStep(n) {
+      document.querySelectorAll('.quiz-step, .results-step').forEach(s => s.classList.remove('active'));
+      if (n <= TOTAL_STEPS) {
+        document.getElementById('step-' + n).classList.add('active');
+        updateProgress(n);
+        document.getElementById('quiz-progress').style.display = '';
+      } else {
+        document.getElementById('step-results').classList.add('active');
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('step-label').textContent = 'Complete!';
+        document.getElementById('step-pct').textContent = '100%';
+        showResults();
+      }
+    }
+
+    function selectOption(el) {
+      const step = parseInt(el.dataset.step);
+      const value = el.dataset.value;
+
+      // Deselect siblings
+      document.querySelectorAll(`[data-step="${step}"]`).forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+
+      // Store answer
+      answers[stepKeys[step - 1]] = value;
+
+      // Advance after brief delay
+      setTimeout(() => {
+        currentStep = step + 1;
+        showStep(currentStep);
+        // Scroll to quiz area
+        document.querySelector('.quiz-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 280);
+    }
+
+    function restartQuiz() {
+      answers.use = null; answers.experience = null; answers.gpu = null; answers.devtools = null;
+      currentStep = 1;
+      document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+      showStep(1);
+    }
+
+    // ── Result logic ───────────────────────────────────────────────────────
+    function showResults() {
+      const { use, experience, gpu, devtools } = answers;
+      const emojiEl = document.getElementById('result-emoji');
+      const titleEl = document.getElementById('result-title');
+      const tipsEl  = document.getElementById('result-tips');
+      const cardEl  = document.getElementById('result-card');
+
+      cardEl.classList.remove('result-unsupported');
+      tipsEl.innerHTML = '';
+
+      let emoji = '🎯';
+      let title = "You're a Perfect Fit!";
+      let tips  = [];
+
+      // Apple Silicon — unsupported
+      if (gpu === 'mac') {
+        emoji = '⚠️';
+        title = 'Not Supported Yet';
+        tips = [
+          'TorrentOS does not currently support Apple Silicon (M1/M2/M3).',
+          'The ISO is x86_64 only — it will not boot on ARM-based Macs.',
+          'Intel Macs can run TorrentOS from a USB as a live desktop, but installing to disk requires disabling Secure Boot.',
+          'Apple Silicon support is planned for a future release — check back soon!'
+        ];
+        cardEl.classList.add('result-unsupported');
+        emojiEl.textContent = emoji;
+        titleEl.textContent = title;
+        tips.forEach(t => {
+          const li = document.createElement('li');
+          li.innerHTML = t;
+          tipsEl.appendChild(li);
+        });
+        return;
+      }
+
+      // Build personalised tips
+      if (use === 'gaming' && experience === 'beginner') {
+        emoji = '🎮';
+        title = "Great Gaming Choice!";
+        tips.push('TorrentOS is an excellent gaming OS — Steam and Proton work out of the box after a quick install.');
+        tips.push('Follow the <strong>First Boot wizard</strong> carefully — it will guide you through all the basics.');
+        tips.push('Enabling Dev Mode is optional for pure gaming — skip it if you just want to play.');
+      } else if (use === 'dev' && experience === 'beginner') {
+        emoji = '🌱';
+        title = "Welcome to Linux! 🚀";
+        tips.push('The <strong>First Boot wizard</strong> will walk you through setting up your user, timezone, and desktop preferences step by step.');
+        tips.push('Enable <strong>Dev Mode</strong> from TorrentOS Settings after first boot to get Rust, Node, VS Code, and Docker in one click.');
+        tips.push('The terminal is your best friend — open it with <strong>Super + Enter</strong> and try <code>sudo pacman -Syu</code> to update.');
+      } else if (use === 'dev' && experience === 'expert') {
+        emoji = '🚀';
+        title = "You'll Feel Right at Home.";
+        tips.push('TorrentOS is pure Arch under the hood — every pacman package, AUR helper (paru), and tool you expect is here.');
+        tips.push('Enable <strong>Dev Mode</strong> for a one-click full toolchain, or cherry-pick from the Arch repos as you normally would.');
+        tips.push('Hyprland config lives in <code>~/.config/hypr/hyprland.conf</code> — tune it to your exact preferences.');
+      } else if (use === 'dev' && experience === 'intermediate') {
+        emoji = '💻';
+        title = "Great Choice for Developers!";
+        tips.push('Enable <strong>Dev Mode</strong> from TorrentOS Settings to get Rust, Node, Docker, VS Code, and Go pre-configured.');
+        tips.push('Use <code>paru</code> for AUR packages alongside the standard <code>pacman</code> for everything else.');
+        tips.push('The Ghostty terminal is GPU-accelerated and set as default — you\'ll love it.');
+      } else if (use === 'creative') {
+        emoji = '🎨';
+        title = "Perfect for Creative Work!";
+        tips.push('Flatpak is pre-installed — get <strong>Kdenlive</strong> (video), <strong>GIMP</strong> (photo), <strong>Inkscape</strong> (vector), or <strong>DaVinci Resolve</strong> with a single command.');
+        tips.push('Install creative apps: <code>flatpak install flathub org.kdenlive.kdenlive</code>');
+        tips.push('Wayland gives you crisp HiDPI rendering and smooth window compositing for creative work.');
+        if (gpu === 'nvidia') tips.push('Run <code>torrentos-doctor</code> first to set up NVIDIA drivers — important for GPU-accelerated rendering.');
+      } else if (use === 'general' && experience === 'beginner') {
+        emoji = '😊';
+        title = "Easy Everyday Computing!";
+        tips.push('The First Boot wizard handles everything — just follow the prompts and you\'ll have a working desktop in minutes.');
+        tips.push('Firefox with uBlock Origin and Google Chrome are pre-installed, so you can browse right away.');
+        tips.push('Use the <strong>TorrentOS Settings app</strong> to customise appearance, font size, and accessibility options.');
+      } else {
+        emoji = '🎯';
+        title = "You're All Set!";
+        tips.push('TorrentOS is a great fit for your use case — the defaults are tuned for daily use without configuration.');
+        tips.push('The First Boot wizard will get you set up in minutes.');
+      }
+
+      // GPU-specific tips (append unless already covered)
+      if (gpu === 'nvidia' && !tips.some(t => t.includes('torrentos-doctor'))) {
+        tips.push('Run <code>torrentos-doctor</code> right after first boot — it detects your NVIDIA GPU and installs the proprietary driver automatically.');
+      }
+      if (gpu === 'amd') {
+        tips.push('AMD works out of the box with the open-source Mesa driver — no extra steps needed. Vulkan is already configured.');
+      }
+
+      // Devtools tip
+      if (devtools === 'yes' && !tips.some(t => t.includes('Dev Mode'))) {
+        tips.push('Enable <strong>Dev Mode</strong> from TorrentOS Settings after first boot to get a full development toolchain in one click.');
+      }
+      if (devtools === 'no' && use === 'gaming') {
+        tips.push('Install Steam with <code>sudo pacman -S steam</code> and enable Proton in Steam settings for Windows game compatibility.');
+      }
+
+      emojiEl.textContent = emoji;
+      titleEl.textContent = title;
+      tips.forEach(t => {
+        const li = document.createElement('li');
+        li.innerHTML = t;
+        tipsEl.appendChild(li);
+      });
+    }
+
+    // Init
+    updateProgress(1);
+  </script>
+
+</body>
+</html>
