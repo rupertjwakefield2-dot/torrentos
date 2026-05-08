@@ -112,26 +112,38 @@ alias cp='cp -i'
 # ---- TorrentOS helpers ----
 # System update
 alias update='if command -v paru >/dev/null; then paru -Syu; else sudo pacman -Syu; fi'
-alias toros-version='grep TORRENTOS_VERSION /etc/torrentos/version 2>/dev/null | cut -d= -f2'
+alias toros-version='grep TORRENTOS_VERSION /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"'"'"'"'"''
+alias torrentos-update='torrentos-update-gui'
 
 # Quick open
 alias settings='torrentos-settings & disown'
 alias files='nautilus & disown'
-alias browser='firefox & disown'
+alias browser='xdg-open https:// 2>/dev/null & disown'
 alias screenshot='torrentos-screenshot & disown'
 alias doctor='torrentos-doctor'
+alias get-browser='torrentos-get-browser'
 
 # Clipboard
 alias pbcopy='wl-copy'
 alias pbpaste='wl-paste'
+alias clip='wl-copy'
 
 # Network
 alias ip='ip --color=auto'
+alias wifi='nmtui'
+alias vpn='nmtui'
 
 # Quick package search / info
 alias pkgs='pacman -Ss'
 alias pkgi='pacman -Qi'
 alias pkgf='pacman -Ql'
+alias pkgl='pacman -Qe'       # explicitly installed packages
+alias pkgo='pacman -Qtdq'     # orphan packages
+alias pkgclean='sudo pacman -Rns $(pacman -Qtdq) 2>/dev/null || echo "No orphans."'
+
+# Disk / memory
+alias disk='df -h | grep -v tmpfs'
+alias mem='free -h'
 
 # ---- functions ----
 
@@ -213,8 +225,10 @@ help() {
     echo
 }
 
-# ---- welcome banner (only in interactive login shells) ----
-if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null; then
+# ---- welcome banner (only in interactive login shells, only after first-boot) ----
+# Suppress the banner during first-boot so it doesn't collide with the wizard logo.
+if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null \
+   && [[ -f "$HOME/.config/torrentos/.firstboot-done" ]]; then
     _blue='\033[38;2;30;111;255m'
     _cyan='\033[38;2;91;192;235m'
     _white='\033[1;37m'

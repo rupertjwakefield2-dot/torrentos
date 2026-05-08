@@ -1,199 +1,321 @@
 #!/usr/bin/env bash
-# TorrentOS first-boot setup wizard (terminal fallback)
-# Runs once on first Hyprland start; the GTK wizard takes over if available.
-# Falls back to this if the GTK wizard is not installed or cannot launch.
+# TorrentOS first-boot setup wizard
+# Runs once on first Hyprland start; tries the GTK wizard first, then this TUI.
 
 DONE_FLAG="$HOME/.config/torrentos/.firstboot-done"
 USER_CONF="$HOME/.config/hypr/user.conf"
 VERSION="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
 
-# ── Try the GTK wizard first ─────────────────────────────────────────────────
+# ── Try the GTK wizard first ──────────────────────────────────────────────────
 if command -v torrentos-first-boot-wizard >/dev/null 2>&1; then
     torrentos-first-boot-wizard
     exit 0
 fi
 
-# ── Already completed? ───────────────────────────────────────────────────────
+# ── Already completed? ────────────────────────────────────────────────────────
 [ -f "$DONE_FLAG" ] && exit 0
 
 mkdir -p "$HOME/.config/torrentos" "$HOME/.config/hypr"
 touch "$USER_CONF" 2>/dev/null
 
-# ── Fix terminal state (autologin via agetty can leave stty in a bad state) ──
-# This ensures backspace, Ctrl+C, etc. all work correctly in the prompts below.
-stty sane 2>/dev/null || true
-stty erase '^?' 2>/dev/null || true   # DEL (127) = backspace in modern terminals
+# ── Restore terminal to a sane state ─────────────────────────────────────────
+# agetty autologin and localectl can both scramble stty settings; reset before
+# every section so backspace/Ctrl+C always work.
+fix_stty() {
+    stty sane        2>/dev/null || true
+    stty erase $'\177' 2>/dev/null || true   # DEL (127) = backspace
+    stty icrnl       2>/dev/null || true
+}
+fix_stty
 
-# ── Colours ──────────────────────────────────────────────────────────────────
+# ── Detect whiptail / dialog for mouse-capable menus ─────────────────────────
+MENU_CMD=""
+command -v whiptail >/dev/null 2>&1 && MENU_CMD="whiptail"
+command -v dialog   >/dev/null 2>&1 && MENU_CMD="${MENU_CMD:-dialog}"
+
+# ── Colours ───────────────────────────────────────────────────────────────────
 B='\033[38;2;30;111;255m'
 C='\033[38;2;91;192;235m'
 W='\033[1;37m'
 D='\033[2;37m'
 G='\033[38;2;91;235;161m'
+Y='\033[38;2;255;180;84m'
 N='\033[0m'
 HR="${D}  ─────────────────────────────────────────────────────────${N}"
 
+# ── Prompt helper — always restores stty first ───────────────────────────────
+ask() {
+    # ask <varname> <prompt> [default]
+    local __var="$1" __prompt="$2" __default="${3:-}"
+    fix_stty
+    if [[ -n "$__default" ]]; then
+        printf "${W}  ${__prompt} [${__default}]: ${N}"
+    else
+        printf "${W}  ${__prompt}: ${N}"
+    fi
+    IFS= read -re __reply
+    [[ -z "$__reply" ]] && __reply="$__default"
+    printf -v "$__var" '%s' "$__reply"
+}
+
+# ── whiptail menu helper ──────────────────────────────────────────────────────
+# wt_menu <varname> <title> <prompt> <item1> <desc1> [<item2> <desc2> ...]
+wt_menu() {
+    local __var="$1"; shift
+    local __title="$1"; shift
+    local __prompt="$1"; shift
+    local __items=("$@")
+    local __result
+    __result=$("$MENU_CMD" --title "$__title" --menu "$__prompt" 18 60 10 \
+        "${__items[@]}" 3>&1 1>&2 2>&3)
+    fix_stty
+    printf -v "$__var" '%s' "$__result"
+}
+
+# ── Header ────────────────────────────────────────────────────────────────────
 clear
 echo
 printf "${B}"
-echo "  ████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗ ██████╗ ███████╗"
-echo "     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔════╝"
-echo "     ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   ██║   ██║███████╗"
-echo "     ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ██║   ██║╚════██║"
-echo "     ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ╚██████╔╝███████║"
-echo "     ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝"
+cat <<'LOGO'
+  ████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗ ██████╗ ███████╗
+     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔════╝
+     ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   ██║   ██║███████╗
+     ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ██║   ██║╚════██║
+     ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ╚██████╔╝███████║
+     ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝
+LOGO
 printf "${N}"
 echo
-printf "${D}  Welcome to TorrentOS v${VERSION}  ·  riptide${N}\n"
-echo "$HR"
+printf "${D}  Welcome to TorrentOS v${VERSION} · riptide${N}\n"
+printf "$HR\n"
 echo
-printf "${D}  Let's get you set up. This will only take a minute.${N}\n"
+printf "${D}  Let's get you set up. This takes about a minute.${N}\n"
 echo
 
-# ── 1. Keyboard layout ───────────────────────────────────────────────────────
-printf "${C}  Keyboard layout${N}\n"
-echo "$HR"
-echo
-printf "${D}   1) United Kingdom (gb)   ${N}  ${D}6) Italian (it)${N}\n"
-printf "${D}   2) United States (us)    ${N}  ${D}7) Portuguese (pt)${N}\n"
-printf "${D}   3) German (de)           ${N}  ${D}8) Dutch (nl)${N}\n"
-printf "${D}   4) French (fr)           ${N}  ${D}9) Swedish (se)${N}\n"
-printf "${D}   5) Spanish (es)          ${N}  ${D}10) Other (type manually)${N}\n"
-echo
-printf "${W}  Your choice [1]: ${N}"
-read -r KB_CHOICE
+# ── 1. Keyboard layout ────────────────────────────────────────────────────────
+printf "${C}  Step 1 of 4 — Keyboard layout${N}\n"
+printf "$HR\n\n"
 
-case "$KB_CHOICE" in
-    2)  KB="us" ;;
-    3)  KB="de" ;;
-    4)  KB="fr" ;;
-    5)  KB="es" ;;
-    6)  KB="it" ;;
-    7)  KB="pt" ;;
-    8)  KB="nl" ;;
-    9)  KB="se" ;;
-    10) printf "${W}  Layout code (e.g. pl, ru, jp): ${N}"; read -r KB; KB="${KB:-us}" ;;
-    *)  KB="gb" ;;
-esac
+if [[ -n "$MENU_CMD" ]]; then
+    wt_menu KB_CHOICE "Keyboard Layout" "Choose your keyboard layout:" \
+        "gb" "United Kingdom" \
+        "us" "United States" \
+        "de" "German" \
+        "fr" "French" \
+        "es" "Spanish" \
+        "it" "Italian" \
+        "pt" "Portuguese" \
+        "nl" "Dutch" \
+        "se" "Swedish" \
+        "other" "Other (type manually)"
+    clear
+    [[ -z "$KB_CHOICE" ]] && KB_CHOICE="gb"
+    KB="$KB_CHOICE"
+    if [[ "$KB" == "other" ]]; then
+        ask KB "Layout code (e.g. pl, ru, jp)" "us"
+    fi
+else
+    printf "${D}   1) United Kingdom (gb)   ${N}  ${D}6) Italian (it)${N}\n"
+    printf "${D}   2) United States (us)    ${N}  ${D}7) Portuguese (pt)${N}\n"
+    printf "${D}   3) German (de)           ${N}  ${D}8) Dutch (nl)${N}\n"
+    printf "${D}   4) French (fr)           ${N}  ${D}9) Swedish (se)${N}\n"
+    printf "${D}   5) Spanish (es)          ${N}  ${D}10) Other (type manually)${N}\n\n"
+    ask KB_CHOICE "Your choice" "1"
+    case "$KB_CHOICE" in
+        2) KB="us" ;; 3) KB="de" ;; 4) KB="fr" ;; 5) KB="es" ;;
+        6) KB="it" ;; 7) KB="pt" ;; 8) KB="nl" ;; 9) KB="se" ;;
+        10) ask KB "Layout code (e.g. pl, ru, jp)" "us" ;;
+        *) KB="gb" ;;
+    esac
+fi
 
-printf "${G}  Keyboard: $KB${N}\n"
+printf "${G}  ✔  Keyboard: ${W}${KB}${N}\n"
 localectl set-keymap "$KB" 2>/dev/null || true
+fix_stty   # localectl can reset terminal settings — restore immediately
 
-# ── 2. Timezone ──────────────────────────────────────────────────────────────
+# ── 2. Timezone ───────────────────────────────────────────────────────────────
 echo
-printf "${C}  Timezone${N}\n"
-echo "$HR"
-echo
-printf "${D}   1) London (Europe/London)          ${N}  ${D}6) Paris (Europe/Paris)${N}\n"
-printf "${D}   2) New York (America/New_York)      ${N}  ${D}7) Tokyo (Asia/Tokyo)${N}\n"
-printf "${D}   3) Los Angeles (America/LA)         ${N}  ${D}8) Sydney (Australia/Sydney)${N}\n"
-printf "${D}   4) Chicago (America/Chicago)        ${N}  ${D}9) Dubai (Asia/Dubai)${N}\n"
-printf "${D}   5) Berlin (Europe/Berlin)           ${N}  ${D}10) Other (type manually)${N}\n"
-echo
-printf "${W}  Your choice [1]: ${N}"
-read -r TZ_CHOICE
+printf "${C}  Step 2 of 4 — Timezone${N}\n"
+printf "$HR\n\n"
 
-case "$TZ_CHOICE" in
-    2)  TZ="America/New_York" ;;
-    3)  TZ="America/Los_Angeles" ;;
-    4)  TZ="America/Chicago" ;;
-    5)  TZ="Europe/Berlin" ;;
-    6)  TZ="Europe/Paris" ;;
-    7)  TZ="Asia/Tokyo" ;;
-    8)  TZ="Australia/Sydney" ;;
-    9)  TZ="Asia/Dubai" ;;
-    10) printf "${W}  Timezone (e.g. Europe/Warsaw): ${N}"; read -r TZ; TZ="${TZ:-Europe/London}" ;;
-    *)  TZ="Europe/London" ;;
-esac
+if [[ -n "$MENU_CMD" ]]; then
+    wt_menu TZ_CHOICE "Timezone" "Choose your timezone:" \
+        "Europe/London"       "London (UTC+0/+1)" \
+        "America/New_York"    "New York (EST/EDT)" \
+        "America/Los_Angeles" "Los Angeles (PST/PDT)" \
+        "America/Chicago"     "Chicago (CST/CDT)" \
+        "Europe/Berlin"       "Berlin (CET/CEST)" \
+        "Europe/Paris"        "Paris (CET/CEST)" \
+        "Europe/Madrid"       "Madrid (CET/CEST)" \
+        "Europe/Amsterdam"    "Amsterdam (CET/CEST)" \
+        "Europe/Warsaw"       "Warsaw (CET/CEST)" \
+        "Europe/Rome"         "Rome (CET/CEST)" \
+        "Europe/Athens"       "Athens (EET/EEST)" \
+        "Europe/Istanbul"     "Istanbul (TRT)" \
+        "America/Toronto"     "Toronto (EST/EDT)" \
+        "America/Vancouver"   "Vancouver (PST/PDT)" \
+        "America/Sao_Paulo"   "São Paulo (BRT)" \
+        "America/Mexico_City" "Mexico City (CST/CDT)" \
+        "Asia/Tokyo"          "Tokyo (JST)" \
+        "Asia/Shanghai"       "Shanghai/Beijing (CST)" \
+        "Asia/Kolkata"        "India (IST)" \
+        "Asia/Dubai"          "Dubai (GST)" \
+        "Asia/Singapore"      "Singapore (SGT)" \
+        "Asia/Seoul"          "Seoul (KST)" \
+        "Australia/Sydney"    "Sydney (AEST/AEDT)" \
+        "Australia/Melbourne" "Melbourne (AEST/AEDT)" \
+        "Pacific/Auckland"    "Auckland (NZST/NZDT)" \
+        "Africa/Johannesburg" "Johannesburg (SAST)" \
+        "Africa/Lagos"        "Lagos/West Africa (WAT)" \
+        "other"               "Other (type manually)"
+    clear
+    [[ -z "$TZ_CHOICE" ]] && TZ_CHOICE="Europe/London"
+    TZ="$TZ_CHOICE"
+    if [[ "$TZ" == "other" ]]; then
+        ask TZ "Timezone (e.g. Europe/Warsaw)" "Europe/London"
+    fi
+else
+    printf "${D}   1) London  (Europe/London)         ${N}  ${D}6) Paris (Europe/Paris)${N}\n"
+    printf "${D}   2) New York (America/New_York)      ${N}  ${D}7) Tokyo (Asia/Tokyo)${N}\n"
+    printf "${D}   3) LA      (America/Los_Angeles)    ${N}  ${D}8) Sydney (Australia/Sydney)${N}\n"
+    printf "${D}   4) Chicago (America/Chicago)        ${N}  ${D}9) Dubai (Asia/Dubai)${N}\n"
+    printf "${D}   5) Berlin  (Europe/Berlin)          ${N}  ${D}10) Other (type manually)${N}\n\n"
+    fix_stty   # ensure backspace works for this read
+    ask TZ_CHOICE "Your choice" "1"
+    case "$TZ_CHOICE" in
+        2)  TZ="America/New_York"    ;; 3)  TZ="America/Los_Angeles" ;;
+        4)  TZ="America/Chicago"     ;; 5)  TZ="Europe/Berlin"       ;;
+        6)  TZ="Europe/Paris"        ;; 7)  TZ="Asia/Tokyo"          ;;
+        8)  TZ="Australia/Sydney"    ;; 9)  TZ="Asia/Dubai"          ;;
+        10) fix_stty; ask TZ "Timezone (e.g. Europe/Warsaw)" "Europe/London" ;;
+        *) TZ="Europe/London" ;;
+    esac
+fi
 
-printf "${G}  Timezone: $TZ${N}\n"
+printf "${G}  ✔  Timezone: ${W}${TZ}${N}\n"
 timedatectl set-timezone "$TZ" 2>/dev/null \
     || ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime 2>/dev/null \
     || true
 
-# ── 3. Locale / language ─────────────────────────────────────────────────────
+# ── 3. Locale / language ──────────────────────────────────────────────────────
 echo
-printf "${C}  System language${N}\n"
-echo "$HR"
-echo
-printf "${D}   1) English (en_GB.UTF-8)     ${N}  ${D}5) Spanish (es_ES.UTF-8)${N}\n"
-printf "${D}   2) English US (en_US.UTF-8)  ${N}  ${D}6) Italian (it_IT.UTF-8)${N}\n"
-printf "${D}   3) German (de_DE.UTF-8)      ${N}  ${D}7) French (fr_FR.UTF-8)${N}\n"
-printf "${D}   4) Portuguese (pt_PT.UTF-8)  ${N}  ${D}8) Keep current${N}\n"
-echo
-printf "${W}  Your choice [1]: ${N}"
-read -r LOCALE_CHOICE
+printf "${C}  Step 3 of 4 — System language${N}\n"
+printf "$HR\n\n"
 
-case "$LOCALE_CHOICE" in
-    2)  LOCALE="en_US.UTF-8" ;;
-    3)  LOCALE="de_DE.UTF-8" ;;
-    4)  LOCALE="pt_PT.UTF-8" ;;
-    5)  LOCALE="es_ES.UTF-8" ;;
-    6)  LOCALE="it_IT.UTF-8" ;;
-    7)  LOCALE="fr_FR.UTF-8" ;;
-    8)  LOCALE="" ;;
-    *)  LOCALE="en_GB.UTF-8" ;;
-esac
-
-if [ -n "$LOCALE" ]; then
-    printf "${G}  Locale: $LOCALE${N}\n"
-    localectl set-locale "LANG=$LOCALE" 2>/dev/null || true
+if [[ -n "$MENU_CMD" ]]; then
+    wt_menu LOCALE_CHOICE "System Language" "Choose your language/locale:" \
+        "en_GB.UTF-8" "English (United Kingdom)" \
+        "en_US.UTF-8" "English (United States)" \
+        "de_DE.UTF-8" "German (Deutsch)" \
+        "fr_FR.UTF-8" "French (Français)" \
+        "es_ES.UTF-8" "Spanish (Español)" \
+        "it_IT.UTF-8" "Italian (Italiano)" \
+        "pt_PT.UTF-8" "Portuguese (Portugal)" \
+        "pt_BR.UTF-8" "Portuguese (Brazil)" \
+        "nl_NL.UTF-8" "Dutch (Nederlands)" \
+        "pl_PL.UTF-8" "Polish (Polski)" \
+        "ru_RU.UTF-8" "Russian (Русский)" \
+        "ja_JP.UTF-8" "Japanese (日本語)" \
+        "zh_CN.UTF-8" "Chinese Simplified (中文)" \
+        "ko_KR.UTF-8" "Korean (한국어)" \
+        "skip"        "Keep current locale"
+    clear
+    [[ -z "$LOCALE_CHOICE" ]] && LOCALE_CHOICE="en_GB.UTF-8"
+    LOCALE="$LOCALE_CHOICE"
+    [[ "$LOCALE" == "skip" ]] && LOCALE=""
+else
+    printf "${D}   1) English UK (en_GB.UTF-8)   ${N}  ${D}5) Spanish  (es_ES.UTF-8)${N}\n"
+    printf "${D}   2) English US (en_US.UTF-8)   ${N}  ${D}6) Italian  (it_IT.UTF-8)${N}\n"
+    printf "${D}   3) German     (de_DE.UTF-8)   ${N}  ${D}7) French   (fr_FR.UTF-8)${N}\n"
+    printf "${D}   4) Portuguese (pt_PT.UTF-8)   ${N}  ${D}8) Keep current${N}\n\n"
+    fix_stty
+    ask LOCALE_CHOICE "Your choice" "1"
+    case "$LOCALE_CHOICE" in
+        2) LOCALE="en_US.UTF-8" ;; 3) LOCALE="de_DE.UTF-8" ;;
+        4) LOCALE="pt_PT.UTF-8" ;; 5) LOCALE="es_ES.UTF-8" ;;
+        6) LOCALE="it_IT.UTF-8" ;; 7) LOCALE="fr_FR.UTF-8" ;;
+        8) LOCALE="" ;;
+        *) LOCALE="en_GB.UTF-8" ;;
+    esac
 fi
 
-# ── 4. Browser ───────────────────────────────────────────────────────────────
-echo
-printf "${C}  Web browser${N}\n"
-echo "$HR"
-echo
-printf "${D}  Chromium is already installed. Want to add another browser?${N}\n"
-echo
-printf "${D}   1) ${W}Google Chrome${D}    — syncs with your Google account${N}\n"
-printf "${D}   2) ${W}Firefox${D}          — fast, private, open-source${N}\n"
-printf "${D}   3) ${W}Brave${D}            — Chrome-based, built-in ad blocker${N}\n"
-printf "${D}   4) ${W}Skip${D}             — Chromium is already included${N}\n"
-echo
-printf "${W}  Your choice [4]: ${N}"
-read -r BR_CHOICE
+if [[ -n "$LOCALE" ]]; then
+    printf "${G}  ✔  Locale: ${W}${LOCALE}${N}\n"
+    localectl set-locale "LANG=$LOCALE" 2>/dev/null || true
+else
+    printf "${G}  ✔  Locale unchanged.${N}\n"
+fi
 
-BROWSER_PKG=""
-BROWSER_NAME=""
-BROWSER_SOURCE=""
+# ── 4. Browser ────────────────────────────────────────────────────────────────
+echo
+printf "${C}  Step 4 of 4 — Web browser${N}\n"
+printf "$HR\n"
+echo
+printf "${D}  Chromium is already installed. Want to add another browser?${N}\n\n"
+
+if [[ -n "$MENU_CMD" ]]; then
+    wt_menu BR_CHOICE "Web Browser" "Add an additional browser (Chromium already installed):" \
+        "chrome"  "Google Chrome   — syncs with your Google account" \
+        "firefox" "Firefox         — fast, private, open-source" \
+        "brave"   "Brave           — Chrome-based, built-in ad blocker" \
+        "vivaldi" "Vivaldi         — highly customisable" \
+        "skip"    "Skip            — Chromium is enough"
+    clear
+    [[ -z "$BR_CHOICE" ]] && BR_CHOICE="skip"
+else
+    printf "${D}   1) ${W}Google Chrome${D}   — syncs with your Google account${N}\n"
+    printf "${D}   2) ${W}Firefox${D}          — fast, private, open-source${N}\n"
+    printf "${D}   3) ${W}Brave${D}            — Chrome-based, built-in ad blocker${N}\n"
+    printf "${D}   4) ${W}Vivaldi${D}          — highly customisable${N}\n"
+    printf "${D}   5) ${W}Skip${D}             — Chromium is already included${N}\n\n"
+    fix_stty
+    ask BR_CHOICE "Your choice" "5"
+    case "$BR_CHOICE" in
+        1) BR_CHOICE="chrome"  ;;
+        2) BR_CHOICE="firefox" ;;
+        3) BR_CHOICE="brave"   ;;
+        4) BR_CHOICE="vivaldi" ;;
+        *) BR_CHOICE="skip"    ;;
+    esac
+fi
+
 case "$BR_CHOICE" in
-    1) BROWSER_PKG="google-chrome";             BROWSER_NAME="Google Chrome";  BROWSER_SOURCE="aur"    ;;
-    2) BROWSER_PKG="firefox";                   BROWSER_NAME="Firefox";        BROWSER_SOURCE="pacman" ;;
-    3) BROWSER_PKG="brave-bin";                 BROWSER_NAME="Brave";          BROWSER_SOURCE="aur"    ;;
-    *) BROWSER_NAME=""; ;;
+    chrome)  BROWSER_PKG="google-chrome"; BROWSER_NAME="Google Chrome"; BROWSER_SRC="aur"    ;;
+    firefox) BROWSER_PKG="firefox";       BROWSER_NAME="Firefox";       BROWSER_SRC="pacman" ;;
+    brave)   BROWSER_PKG="brave-bin";     BROWSER_NAME="Brave";         BROWSER_SRC="aur"    ;;
+    vivaldi) BROWSER_PKG="vivaldi";       BROWSER_NAME="Vivaldi";       BROWSER_SRC="aur"    ;;
+    *)       BROWSER_PKG="" ;;
 esac
 
 if [[ -n "$BROWSER_PKG" ]]; then
-    printf "${G}  Installing $BROWSER_NAME — this may take a few minutes…${N}\n"
-    if [[ "$BROWSER_SOURCE" == "aur" ]]; then
+    printf "${G}  Installing ${W}${BROWSER_NAME}${G} — this may take a few minutes…${N}\n"
+    if [[ "$BROWSER_SRC" == "aur" ]]; then
         AUR=""
         command -v paru >/dev/null 2>&1 && AUR=paru
         command -v yay  >/dev/null 2>&1 && AUR="${AUR:-yay}"
         if [[ -n "$AUR" ]]; then
             "$AUR" -S --needed --noconfirm "$BROWSER_PKG" 2>/dev/null \
-                && printf "${G}  ✔  $BROWSER_NAME installed.${N}\n" \
-                || printf "${Y}  ⚠  Could not install now. Run: paru -S $BROWSER_PKG${N}\n"
+                && printf "${G}  ✔  ${BROWSER_NAME} installed.${N}\n" \
+                || printf "${Y}  ⚠  Could not install right now. Run: paru -S ${BROWSER_PKG}${N}\n"
         else
-            printf "${Y}  ⚠  AUR helper not found. Run: torrentos-get-browser${N}\n"
+            printf "${Y}  ⚠  No AUR helper found. Run: ${W}torrentos-get-browser${Y} after setup.${N}\n"
         fi
     else
         sudo pacman -S --needed --noconfirm "$BROWSER_PKG" 2>/dev/null \
-            && printf "${G}  ✔  $BROWSER_NAME installed.${N}\n" \
-            || printf "${Y}  ⚠  Could not install now. Run: torrentos-get-browser${N}\n"
+            && printf "${G}  ✔  ${BROWSER_NAME} installed.${N}\n" \
+            || printf "${Y}  ⚠  Could not install right now. Run: ${W}torrentos-get-browser${Y} after setup.${N}\n"
     fi
 else
     printf "${G}  ✔  Chromium is ready to use.${N}\n"
 fi
 
-# ── Create XDG user directories ──────────────────────────────────────────────
+# ── Create XDG user directories ───────────────────────────────────────────────
 for dir in Desktop Downloads Documents Pictures Videos Music Public Templates; do
     mkdir -p "$HOME/$dir"
 done
-command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update
+command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update 2>/dev/null || true
 
-# ── Write user.conf ──────────────────────────────────────────────────────────
+# ── Write user.conf ───────────────────────────────────────────────────────────
 {
     echo "# TorrentOS user config — generated by first-boot wizard"
     echo "# Edit this file to customise your desktop."
@@ -206,11 +328,42 @@ command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update
 
 touch "$DONE_FLAG"
 
+# ── Done screen ───────────────────────────────────────────────────────────────
+fix_stty
+clear
 echo
-echo "$HR"
-printf "${G}  All done!${N}\n"
-printf "${D}  • Press ${W}Super + Space${D} to open the app launcher${N}\n"
-printf "${D}  • Press ${W}Super + T${D}     to open a terminal${N}\n"
-printf "${D}  • Run   ${W}torrentos-get-browser${D} anytime to install more browsers${N}\n"
+printf "${B}"
+printf "  ╔═══════════════════════════════════════════════════════╗\n"
+printf "  ║      TorrentOS v${VERSION} is ready  🎉                  ║\n"
+printf "  ╚═══════════════════════════════════════════════════════╝\n"
+printf "${N}\n"
+
+printf "${C}  Desktop shortcuts${N}\n"
+printf "$HR\n"
+printf "${D}  Super + Space       ${N}${W}App launcher${N}\n"
+printf "${D}  Super + Return      ${N}${W}Open terminal${N}\n"
+printf "${D}  Super + E           ${N}${W}File manager${N}\n"
+printf "${D}  Super + L           ${N}${W}Lock screen${N}\n"
+printf "${D}  Super + Q           ${N}${W}Close window${N}\n"
+printf "${D}  Super + F           ${N}${W}Fullscreen${N}\n"
+printf "${D}  Super + 1–9         ${N}${W}Switch workspace${N}\n"
+printf "${D}  Super + Shift + S   ${N}${W}Screenshot (region select)${N}\n"
+printf "${D}  Print               ${N}${W}Screenshot (full screen)${N}\n"
 echo
-sleep 1
+printf "${C}  Useful terminal commands${N}\n"
+printf "$HR\n"
+printf "${D}  update              ${N}${W}Update all packages${N}\n"
+printf "${D}  doctor              ${N}${W}System health check${N}\n"
+printf "${D}  settings            ${N}${W}Open TorrentOS Settings${N}\n"
+printf "${D}  get-browser         ${N}${W}Install a browser anytime${N}\n"
+printf "${D}  ll / lt             ${N}${W}List files with icons / tree view${N}\n"
+printf "${D}  btop                ${N}${W}System monitor${N}\n"
+printf "${D}  extract <file>      ${N}${W}Unzip any archive format${N}\n"
+printf "${D}  myip                ${N}${W}Show your public IP address${N}\n"
+printf "${D}  weather             ${N}${W}Show weather forecast${N}\n"
+printf "${D}  pbcopy / pbpaste    ${N}${W}Clipboard (works like macOS)${N}\n"
+printf "${D}  help                ${N}${W}Full shortcut reference${N}\n"
+echo
+printf "$HR\n"
+printf "${D}  Hyprland is starting — your desktop will appear shortly.${N}\n\n"
+sleep 2

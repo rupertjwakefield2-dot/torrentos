@@ -165,6 +165,7 @@ neovim
 helix
 zsh
 zsh-completions
+whiptail
 starship
 fzf
 ripgrep
