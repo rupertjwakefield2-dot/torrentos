@@ -11,9 +11,12 @@ bindkey "^[[3~" delete-char          # Del key (forward delete)
 
 # ---- history ----
 HISTFILE="$HOME/.zsh_history"
-HISTSIZE=20000
-SAVEHIST=20000
+HISTSIZE=50000
+SAVEHIST=50000
 setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE INC_APPEND_HISTORY HIST_VERIFY
+
+# ---- directory stack ----
+setopt AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_MINUS
 
 # ---- completion ----
 autoload -Uz compinit
@@ -85,10 +88,21 @@ alias dcl='docker compose logs -f'
 alias k='kubectl'
 alias kns='kubectl config set-context --current --namespace'
 alias g='git'
+
+# Git shortcuts
 alias gs='git status'
 alias gd='git diff'
-alias gp='git pull'
-alias gl='git log --oneline --graph --decorate'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline --graph --decorate --all -15'
+
+# Python / dev tools
+alias py='python3'
+alias ports='ss -tulpn'
+alias myip='curl -s ifconfig.me && echo'
+alias weather='curl wttr.in'
+alias ff='fastfetch'
+alias neofetch='fastfetch'
 
 # Safety
 alias rm='rm -i'
@@ -113,12 +127,44 @@ alias pbpaste='wl-paste'
 
 # Network
 alias ip='ip --color=auto'
-alias myip='curl -s https://api.ipify.org && echo'
 
 # Quick package search / info
 alias pkgs='pacman -Ss'
 alias pkgi='pacman -Qi'
 alias pkgf='pacman -Ql'
+
+# ---- functions ----
+
+# Create a directory and immediately cd into it
+mkcd() { mkdir -p "$1" && cd "$1" }
+
+# Universal archive extractor
+extract() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: extract <archive>"
+        return 1
+    fi
+    if [[ ! -f "$1" ]]; then
+        echo "extract: '$1' is not a file"
+        return 1
+    fi
+    case "$1" in
+        *.tar.gz|*.tgz)      tar xzf "$1"        ;;
+        *.tar.bz2|*.tbz2)    tar xjf "$1"        ;;
+        *.tar.xz|*.txz)      tar xJf "$1"        ;;
+        *.tar.zst)            tar --zstd -xf "$1" ;;
+        *.tar)                tar xf  "$1"        ;;
+        *.gz)                 gunzip  "$1"        ;;
+        *.bz2)                bunzip2 "$1"        ;;
+        *.xz)                 unxz    "$1"        ;;
+        *.zst)                zstd -d "$1"        ;;
+        *.zip)                unzip   "$1"        ;;
+        *.7z)                 7z x    "$1"        ;;
+        *.rar)                unrar x "$1"        ;;
+        *.Z)                  uncompress "$1"     ;;
+        *)  echo "extract: unknown archive format '$1'" ; return 1 ;;
+    esac
+}
 
 # ---- help command ----
 help() {
@@ -138,7 +184,8 @@ help() {
     printf "${_dim}    Super + L           ${_rst}${_white}Lock screen${_rst}\n"
     printf "${_dim}    Super + Q           ${_rst}${_white}Close window${_rst}\n"
     printf "${_dim}    Super + F           ${_rst}${_white}Fullscreen${_rst}\n"
-    printf "${_dim}    Super + Shift + F   ${_rst}${_white}Float / tile toggle${_rst}\n"
+    printf "${_dim}    Super + Shift + F   ${_rst}${_white}Maximize (no bar)${_rst}\n"
+    printf "${_dim}    Super + Tab         ${_rst}${_white}Cycle windows${_rst}\n"
     printf "${_dim}    Super + 1-9         ${_rst}${_white}Switch workspace${_rst}\n"
     printf "${_dim}    Super + Shift + S   ${_rst}${_white}Screenshot (region)${_rst}\n"
     printf "${_dim}    Print               ${_rst}${_white}Screenshot (full, to clipboard)${_rst}\n"
@@ -150,6 +197,10 @@ help() {
     printf "${_dim}    btop                ${_rst}${_white}System monitor${_rst}\n"
     printf "${_dim}    pbcopy / pbpaste    ${_rst}${_white}Clipboard (like macOS)${_rst}\n"
     printf "${_dim}    cd <fuzzy>          ${_rst}${_white}Smart directory jump (zoxide)${_rst}\n"
+    printf "${_dim}    mkcd <dir>          ${_rst}${_white}Create directory and cd into it${_rst}\n"
+    printf "${_dim}    extract <file>      ${_rst}${_white}Extract any archive format${_rst}\n"
+    printf "${_dim}    ports               ${_rst}${_white}Show listening ports${_rst}\n"
+    printf "${_dim}    weather             ${_rst}${_white}Show weather forecast${_rst}\n"
     echo
     printf "${_cyan}  System:${_rst}\n"
     printf "${_dim}    settings            ${_rst}${_white}Open TorrentOS Settings${_rst}\n"
@@ -170,9 +221,14 @@ if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null; then
     _dim='\033[2;37m'
     _rst='\033[0m'
     _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
-    printf "\n${_blue}  TorrentOS${_rst}  ${_dim}v${_ver}${_rst}"
-    printf "   ${_dim}$(uname -r | cut -d- -f1) kernel${_rst}\n"
-    printf "${_dim}  Type ${_rst}${_white}help${_dim} for a quick reference.${_rst}\n\n"
+    _uptime="$(uptime -p 2>/dev/null | sed 's/up //' || echo '?')"
+    echo
+    printf "${_blue}  +-----------------------------+${_rst}\n"
+    printf "${_blue}  |${_rst}  ${_white}TorrentOS${_rst}  ${_dim}v${_ver}${_rst}             ${_blue}|${_rst}\n"
+    printf "${_blue}  |${_rst}  ${_dim}Uptime: ${_cyan}${_uptime}${_rst}           ${_blue}|${_rst}\n"
+    printf "${_blue}  +-----------------------------+${_rst}\n"
+    printf "  ${_dim}Super+Space ${_rst}launcher  ${_dim}Super+Return ${_rst}terminal  ${_dim}Super+L ${_rst}lock\n"
+    printf "  ${_dim}Type ${_rst}${_white}help${_dim} for a full reference.${_rst}\n\n"
 fi
 
 # ---- per-machine overrides ----

@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 # torrentos-doctor — TorrentOS system health check
 # Runs a series of quick diagnostic checks and reports pass/fail with hints.
-# Usage: torrentos-doctor [--quiet]
+# Usage: torrentos-doctor [--quiet] [--fix]
 
 set -euo pipefail
 
 QUIET=0
-[[ "${1:-}" == "--quiet" ]] && QUIET=1
+FIX=0
+for arg in "${@:-}"; do
+    case "$arg" in
+        --quiet) QUIET=1 ;;
+        --fix)   FIX=1   ;;
+    esac
+done
 
 B='\033[38;2;30;111;255m'
 G='\033[38;2;91;235;161m'
@@ -20,6 +26,9 @@ PASS=0
 WARN=0
 FAIL=0
 
+# Track failed check names for --fix suggestions
+FAILED_CHECKS=()
+
 header() {
     [[ $QUIET -eq 1 ]] && return
     echo
@@ -30,7 +39,7 @@ header() {
 
 ok()   { PASS=$(( PASS + 1 )); [[ $QUIET -eq 0 ]] && printf "${G}  ✔${N}  %s\n" "$1"; }
 warn() { WARN=$(( WARN + 1 )); printf "${Y}  ⚠${N}  %s\n" "$1"; }
-fail() { FAIL=$(( FAIL + 1 )); printf "${R}  ✘${N}  %s\n" "$1"; }
+fail() { FAIL=$(( FAIL + 1 )); FAILED_CHECKS+=("$1"); printf "${R}  ✘${N}  %s\n" "$1"; }
 hint() { [[ $QUIET -eq 0 ]] && printf "${D}     ↳ %s${N}\n" "$1"; }
 
 # ── checks ────────────────────────────────────────────────────────────────────
@@ -182,6 +191,52 @@ check_failed_units() {
     fi
 }
 
+check_flatpak() {
+    if command -v flatpak >/dev/null 2>&1; then
+        ok "flatpak is installed"
+        if flatpak remotes 2>/dev/null | grep -q flathub; then
+            ok "Flathub remote is configured"
+        else
+            warn "Flathub remote not found"
+            hint "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
+        fi
+    else
+        warn "flatpak not installed"
+        hint "sudo pacman -S flatpak"
+    fi
+}
+
+check_aur_helper() {
+    if command -v paru >/dev/null 2>&1; then
+        ok "AUR helper: paru $(paru --version 2>/dev/null | head -1 | awk '{print $2}' || echo '')"
+    elif command -v yay >/dev/null 2>&1; then
+        ok "AUR helper: yay"
+    else
+        warn "No AUR helper found (paru or yay)"
+        hint "Install paru: git clone https://aur.archlinux.org/paru.git && cd paru && makepkg -si"
+    fi
+}
+
+check_hyprlock() {
+    if command -v hyprlock >/dev/null 2>&1; then
+        local ver
+        ver="$(hyprlock --version 2>/dev/null | head -1 || echo 'unknown')"
+        ok "hyprlock installed: $ver"
+    else
+        fail "hyprlock not found"
+        hint "sudo pacman -S hyprlock  # or: paru -S hyprlock-git"
+    fi
+}
+
+check_systemd_resolved() {
+    if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        ok "systemd-resolved (DNS) is running"
+    else
+        warn "systemd-resolved is not active"
+        hint "sudo systemctl enable --now systemd-resolved"
+    fi
+}
+
 # ── run all checks ────────────────────────────────────────────────────────────
 
 header
@@ -207,6 +262,7 @@ echo
 
 printf "${W}  Services${N}\n"
 check_service_active NetworkManager "NetworkManager"
+check_systemd_resolved
 check_user_service   torrentos-settingsd "torrentos-settingsd"
 check_failed_units
 echo
@@ -219,9 +275,15 @@ check_audio
 check_hyprland_socket
 echo
 
-printf "${W}  Pacman${N}\n"
+printf "${W}  Pacman & AUR${N}\n"
 check_pacman_lock
 check_writable "$HOME/.config" "~/.config"
+check_aur_helper
+echo
+
+printf "${W}  Extra tools${N}\n"
+check_flatpak
+check_hyprlock
 echo
 
 # ── summary ───────────────────────────────────────────────────────────────────
@@ -233,6 +295,55 @@ if (( WARN > 0 )); then printf "${Y}⚠ %d warning(s)${N}  " "$WARN"; fi
 if (( FAIL > 0 )); then printf "${R}✘ %d failed${N}"      "$FAIL"; fi
 echo
 echo
+
+# ── --fix suggestions ─────────────────────────────────────────────────────────
+if [[ $FIX -eq 1 ]] && (( FAIL > 0 || WARN > 0 )); then
+    printf "${W}  Suggested fixes:${N}\n"
+    printf "${D}  ─────────────────────────────────────────────────${N}\n"
+
+    # AUR helper missing
+    if ! command -v paru >/dev/null 2>&1 && ! command -v yay >/dev/null 2>&1; then
+        printf "${Y}  AUR helper:${N}\n"
+        printf "${D}    git clone https://aur.archlinux.org/paru.git${N}\n"
+        printf "${D}    cd paru && makepkg -si${N}\n"
+    fi
+
+    # flatpak / flathub
+    if ! command -v flatpak >/dev/null 2>&1; then
+        printf "${Y}  Install flatpak:${N}\n"
+        printf "${D}    sudo pacman -S flatpak${N}\n"
+    elif ! flatpak remotes 2>/dev/null | grep -q flathub; then
+        printf "${Y}  Add Flathub remote:${N}\n"
+        printf "${D}    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo${N}\n"
+    fi
+
+    # hyprlock missing
+    if ! command -v hyprlock >/dev/null 2>&1; then
+        printf "${Y}  Install hyprlock:${N}\n"
+        printf "${D}    sudo pacman -S hyprlock${N}\n"
+    fi
+
+    # systemd-resolved
+    if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        printf "${Y}  Enable DNS resolver:${N}\n"
+        printf "${D}    sudo systemctl enable --now systemd-resolved${N}\n"
+        printf "${D}    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf${N}\n"
+    fi
+
+    # pacman DB lock
+    if [[ -f /var/lib/pacman/db.lck ]]; then
+        printf "${Y}  Remove stale pacman lock:${N}\n"
+        printf "${D}    sudo rm /var/lib/pacman/db.lck${N}\n"
+    fi
+
+    # audio
+    if ! (command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1); then
+        printf "${Y}  Restart audio:${N}\n"
+        printf "${D}    systemctl --user restart pipewire pipewire-pulse wireplumber${N}\n"
+    fi
+
+    echo
+fi
 
 if (( FAIL > 0 )); then
     exit 2

@@ -813,17 +813,17 @@
       let title = "You're a Perfect Fit!";
       let tips  = [];
 
-      // Apple Silicon — unsupported
+      // Apple Silicon — supported via Asahi Linux
       if (gpu === 'mac') {
-        emoji = '⚠️';
-        title = 'Not Supported Yet';
+        emoji = '🍎';
+        title = 'Supported via Asahi Linux!';
         tips = [
-          'TorrentOS does not currently support Apple Silicon (M1/M2/M3).',
-          'The ISO is x86_64 only — it will not boot on ARM-based Macs.',
-          'Intel Macs can run TorrentOS from a USB as a live desktop, but installing to disk requires disabling Secure Boot.',
-          'Apple Silicon support is planned for a future release — check back soon!'
+          'TorrentOS supports Apple Silicon (M1, M2, M3) via the <strong>Asahi Linux project</strong>.',
+          'You\'ll first install Arch Linux (Asahi) on your Mac, then run the TorrentOS bootstrap script — takes ~20 minutes.',
+          'Intel Macs use the standard ISO — <a href="index.html#download" style="color:var(--blue2)">download it directly</a>.',
+          '👉 <a href="apple-silicon.html" style="color:var(--blue2);font-weight:600">Full installation guide for Apple Silicon →</a>'
         ];
-        cardEl.classList.add('result-unsupported');
+        cardEl.classList.add('result-supported');
         emojiEl.textContent = emoji;
         titleEl.textContent = title;
         tips.forEach(t => {
