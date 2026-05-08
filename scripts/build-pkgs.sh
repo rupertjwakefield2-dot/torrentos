@@ -133,18 +133,22 @@ stage_tools() {
     require_file "$bin/torrentos-help"
     require_file "$bin/torrentos-update-check"
     require_file "$bin/torrentos-doctor"
+    require_file "$bin/torrentos-get-browser"
     require_file "$apps/torrentos-update.desktop"
     require_file "$apps/torrentos-screenshot.desktop"
     require_file "$apps/torrentos-help.desktop"
+    require_file "$apps/torrentos-get-browser.desktop"
 
     cp "$bin/torrentos-update-gui"           "$pkg/torrentos-update-gui"
     cp "$bin/torrentos-screenshot"           "$pkg/torrentos-screenshot"
     cp "$bin/torrentos-help"                 "$pkg/torrentos-help"
     cp "$bin/torrentos-update-check"         "$pkg/torrentos-update-check"
     cp "$bin/torrentos-doctor"               "$pkg/torrentos-doctor"
+    cp "$bin/torrentos-get-browser"          "$pkg/torrentos-get-browser"
     cp "$apps/torrentos-update.desktop"      "$pkg/torrentos-update-gui.desktop"
     cp "$apps/torrentos-screenshot.desktop"  "$pkg/torrentos-screenshot.desktop"
     cp "$apps/torrentos-help.desktop"        "$pkg/torrentos-help.desktop"
+    cp "$apps/torrentos-get-browser.desktop" "$pkg/torrentos-get-browser.desktop"
 }
 
 # 5. torrentos-theme: ensure wallpaper.png exists.

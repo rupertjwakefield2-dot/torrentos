@@ -171,9 +171,11 @@ rm -f  usr/local/bin/torrentos-update-gui \
        usr/local/bin/torrentos-help \
        usr/local/bin/torrentos-update-check \
        usr/local/bin/torrentos-doctor \
+       usr/local/bin/torrentos-get-browser \
        usr/share/applications/torrentos-update.desktop \
        usr/share/applications/torrentos-screenshot.desktop \
-       usr/share/applications/torrentos-help.desktop
+       usr/share/applications/torrentos-help.desktop \
+       usr/share/applications/torrentos-get-browser.desktop
 # torrentos-hyprland-config also owns libinput-gestures.conf in skel:
 rm -f  etc/skel/.config/libinput-gestures.conf
 # Clean up empty parent directories

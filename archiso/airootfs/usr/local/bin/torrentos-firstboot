@@ -140,6 +140,53 @@ if [ -n "$LOCALE" ]; then
     localectl set-locale "LANG=$LOCALE" 2>/dev/null || true
 fi
 
+# ── 4. Browser ───────────────────────────────────────────────────────────────
+echo
+printf "${C}  Web browser${N}\n"
+echo "$HR"
+echo
+printf "${D}  Chromium is already installed. Want to add another browser?${N}\n"
+echo
+printf "${D}   1) ${W}Google Chrome${D}    — syncs with your Google account${N}\n"
+printf "${D}   2) ${W}Firefox${D}          — fast, private, open-source${N}\n"
+printf "${D}   3) ${W}Brave${D}            — Chrome-based, built-in ad blocker${N}\n"
+printf "${D}   4) ${W}Skip${D}             — Chromium is already included${N}\n"
+echo
+printf "${W}  Your choice [4]: ${N}"
+read -r BR_CHOICE
+
+BROWSER_PKG=""
+BROWSER_NAME=""
+BROWSER_SOURCE=""
+case "$BR_CHOICE" in
+    1) BROWSER_PKG="google-chrome";             BROWSER_NAME="Google Chrome";  BROWSER_SOURCE="aur"    ;;
+    2) BROWSER_PKG="firefox";                   BROWSER_NAME="Firefox";        BROWSER_SOURCE="pacman" ;;
+    3) BROWSER_PKG="brave-bin";                 BROWSER_NAME="Brave";          BROWSER_SOURCE="aur"    ;;
+    *) BROWSER_NAME=""; ;;
+esac
+
+if [[ -n "$BROWSER_PKG" ]]; then
+    printf "${G}  Installing $BROWSER_NAME — this may take a few minutes…${N}\n"
+    if [[ "$BROWSER_SOURCE" == "aur" ]]; then
+        AUR=""
+        command -v paru >/dev/null 2>&1 && AUR=paru
+        command -v yay  >/dev/null 2>&1 && AUR="${AUR:-yay}"
+        if [[ -n "$AUR" ]]; then
+            "$AUR" -S --needed --noconfirm "$BROWSER_PKG" 2>/dev/null \
+                && printf "${G}  ✔  $BROWSER_NAME installed.${N}\n" \
+                || printf "${Y}  ⚠  Could not install now. Run: paru -S $BROWSER_PKG${N}\n"
+        else
+            printf "${Y}  ⚠  AUR helper not found. Run: torrentos-get-browser${N}\n"
+        fi
+    else
+        sudo pacman -S --needed --noconfirm "$BROWSER_PKG" 2>/dev/null \
+            && printf "${G}  ✔  $BROWSER_NAME installed.${N}\n" \
+            || printf "${Y}  ⚠  Could not install now. Run: torrentos-get-browser${N}\n"
+    fi
+else
+    printf "${G}  ✔  Chromium is ready to use.${N}\n"
+fi
+
 # ── Create XDG user directories ──────────────────────────────────────────────
 for dir in Desktop Downloads Documents Pictures Videos Music Public Templates; do
     mkdir -p "$HOME/$dir"
@@ -161,6 +208,9 @@ touch "$DONE_FLAG"
 
 echo
 echo "$HR"
-printf "${G}  All done.${N} ${D}Starting your desktop now…${N}\n"
+printf "${G}  All done!${N}\n"
+printf "${D}  • Press ${W}Super + Space${D} to open the app launcher${N}\n"
+printf "${D}  • Press ${W}Super + T${D}     to open a terminal${N}\n"
+printf "${D}  • Run   ${W}torrentos-get-browser${D} anytime to install more browsers${N}\n"
 echo
 sleep 1

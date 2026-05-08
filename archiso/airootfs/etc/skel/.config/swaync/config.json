@@ -72,6 +72,10 @@
                 {
                     "label": "󰚰 Update",
                     "command": "torrentos-update-gui"
+                },
+                {
+                    "label": "󰖟 Browser",
+                    "command": "ghostty -e torrentos-get-browser"
                 }
             ]
         },
