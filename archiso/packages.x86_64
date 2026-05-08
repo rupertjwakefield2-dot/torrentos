@@ -115,9 +115,12 @@ xf86-video-intel
 vulkan-radeon
 vulkan-intel
 libva-mesa-driver
-# Nvidia utils (userspace only — kernel module installed post-disk-install)
+# NVIDIA — full driver stack (kernel module + userspace + Wayland bridge)
+nvidia
 nvidia-utils
 nvidia-settings
+nvidia-prime
+libva-nvidia-driver
 egl-wayland
 
 # --- file manager / images / archives ---
