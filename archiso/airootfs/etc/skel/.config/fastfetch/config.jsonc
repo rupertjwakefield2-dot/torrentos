@@ -1,0 +1,104 @@
+// TorrentOS — fastfetch config
+// Run `fastfetch` in a terminal to see system info with TorrentOS branding.
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "type": "file",
+        "source": "/usr/share/torrentos/branding/logo-ascii.txt",
+        "color": {
+            "1": "38;2;30;111;255",
+            "2": "1;37"
+        },
+        "padding": {
+            "top": 1,
+            "left": 2,
+            "right": 3
+        }
+    },
+    "display": {
+        "separator": "  ",
+        "color": {
+            "keys":   "blue",
+            "title":  "white",
+            "output": "white"
+        }
+    },
+    "modules": [
+        {
+            "type": "title",
+            "key": "",
+            "format": "{user-name}@{host-name}"
+        },
+        "separator",
+        {
+            "type": "os",
+            "key": " OS",
+            "keyColor": "blue"
+        },
+        {
+            "type": "kernel",
+            "key": " Kernel",
+            "keyColor": "blue"
+        },
+        {
+            "type": "wm",
+            "key": " WM",
+            "keyColor": "blue"
+        },
+        {
+            "type": "terminal",
+            "key": " Terminal",
+            "keyColor": "blue"
+        },
+        {
+            "type": "shell",
+            "key": " Shell",
+            "keyColor": "blue"
+        },
+        {
+            "type": "uptime",
+            "key": "󰔛 Uptime",
+            "keyColor": "blue"
+        },
+        {
+            "type": "packages",
+            "key": "󰏖 Packages",
+            "keyColor": "blue"
+        },
+        "separator",
+        {
+            "type": "cpu",
+            "key": "󰻠 CPU",
+            "keyColor": "blue",
+            "showPeCoreCount": true
+        },
+        {
+            "type": "gpu",
+            "key": "󰿵 GPU",
+            "keyColor": "blue",
+            "detectionMethod": "pci"
+        },
+        {
+            "type": "memory",
+            "key": "󰾅 Memory",
+            "keyColor": "blue"
+        },
+        {
+            "type": "disk",
+            "key": "󰋊 Disk",
+            "keyColor": "blue",
+            "folders": "/"
+        },
+        {
+            "type": "display",
+            "key": "󰍺 Display",
+            "keyColor": "blue"
+        },
+        "separator",
+        {
+            "type": "colors",
+            "paddingLeft": 0,
+            "symbol": "circle"
+        }
+    ]
+}

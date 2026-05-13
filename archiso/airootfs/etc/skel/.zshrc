@@ -226,23 +226,22 @@ help() {
 }
 
 # ---- welcome banner (only in interactive login shells, only after first-boot) ----
-# Suppress the banner during first-boot so it doesn't collide with the wizard logo.
-if [[ -o interactive ]] && [[ -o login ]] && command -v tput >/dev/null \
+# Shows fastfetch system info. Suppressed during first-boot so it doesn't collide with the wizard.
+if [[ -o interactive ]] && [[ -o login ]] \
    && [[ -f "$HOME/.config/torrentos/.firstboot-done" ]]; then
-    _blue='\033[38;2;30;111;255m'
-    _cyan='\033[38;2;91;192;235m'
-    _white='\033[1;37m'
-    _dim='\033[2;37m'
-    _rst='\033[0m'
-    _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
-    _uptime="$(uptime -p 2>/dev/null | sed 's/up //' || echo '?')"
-    echo
-    printf "${_blue}  +-----------------------------+${_rst}\n"
-    printf "${_blue}  |${_rst}  ${_white}TorrentOS${_rst}  ${_dim}v${_ver}${_rst}             ${_blue}|${_rst}\n"
-    printf "${_blue}  |${_rst}  ${_dim}Uptime: ${_cyan}${_uptime}${_rst}           ${_blue}|${_rst}\n"
-    printf "${_blue}  +-----------------------------+${_rst}\n"
-    printf "  ${_dim}Super+Space ${_rst}launcher  ${_dim}Super+Return ${_rst}terminal  ${_dim}Super+L ${_rst}lock\n"
-    printf "  ${_dim}Type ${_rst}${_white}help${_dim} for a full reference.${_rst}\n\n"
+    if command -v fastfetch >/dev/null 2>&1; then
+        fastfetch
+    else
+        # Fallback minimal banner if fastfetch isn't available
+        _blue='\033[38;2;30;111;255m'
+        _dim='\033[2;37m'
+        _white='\033[1;37m'
+        _rst='\033[0m'
+        _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
+        echo
+        printf "${_blue}  TorrentOS${_rst}  v${_ver}\n"
+        printf "  ${_dim}Type ${_white}help${_dim} for shortcuts and commands.${_rst}\n\n"
+    fi
 fi
 
 # ---- per-machine overrides ----

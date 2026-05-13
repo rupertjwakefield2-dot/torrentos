@@ -309,6 +309,17 @@ else
     printf "${G}  ✔  Chromium is ready to use.${N}\n"
 fi
 
+# ── Set up Flathub (silent — runs in background while user reads done screen) ──
+_setup_flathub() {
+    if command -v flatpak >/dev/null 2>&1; then
+        if ! flatpak remotes 2>/dev/null | grep -q flathub; then
+            flatpak remote-add --if-not-exists flathub \
+                https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+        fi
+    fi
+}
+_setup_flathub &
+
 # ── Create XDG user directories ───────────────────────────────────────────────
 for dir in Desktop Downloads Documents Pictures Videos Music Public Templates; do
     mkdir -p "$HOME/$dir"

@@ -11,7 +11,7 @@
 
     "modules-left":   ["custom/logo", "hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right":  ["mpris", "cpu", "memory", "tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
+    "modules-right":  ["mpris", "custom/gpu", "cpu", "memory", "disk", "tray", "network", "bluetooth", "pulseaudio", "battery", "custom/notifications", "custom/power"],
 
     // ── Left ────────────────────────────────────────────────────────────
     "custom/logo": {
@@ -113,6 +113,28 @@
         "states": {
             "warning":  75,
             "critical": 90
+        },
+        "on-click": "ghostty -e btop"
+    },
+
+    "custom/gpu": {
+        "exec": "nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | awk -F', ' '{printf \"%s%%  %s°C\", $1, $2}' || echo ''",
+        "format": "󰿵  {}",
+        "interval": 5,
+        "tooltip-format": "GPU Usage & Temperature (NVIDIA RTX)",
+        "on-click": "ghostty -e btop",
+        "return-type": ""
+    },
+
+    "disk": {
+        "interval": 30,
+        "format": "󰋊  {percentage_used}%",
+        "format-alt": "󰋊  {used} / {total}",
+        "path": "/",
+        "tooltip-format": "Disk: {used} used of {total}\n{free} free ({percentage_used}% full)",
+        "states": {
+            "warning":  80,
+            "critical": 95
         },
         "on-click": "ghostty -e btop"
     },

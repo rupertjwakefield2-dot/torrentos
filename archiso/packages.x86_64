@@ -198,6 +198,15 @@ podman
 # --- flatpak (for sandboxed apps) ---
 flatpak
 
+# --- gaming ---
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+
+# --- fastfetch (system info) ---
+fastfetch
+
 # --- browsers ---
 firefox
 

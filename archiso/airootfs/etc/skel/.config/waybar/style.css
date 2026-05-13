@@ -27,7 +27,7 @@ window#waybar.empty {
 
 /* ── Shared module padding ─────────────────────────────────── */
 #custom-logo, #workspaces, #window,
-#clock, #mpris, #cpu, #memory,
+#clock, #mpris, #custom-gpu, #cpu, #memory, #disk,
 #tray, #network, #bluetooth, #pulseaudio, #battery,
 #custom-notifications, #custom-power {
     padding: 0 10px;
@@ -124,6 +124,26 @@ window#waybar.empty {
 
 #memory.warning  { color: #FFB454; }
 #memory.critical {
+    color: #FF6B6B;
+    animation: pulse-warn 1.5s ease-in-out infinite;
+}
+
+/* ── GPU ───────────────────────────────────────────────────── */
+#custom-gpu {
+    color: #B0D4FF;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+/* ── Disk ──────────────────────────────────────────────────── */
+#disk {
+    color: #B0D4FF;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+#disk.warning  { color: #FFB454; }
+#disk.critical {
     color: #FF6B6B;
     animation: pulse-warn 1.5s ease-in-out infinite;
 }
