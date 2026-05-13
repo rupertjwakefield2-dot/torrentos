@@ -30,11 +30,14 @@ application/x-yaml=org.gnome.TextEditor.desktop
 # Images
 image/png=org.gnome.Loupe.desktop
 image/jpeg=org.gnome.Loupe.desktop
+image/jpg=org.gnome.Loupe.desktop
 image/webp=org.gnome.Loupe.desktop
 image/gif=org.gnome.Loupe.desktop
 image/bmp=org.gnome.Loupe.desktop
 image/svg+xml=org.gnome.Loupe.desktop
 image/tiff=org.gnome.Loupe.desktop
+image/avif=org.gnome.Loupe.desktop
+image/heic=org.gnome.Loupe.desktop
 
 # Video
 video/mp4=mpv.desktop
@@ -53,6 +56,9 @@ audio/wav=mpv.desktop
 audio/x-wav=mpv.desktop
 audio/mp4=mpv.desktop
 audio/aac=mpv.desktop
+audio/opus=mpv.desktop
+audio/x-flac=mpv.desktop
+audio/x-m4a=mpv.desktop
 
 # Archive
 application/zip=org.gnome.FileRoller.desktop

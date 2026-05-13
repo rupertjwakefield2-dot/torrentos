@@ -589,7 +589,7 @@
             <span class="faq-chevron">+</span>
           </summary>
           <div class="faq-body">
-            The easiest way: open a terminal after first boot and run <code>torrentos-doctor</code>. It auto-detects your GPU and walks you through the driver install. Alternatively, run <code>sudo pacman -S nvidia nvidia-utils</code> and reboot. The proprietary driver is needed for Wayland compositing on NVIDIA hardware.
+            TorrentOS ships with full NVIDIA support pre-configured — <code>nvidia-dkms</code>, the Wayland GBM backend, DRM modeset, and hardware cursor workaround are all set up automatically. On the live ISO just run <code>torrentos-doctor</code> to verify everything is working. If you installed manually and the driver is missing, run <code>sudo pacman -S nvidia-dkms nvidia-utils</code> and reboot.
           </div>
         </details>
 
@@ -649,7 +649,7 @@
             <span class="faq-chevron">+</span>
           </summary>
           <div class="faq-body">
-            Yes. Install <strong style="color:var(--white)">Steam</strong> from the package manager (<code>sudo pacman -S steam</code>), then enable <strong style="color:var(--white)">Proton</strong> in Steam settings to play Windows games. Vulkan is set up by default. NVIDIA users should install the proprietary driver first via <code>torrentos-doctor</code> for the best performance.
+            Yes. <strong style="color:var(--white)">GameMode</strong> and <strong style="color:var(--white)">MangoHud</strong> are pre-installed for performance overlays. Install <strong style="color:var(--white)">Steam</strong> from Flatpak (<code>flatpak install flathub com.valvesoftware.Steam</code>) or pacman (<code>sudo pacman -S steam</code>), then enable <strong style="color:var(--white)">Proton</strong> in Steam Settings → Steam Play to run Windows games. Vulkan is set up by default. NVIDIA RTX/GTX cards work out of the box with the bundled drivers.
           </div>
         </details>
 
@@ -793,8 +793,8 @@
         answer: 'System requirements: <strong style="color:var(--white)">8 GB RAM</strong> (16 GB recommended), a <strong style="color:var(--white)">4-core CPU</strong>, <strong style="color:var(--white)">50 GB storage</strong>, a 64-bit x86 processor, and a GPU with Vulkan support. Most modern PCs qualify.'
       },
       {
-        keys: ['nvidia', 'gpu driver', 'proprietary', 'graphics driver'],
-        answer: 'Run <code>torrentos-doctor</code> in the terminal after first boot — it auto-detects your NVIDIA GPU and guides you. Or manually run: <code>sudo pacman -S nvidia nvidia-utils</code> then reboot. This is required for Wayland compositing on NVIDIA hardware.'
+        keys: ['nvidia', 'gpu driver', 'proprietary', 'graphics driver', 'rtx', 'gtx', 'cursor', 'black screen'],
+        answer: 'TorrentOS ships with full NVIDIA support pre-configured — <code>nvidia-dkms</code>, DRM modeset, GBM backend, and cursor fix are all set automatically. Run <code>torrentos-doctor</code> to verify. If you installed manually, run: <code>sudo pacman -S nvidia-dkms nvidia-utils</code> and reboot.'
       },
       {
         keys: ['apple', 'silicon', 'm1', 'm2', 'm3', 'm4', 'm5', 'macbook', 'mac', 'asahi', 'arm', 'aarch64'],
@@ -813,8 +813,8 @@
         answer: 'Flatpak is pre-installed with Flathub configured. Install apps from GNOME Software, Discover, or the terminal: <code>flatpak install flathub &lt;app-id&gt;</code>. DaVinci Resolve, Kdenlive, GIMP, Inkscape, OBS, and thousands more are available.'
       },
       {
-        keys: ['gaming', 'steam', 'proton', 'wine', 'windows game', 'play'],
-        answer: 'Install Steam: <code>sudo pacman -S steam</code>, then enable Proton in Steam Settings → Steam Play. Vulkan is set up by default so most games work immediately. For best NVIDIA performance, install the proprietary driver first with <code>torrentos-doctor</code>.'
+        keys: ['gaming', 'steam', 'proton', 'wine', 'windows game', 'play', 'gamemode', 'mangohud', 'lutris', 'game'],
+        answer: 'GameMode and MangoHud are pre-installed for performance and overlays. Install Steam via Flatpak: <code>flatpak install flathub com.valvesoftware.Steam</code>, then enable Proton in Steam Settings → Steam Play. Vulkan is set up by default. NVIDIA RTX/GTX works out of the box.'
       },
       {
         keys: ['hyprland', 'compositor', 'wayland', 'desktop', 'window manager', 'tiling'],

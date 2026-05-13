@@ -833,6 +833,16 @@
           <h3>Real settings app</h3>
           <p>Appearance, display, keyboard, network, and accessibility — all in one polished GTK4 control panel. No config-file spelunking.</p>
         </div>
+        <div class="card reveal reveal-delay-3">
+          <div class="card-icon">🎮</div>
+          <h3>Gaming out of the box</h3>
+          <p>GameMode, MangoHud, and full NVIDIA RTX support pre-configured. Steam and Lutris install in seconds via Flatpak.</p>
+        </div>
+        <div class="card reveal reveal-delay-4">
+          <div class="card-icon">📦</div>
+          <h3>Flatpak &amp; Flathub ready</h3>
+          <p>Flathub is configured automatically on first boot. Thousands of sandboxed apps available immediately with <code>flatpak install</code>.</p>
+        </div>
       </div>
 
       <div class="tab-panel" id="tab-desktop">
@@ -894,13 +904,28 @@
         </div>
         <div class="card reveal reveal-delay-2">
           <div class="card-icon">🐳</div>
-          <h3>Docker</h3>
-          <p>Pre-installed and ready. Run `docker run` and it works. No post-install setup.</p>
+          <h3>Docker &amp; Podman</h3>
+          <p>Both pre-installed and ready. Run <code>docker run</code> and it works. No post-install setup.</p>
         </div>
         <div class="card reveal reveal-delay-3">
           <div class="card-icon">🛠️</div>
           <h3>Full stack ready</h3>
-          <p>Git, Neovim, Python 3, Node.js, Go, and Zsh with plugins all configured out of the box.</p>
+          <p>Git, Neovim, Python 3, Node.js, Rust, Go, and Zsh with fzf, zoxide, bat, eza, and ripgrep.</p>
+        </div>
+        <div class="card reveal reveal-delay-4">
+          <div class="card-icon">🎮</div>
+          <h3>Gaming ready</h3>
+          <p>GameMode and MangoHud pre-installed. Full NVIDIA RTX support out of the box with correct Wayland env vars.</p>
+        </div>
+        <div class="card reveal reveal-delay-5">
+          <div class="card-icon">📦</div>
+          <h3>Flatpak + Flathub</h3>
+          <p>Flatpak pre-configured and Flathub added automatically on first boot — thousands of sandboxed apps one command away.</p>
+        </div>
+        <div class="card reveal reveal-delay-6">
+          <div class="card-icon">🔍</div>
+          <h3>System diagnostics</h3>
+          <p><code>torrentos-doctor</code> checks GPU drivers, audio, services, disk space, NVIDIA Wayland env, and more. Run <code>doctor --fix</code> to auto-repair.</p>
         </div>
       </div>
     </div>
@@ -1007,11 +1032,11 @@
         </details>
         <details class="faq-item reveal reveal-delay-2">
           <summary>Does it work on a Mac?</summary>
-          <p>Intel Macs can boot TorrentOS from USB and run it as a live desktop, but installing to disk requires disabling Secure Boot and repartitioning. Apple Silicon (M1/M2/M3) is not currently supported — the ISO is x86_64 only.</p>
+          <p>Intel Macs can boot TorrentOS from USB and run it as a live desktop, but installing to disk requires disabling Secure Boot and repartitioning. Apple Silicon (M1–M5) is not currently supported — the ISO is x86_64 only. See the <a href="apple-silicon.html" style="color:var(--blue2)">Apple Silicon page</a> for future plans.</p>
         </details>
         <details class="faq-item reveal reveal-delay-3">
           <summary>Do I need an NVIDIA GPU?</summary>
-          <p>No. TorrentOS works on Intel integrated graphics, AMD, and NVIDIA. NVIDIA requires the proprietary driver after installing to disk — the live ISO uses software rendering as a fallback so it boots on anything.</p>
+          <p>No. TorrentOS works on Intel integrated graphics, AMD GPUs, and NVIDIA. NVIDIA RTX and GTX cards are fully supported — <code>nvidia-dkms</code>, the correct Wayland environment variables (<code>WLR_NO_HARDWARE_CURSORS</code>, <code>GBM_BACKEND</code>), and DRM modeset are all configured out of the box. GameMode and MangoHud also work with NVIDIA.</p>
         </details>
         <details class="faq-item reveal reveal-delay-4">
           <summary>Can I try it without installing?</summary>
@@ -1023,7 +1048,7 @@
         </details>
         <details class="faq-item reveal reveal-delay-6">
           <summary>Can I install my own apps?</summary>
-          <p>Yes. TorrentOS uses <code>pacman</code> (Arch Linux package manager) and supports the AUR via <code>paru</code>. You can install almost any Linux application, including Flatpaks and AppImages.</p>
+          <p>Yes. TorrentOS uses <code>pacman</code> (Arch Linux package manager) and supports the AUR via <code>paru</code>. Flatpak is pre-installed and Flathub is configured automatically on first boot — giving you access to thousands of sandboxed apps. AppImages also work out of the box.</p>
         </details>
       </div>
     </div>

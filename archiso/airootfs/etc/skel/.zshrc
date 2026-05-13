@@ -140,15 +140,103 @@ alias pkgf='pacman -Ql'
 alias pkgl='pacman -Qe'       # explicitly installed packages
 alias pkgo='pacman -Qtdq'     # orphan packages
 alias pkgclean='sudo pacman -Rns $(pacman -Qtdq) 2>/dev/null || echo "No orphans."'
+alias pkgsize='expac -H M "%m\t%n" | sort -rh | head -30'  # top 30 largest packages
 
 # Disk / memory
 alias disk='df -h | grep -v tmpfs'
 alias mem='free -h'
 
+# Process / system
+alias psg='ps aux | grep -v grep | grep'
+alias killed='journalctl -b -1 -k | grep -i "killed process"'
+alias syslog='journalctl -b -f'
+alias recentlog='journalctl -b --since "1 hour ago"'
+
+# Network
+alias pingg='ping -c 4 8.8.8.8'
+alias localip='ip addr show | grep "inet " | awk "{print \$2}"'
+
+# Quick edit config files
+alias zshconfig='${EDITOR:-nvim} ~/.zshrc'
+alias nvimconfig='${EDITOR:-nvim} ~/.config/nvim/init.lua'
+alias hyprconfig='${EDITOR:-nvim} ~/.config/hypr/hyprland.conf'
+alias waybarconfig='${EDITOR:-nvim} ~/.config/waybar/config.jsonc'
+
 # ---- functions ----
 
 # Create a directory and immediately cd into it
 mkcd() { mkdir -p "$1" && cd "$1" }
+
+# Find a file by name (fuzzy with fzf if available)
+ff-find() {
+    if command -v fzf >/dev/null 2>&1; then
+        find "${2:-.}" -name "*${1}*" 2>/dev/null | fzf --preview 'bat --color=always {} 2>/dev/null || ls -la {}'
+    else
+        find "${2:-.}" -name "*${1}*" 2>/dev/null
+    fi
+}
+
+# Quickly jump to a project directory (searches ~/code, ~/projects, ~/work)
+proj() {
+    local dir
+    dir=$(find ~/code ~/projects ~/work ~/dev ~/repos 2>/dev/null -maxdepth 2 -type d \
+        | fzf --query="${1:-}" --select-1 --exit-0 \
+              --preview 'ls -la {}') && cd "$dir"
+}
+
+# Show a process listening on a port
+port() {
+    if [[ -z "$1" ]]; then
+        ss -tulpn
+    else
+        ss -tulpn | grep ":${1}"
+    fi
+}
+
+# Git shortcuts
+gfp()   { git fetch --prune && git pull }
+gcm()   { git checkout "${1:-main}" }
+gclean() { git branch --merged | grep -vE '^\*|main|master|dev' | xargs -r git branch -d }
+
+# Quick note to ~/Notes (creates file if not exist)
+note() {
+    local notesdir="$HOME/Notes"
+    mkdir -p "$notesdir"
+    if [[ -z "$1" ]]; then
+        "${EDITOR:-nvim}" "$notesdir/scratch.md"
+    else
+        "${EDITOR:-nvim}" "$notesdir/${1}.md"
+    fi
+}
+
+# Show disk usage of current directory, sorted
+dusort() {
+    du -sh "${1:-.}"/* 2>/dev/null | sort -rh | head -20
+}
+
+# Download a YouTube video with yt-dlp (if installed)
+yt() {
+    if command -v yt-dlp >/dev/null 2>&1; then
+        yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' \
+               --merge-output-format mp4 "${@}"
+    else
+        echo "yt-dlp not found. Install with: paru -S yt-dlp"
+    fi
+}
+
+# SSH with tmux persistence
+tssh() {
+    ssh -t "$@" 'tmux new-session -A -s main'
+}
+
+# Convert epoch timestamp to human date
+epoch() {
+    if [[ -n "$1" ]]; then
+        date -d "@$1" 2>/dev/null || date -r "$1" 2>/dev/null
+    else
+        date +%s
+    fi
+}
 
 # Universal archive extractor
 extract() {
