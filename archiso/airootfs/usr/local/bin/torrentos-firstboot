@@ -22,9 +22,11 @@ touch "$USER_CONF" 2>/dev/null
 # agetty autologin and localectl can both scramble stty settings; reset before
 # every section so backspace/Ctrl+C always work.
 fix_stty() {
-    stty sane        2>/dev/null || true
-    stty erase $'\177' 2>/dev/null || true   # DEL (127) = backspace
-    stty icrnl       2>/dev/null || true
+    stty sane              2>/dev/null || true
+    stty erase $'\177'     2>/dev/null || true   # DEL (127) = backspace
+    stty icrnl intr $'\003' 2>/dev/null || true
+    # If TERM is unset or "unknown", fall back to "linux" so ncurses tools work.
+    [[ -z "${TERM:-}" || "$TERM" == "unknown" ]] && export TERM=linux
 }
 fix_stty
 
@@ -46,6 +48,9 @@ HR="${D}  ───────────────────────�
 # ── Prompt helper — always restores stty first ───────────────────────────────
 ask() {
     # ask <varname> <prompt> [default]
+    # NOTE: deliberately uses 'read -r' (no -e) so backspace is handled by the
+    # kernel line discipline (stty erase=^?) rather than readline. readline
+    # breaks in unknown/dumb terminal types (live ISO agetty sessions).
     local __var="$1" __prompt="$2" __default="${3:-}"
     fix_stty
     if [[ -n "$__default" ]]; then
@@ -53,7 +58,7 @@ ask() {
     else
         printf "${W}  ${__prompt}: ${N}"
     fi
-    IFS= read -re __reply
+    IFS= read -r __reply
     [[ -z "$__reply" ]] && __reply="$__default"
     printf -v "$__var" '%s' "$__reply"
 }
