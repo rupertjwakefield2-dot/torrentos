@@ -33,17 +33,17 @@ echo
 printf "${B}  TorrentOS — Browser Installer${N}\n"
 echo "$HR"
 echo
-printf "${D}  Choose a browser to install. Chromium is already included${N}\n"
+printf "${D}  Choose a browser to install. Firefox is already included${N}\n"
 printf "${D}  with TorrentOS — the others take 1–3 minutes to install.${N}\n"
 echo
 
 # ── browser menu ──────────────────────────────────────────────────────────────
 printf "  ${W}1)${N}  ${C}Google Chrome${N}       ${D}The most popular browser. Syncs with your Google account.${N}\n"
-printf "  ${W}2)${N}  ${C}Firefox${N}             ${D}Fast, private, open-source. Best for privacy.${N}\n"
-printf "  ${W}3)${N}  ${C}Brave${N}               ${D}Chrome-based with built-in ad blocking.${N}\n"
-printf "  ${W}4)${N}  ${C}Vivaldi${N}             ${D}Chrome-based, highly customisable.${N}\n"
-printf "  ${W}5)${N}  ${C}Microsoft Edge${N}      ${D}Chrome-based, integrates with Microsoft 365.${N}\n"
-printf "  ${W}6)${N}  ${C}Chromium${N}            ${D}Already installed — open-source Chrome (no Google account sync).${N}\n"
+printf "  ${W}2)${N}  ${C}Brave${N}               ${D}Chrome-based with built-in ad blocking.${N}\n"
+printf "  ${W}3)${N}  ${C}Vivaldi${N}             ${D}Chrome-based, highly customisable.${N}\n"
+printf "  ${W}4)${N}  ${C}Microsoft Edge${N}      ${D}Chrome-based, integrates with Microsoft 365.${N}\n"
+printf "  ${W}5)${N}  ${C}Chromium${N}            ${D}Open-source Chrome (no Google account sync).${N}\n"
+printf "  ${W}6)${N}  ${C}Firefox${N}             ${D}Already installed — fast, private, open-source.${N}\n"
 printf "  ${W}7)${N}  ${C}All of the above${N}    ${D}Install everything listed.${N}\n"
 printf "  ${W}8)${N}  ${C}Skip / exit${N}\n"
 echo
@@ -94,17 +94,17 @@ install_browser() {
 # ── dispatch ──────────────────────────────────────────────────────────────────
 case "$CHOICE" in
     1) install_browser "Google Chrome"    "google-chrome"                aur     ;;
-    2) install_browser "Firefox"          "firefox"                      pacman  ;;
-    3) install_browser "Brave"            "brave-bin"                    aur     ;;
-    4) install_browser "Vivaldi"          "vivaldi"                      aur     ;;
-    5) install_browser "Microsoft Edge"   "microsoft-edge-stable-bin"    aur     ;;
-    6) printf "${G}  ✔  Chromium is already installed — open it from the app launcher.${N}\n" ;;
+    2) install_browser "Brave"            "brave-bin"                    aur     ;;
+    3) install_browser "Vivaldi"          "vivaldi"                      aur     ;;
+    4) install_browser "Microsoft Edge"   "microsoft-edge-stable-bin"    aur     ;;
+    5) install_browser "Chromium"         "chromium"                     pacman  ;;
+    6) printf "${G}  ✔  Firefox is already installed — open it from the app launcher.${N}\n" ;;
     7)
         install_browser "Google Chrome"   "google-chrome"                aur
-        install_browser "Firefox"         "firefox"                      pacman
         install_browser "Brave"           "brave-bin"                    aur
         install_browser "Vivaldi"         "vivaldi"                      aur
         install_browser "Microsoft Edge"  "microsoft-edge-stable-bin"    aur
+        install_browser "Chromium"        "chromium"                     pacman
         ;;
     8) echo; printf "${D}  Skipped.${N}\n"; exit 0 ;;
     *) echo; printf "${Y}  Unknown choice. Run torrentos-get-browser to try again.${N}\n"; exit 1 ;;

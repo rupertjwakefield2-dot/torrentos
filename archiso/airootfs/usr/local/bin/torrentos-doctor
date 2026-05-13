@@ -384,11 +384,16 @@ check_systemd_resolved() {
 header
 
 printf "${W}  Core tools${N}\n"
-check_cmd hyprctl "Hyprland CLI (hyprctl)"
-check_cmd nmcli   "NetworkManager CLI (nmcli)"
-check_cmd pacman  "pacman package manager"
-check_cmd python3 "Python 3"
-check_cmd git     "Git"
+check_cmd hyprctl    "Hyprland CLI (hyprctl)"
+check_cmd nmcli      "NetworkManager CLI (nmcli)"
+check_cmd pacman     "pacman package manager"
+check_cmd python3    "Python 3"
+check_cmd git        "Git"
+check_cmd zsh        "Zsh shell"
+check_cmd starship   "Starship prompt"
+check_cmd fastfetch  "fastfetch (system info)"
+check_cmd tmux       "tmux terminal multiplexer"
+check_cmd nvim       "Neovim"
 echo
 
 printf "${W}  TorrentOS components${N}\n"
@@ -439,6 +444,10 @@ check_flatpak
 check_hyprlock
 check_gamemode
 check_mangohud
+check_cmd libinput-gestures-setup "libinput-gestures (touchpad gestures)" \
+    "sudo pacman -S libinput-gestures && libinput-gestures-setup start"
+check_cmd wf-recorder "wf-recorder (screen recording)" "sudo pacman -S wf-recorder"
+check_cmd git-delta   "git-delta (better diffs)"       "sudo pacman -S git-delta"
 echo
 
 # ── summary ───────────────────────────────────────────────────────────────────

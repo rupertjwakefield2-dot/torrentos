@@ -256,37 +256,33 @@ echo
 printf "${C}  Step 4 of 4 — Web browser${N}\n"
 printf "$HR\n"
 echo
-printf "${D}  Chromium is already installed. Want to add another browser?${N}\n\n"
+printf "${D}  Firefox is already installed. Want to add another browser?${N}\n\n"
 
 if [[ -n "$MENU_CMD" ]]; then
-    wt_menu BR_CHOICE "Web Browser" "Add an additional browser (Chromium already installed):" \
+    wt_menu BR_CHOICE "Web Browser" "Add an additional browser (Firefox already installed):" \
         "chrome"  "Google Chrome   — syncs with your Google account" \
-        "firefox" "Firefox         — fast, private, open-source" \
         "brave"   "Brave           — Chrome-based, built-in ad blocker" \
         "vivaldi" "Vivaldi         — highly customisable" \
-        "skip"    "Skip            — Chromium is enough"
+        "skip"    "Skip            — Firefox is enough"
     clear
     [[ -z "$BR_CHOICE" ]] && BR_CHOICE="skip"
 else
     printf "${D}   1) ${W}Google Chrome${D}   — syncs with your Google account${N}\n"
-    printf "${D}   2) ${W}Firefox${D}          — fast, private, open-source${N}\n"
-    printf "${D}   3) ${W}Brave${D}            — Chrome-based, built-in ad blocker${N}\n"
-    printf "${D}   4) ${W}Vivaldi${D}          — highly customisable${N}\n"
-    printf "${D}   5) ${W}Skip${D}             — Chromium is already included${N}\n\n"
+    printf "${D}   2) ${W}Brave${D}            — Chrome-based, built-in ad blocker${N}\n"
+    printf "${D}   3) ${W}Vivaldi${D}          — highly customisable${N}\n"
+    printf "${D}   4) ${W}Skip${D}             — Firefox is already included${N}\n\n"
     fix_stty
-    ask BR_CHOICE "Your choice" "5"
+    ask BR_CHOICE "Your choice" "4"
     case "$BR_CHOICE" in
         1) BR_CHOICE="chrome"  ;;
-        2) BR_CHOICE="firefox" ;;
-        3) BR_CHOICE="brave"   ;;
-        4) BR_CHOICE="vivaldi" ;;
+        2) BR_CHOICE="brave"   ;;
+        3) BR_CHOICE="vivaldi" ;;
         *) BR_CHOICE="skip"    ;;
     esac
 fi
 
 case "$BR_CHOICE" in
     chrome)  BROWSER_PKG="google-chrome"; BROWSER_NAME="Google Chrome"; BROWSER_SRC="aur"    ;;
-    firefox) BROWSER_PKG="firefox";       BROWSER_NAME="Firefox";       BROWSER_SRC="pacman" ;;
     brave)   BROWSER_PKG="brave-bin";     BROWSER_NAME="Brave";         BROWSER_SRC="aur"    ;;
     vivaldi) BROWSER_PKG="vivaldi";       BROWSER_NAME="Vivaldi";       BROWSER_SRC="aur"    ;;
     *)       BROWSER_PKG="" ;;
@@ -311,7 +307,7 @@ if [[ -n "$BROWSER_PKG" ]]; then
             || printf "${Y}  ⚠  Could not install right now. Run: ${W}torrentos-get-browser${Y} after setup.${N}\n"
     fi
 else
-    printf "${G}  ✔  Chromium is ready to use.${N}\n"
+    printf "${G}  ✔  Firefox is ready to use.${N}\n"
 fi
 
 # ── Set up Flathub (silent — runs in background while user reads done screen) ──
