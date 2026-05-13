@@ -116,7 +116,8 @@ vulkan-radeon
 vulkan-intel
 libva-mesa-driver
 # NVIDIA — full driver stack (kernel module + userspace + Wayland bridge)
-nvidia
+# nvidia-dkms builds against any kernel via DKMS (required for live ISO builds)
+nvidia-dkms
 nvidia-utils
 nvidia-settings
 nvidia-prime
@@ -168,7 +169,7 @@ neovim
 helix
 zsh
 zsh-completions
-whiptail
+libnewt
 starship
 fzf
 ripgrep
