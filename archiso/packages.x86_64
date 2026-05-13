@@ -203,11 +203,8 @@ socat
 git-delta
 tokei
 hyperfine
-# Archive tools
+# Archive tools (zip/unzip/unrar/p7zip also listed under Files section — de-duped here)
 zip
-unzip
-unrar
-p7zip
 # Wayland screenshot / clipboard
 wf-recorder
 
