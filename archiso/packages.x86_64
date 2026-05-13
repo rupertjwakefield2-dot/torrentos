@@ -119,6 +119,7 @@ libva-mesa-driver
 # nvidia-dkms builds against any kernel via DKMS (required for live ISO builds)
 nvidia-dkms
 nvidia-utils
+lib32-nvidia-utils
 nvidia-settings
 nvidia-prime
 libva-nvidia-driver
@@ -239,6 +240,8 @@ libnotify
 # --- pacman helpers ---
 # checkupdates (from pacman-contrib) is used by torrentos-update-check
 pacman-contrib
+# expac: package query tool (used by pkgsize alias in .zshrc)
+expac
 
 # --- python (required by torrentos-settings) ---
 python

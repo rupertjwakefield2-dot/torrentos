@@ -10,11 +10,11 @@ depends=(
     'gtk3'
     'gtk4'
     'libadwaita'
-    'qt5ct'
     'qt6ct'
 )
 optdepends=(
-    'kvantum: Qt theming engine'
+    'qt5ct: Qt5 app theming (only needed if Qt5 apps are installed)'
+    'kvantum: Qt theming engine for Kvantum-based themes'
     'bibata-cursor-theme: cursor pack'
 )
 source=(

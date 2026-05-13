@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=TorrentOS Help
+GenericName=Help & Quick Reference
+Comment=Quick reference for keyboard shortcuts, aliases, and system commands
+Exec=ghostty -e torrentos-help
+Icon=help-browser
+Terminal=false
+Type=Application
+Categories=System;Documentation;
+Keywords=help;reference;shortcuts;commands;keyboard;torrentos;
+StartupNotify=false

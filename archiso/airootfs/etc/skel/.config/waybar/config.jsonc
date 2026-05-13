@@ -102,7 +102,7 @@
             "warning":  70,
             "critical": 90
         },
-        "on-click": "ghostty -e btop"
+        "on-click": "ghostty --class=ghostty-btop -e btop"
     },
 
     "memory": {
@@ -114,16 +114,15 @@
             "warning":  75,
             "critical": 90
         },
-        "on-click": "ghostty -e btop"
+        "on-click": "ghostty --class=ghostty-btop -e btop"
     },
 
     "custom/gpu": {
-        "exec": "nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | awk -F', ' '{printf \"%s%%  %s°C\", $1, $2}' || echo ''",
+        "exec": "nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,name --format=csv,noheader,nounits 2>/dev/null | awk -F', ' '{printf \"{\\\"text\\\":\\\"%s%%  %s°C\\\",\\\"tooltip\\\":\\\"%s — %s%% load  %s°C\\\"}\", $3, $1, $3, $1, $2}' || echo ''",
         "format": "󰿵  {}",
         "interval": 5,
-        "tooltip-format": "GPU Usage & Temperature (NVIDIA RTX)",
         "on-click": "ghostty -e btop",
-        "return-type": ""
+        "return-type": "json"
     },
 
     "disk": {
@@ -136,7 +135,7 @@
             "warning":  80,
             "critical": 95
         },
-        "on-click": "ghostty -e btop"
+        "on-click": "ghostty --class=ghostty-btop -e btop"
     },
 
     "tray": {

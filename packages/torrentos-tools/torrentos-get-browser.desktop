@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Get a Browser
+Comment=Install Google Chrome, Firefox, Brave, or other browsers
+Exec=ghostty -e torrentos-get-browser
+Icon=web-browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;System;
+Keywords=browser;chrome;firefox;brave;install;web;internet;
+StartupNotify=true

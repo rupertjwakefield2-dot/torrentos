@@ -13,6 +13,9 @@ depends=(
     'ghostty'
     'rofi-wayland'
     'starship'
+    'libinput-gestures'   # touchpad gesture config
+    'tmux'                # tmux config deployed here
+    'neovim'              # nvim config deployed here
 )
 source=(
     'hyprland.conf'
@@ -37,8 +40,12 @@ source=(
     'user-dirs.dirs'
     'qt6ct.conf'
     'libinput-gestures.conf'
+    'tmux.conf'
+    'nvim-init.lua'
+    'gitconfig'
+    'btop.conf'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     local skel="$pkgdir/etc/skel/.config"
@@ -73,4 +80,10 @@ package() {
     install -Dm644 "$srcdir/libinput-gestures.conf"    "$skel/libinput-gestures.conf"
 
     install -Dm644 "$srcdir/zshrc"                     "$pkgdir/etc/skel/.zshrc"
+
+    # New configs added in v0.5
+    install -Dm644 "$srcdir/tmux.conf"                 "$skel/tmux/tmux.conf"
+    install -Dm644 "$srcdir/nvim-init.lua"             "$skel/nvim/init.lua"
+    install -Dm644 "$srcdir/gitconfig"                 "$pkgdir/etc/skel/.gitconfig"
+    install -Dm644 "$srcdir/btop.conf"                 "$skel/btop/btop.conf"
 }

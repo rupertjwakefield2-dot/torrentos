@@ -131,14 +131,14 @@ detect_files = ["go.mod", "go.sum"]
 [java]
 symbol = " "
 style = "bold #FF8585"
-detect_files = ["pom.xml", "build.gradle", "build.gradle.kts", ".java-version"]
+detect_files = ["pom.xml", "build.gradle", ".java-version", "gradlew"]
 detect_extensions = ["java", "class", "jar"]
 
 # ── Kotlin ───────────────────────────────────────────────────────────────────
 [kotlin]
-symbol = " "
+symbol = "󱈙 "
 style = "bold #C678DD"
-detect_files = ["build.gradle", "build.gradle.kts"]
+detect_files = ["build.gradle.kts", "settings.gradle.kts"]
 detect_extensions = ["kt", "kts"]
 
 # ── Ruby ─────────────────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ format = "[$symbol$context( \\($namespace\\))]($style) "
 [terraform]
 symbol = "󱁢 "
 style = "bold #C678DD"
-detect_files = ["*.tf", "*.tfvars"]
+detect_extensions = ["tf", "tfvars"]
 detect_folders = [".terraform"]
 format = "[$symbol$workspace]($style) "
 

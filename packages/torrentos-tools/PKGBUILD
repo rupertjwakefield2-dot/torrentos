@@ -23,6 +23,8 @@ optdepends=(
     'loupe: image viewer for screenshot preview'
     'libnotify: desktop notifications (screenshots, update notifier)'
     'hyprctl: window geometry for window-mode screenshot'
+    'archinstall: guided installer used by torrentos-install'
+    'jq: JSON processing used by torrentos-install'
 )
 source=(
     'torrentos-update-gui'
@@ -35,8 +37,9 @@ source=(
     'torrentos-doctor'
     'torrentos-get-browser'
     'torrentos-get-browser.desktop'
+    'torrentos-install'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     # Executables
@@ -46,6 +49,8 @@ package() {
     install -Dm755 "$srcdir/torrentos-update-check"    "$pkgdir/usr/local/bin/torrentos-update-check"
     install -Dm755 "$srcdir/torrentos-doctor"          "$pkgdir/usr/local/bin/torrentos-doctor"
     install -Dm755 "$srcdir/torrentos-get-browser"     "$pkgdir/usr/local/bin/torrentos-get-browser"
+
+    install -Dm755 "$srcdir/torrentos-install"           "$pkgdir/usr/local/bin/torrentos-install"
 
     # Desktop entries
     install -Dm644 "$srcdir/torrentos-update-gui.desktop"  \

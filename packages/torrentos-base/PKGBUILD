@@ -33,12 +33,13 @@ depends=(
     'playerctl'
     'orca'
     'at-spi2-core'
-    # Screen capture
+    # Screen capture & recording
     'grim'
     'slurp'
     'wl-clipboard'
     'cliphist'
     'wl-clip-persist'
+    'wf-recorder'
     # Night light
     'gammastep'
     # System tools
@@ -47,9 +48,12 @@ depends=(
     'xdg-utils'
     'xdg-user-dirs'
     'polkit-gnome'
+    'libinput-gestures'   # touchpad gesture daemon
     # Shell & terminal tools
     'zsh'
+    'zsh-completions'
     'starship'
+    'fastfetch'
     'fzf'
     'ripgrep'
     'fd'
@@ -57,7 +61,29 @@ depends=(
     'eza'
     'zoxide'
     'btop'
+    'tmux'
     'jq'
+    'expac'               # pkgsize alias in .zshrc
+    # Editor
+    'neovim'
+    # Gaming
+    'gamemode'
+    'lib32-gamemode'
+    'mangohud'
+    'lib32-mangohud'
+    # Developer tools
+    'git-delta'           # better git diffs (.gitconfig pager)
+    'strace'
+    'lsof'
+    'nmap'
+    'socat'
+    'zip'
+    'tokei'               # code stats (loc counter)
+    'hyperfine'           # benchmarking tool
+    # Utilities
+    'imv'                 # lightweight image viewer (CLI)
+    'gnome-calculator'
+    'gnome-font-viewer'
     # Qt / theming
     'qt6ct'
     'kvantum'
