@@ -669,7 +669,18 @@
             <span class="faq-chevron">+</span>
           </summary>
           <div class="faq-body">
-            v0.5 adds the brand-new <strong style="color:var(--white)">TorrentOS Settings app</strong> (libadwaita, covers appearance, display, accessibility, and dev mode), a <strong style="color:var(--white)">Developer Mode installer</strong> that sets up Rust, Node, Docker, and VS Code in one click, significantly improved accessibility options, and a polished <strong style="color:var(--white)">first-boot setup wizard</strong>.
+            v0.5 is a major release with improvements across the board:
+            <ul style="margin-top:0.6rem;padding-left:1.2rem;line-height:2">
+              <li><strong style="color:var(--white)">TorrentOS Settings app</strong> — full libadwaita control panel for appearance, display, keyboard, network, accessibility, and Dev Mode</li>
+              <li><strong style="color:var(--white)">Gaming ready out of the box</strong> — GameMode, MangoHud, and lib32 libraries pre-installed; NVIDIA RTX/GTX fully pre-configured</li>
+              <li><strong style="color:var(--white)">Flatpak + Flathub</strong> configured automatically on first boot</li>
+              <li><strong style="color:var(--white)">tmux</strong> with TorrentOS-themed config, vim copy mode, and Wayland clipboard integration</li>
+              <li><strong style="color:var(--white)">Neovim</strong> default config with system clipboard, relative numbers, and smart autocommands</li>
+              <li><strong style="color:var(--white)">Improved touchpad gestures</strong> — 4-finger workspace switching, 3-finger window moving, app launcher and notifications via swipe</li>
+              <li><strong style="color:var(--white)">Hyprlock battery indicator</strong>, improved blur, and brightness restore on resume</li>
+              <li><strong style="color:var(--white)">Expanded starship prompt</strong> — Java, Kotlin, Ruby, PHP, C/C++, Terraform language detection</li>
+              <li><strong style="color:var(--white)">Developer Mode installer</strong> — Rust, Node, Docker, VS Code, Go in one click</li>
+            </ul>
           </div>
         </details>
 
@@ -802,7 +813,7 @@
       },
       {
         keys: ['trackpad', 'gesture', 'multitouch', 'touchpad', 'swipe'],
-        answer: 'Yes, multi-touch gestures work. Three-finger swipe changes workspaces, pinch-to-zoom works in apps. Configured via libinput-gestures — see <code>~/.config/libinput-gestures.conf</code>.'
+        answer: 'Yes, full multi-touch gestures work via libinput-gestures. 4-finger swipe left/right switches workspaces; 3-finger swipe left/right moves the current window to the next workspace. 4-finger swipe up opens the app launcher; 4-finger swipe down toggles the notification centre. Pinch-to-zoom works natively in apps. Config: <code>~/.config/libinput-gestures.conf</code>.'
       },
       {
         keys: ['update', 'upgrade', 'pacman -syu', 'updates', 'rolling'],
@@ -871,6 +882,26 @@
       {
         keys: ['laptop', 'battery', 'brightness', 'touchpad', 'suspend', 'hibernate', 'power'],
         answer: 'TorrentOS works well on laptops. Touchpad gestures (libinput), brightness keys, function keys, suspend, and hibernate all work out of the box. Battery optimisation uses power-profiles-daemon — set to Power Saver in the Waybar system menu when you need longer runtime.'
+      },
+      {
+        keys: ['tmux', 'terminal multiplexer', 'session', 'split terminal', 'pane'],
+        answer: 'tmux is pre-installed with a TorrentOS-themed config (<code>~/.config/tmux/tmux.conf</code>). Prefix is <code>Ctrl+b</code> or <code>Ctrl+Space</code>. Split panes with <code>prefix + |</code> (horizontal) and <code>prefix + -</code> (vertical). Navigate panes with <code>Alt+hjkl</code> (no prefix needed). Copy mode uses vim bindings; yanked text goes to the Wayland clipboard.'
+      },
+      {
+        keys: ['neovim', 'nvim', 'vim', 'editor', 'text editor', 'code editor'],
+        answer: 'Neovim is pre-installed with a sensible default config at <code>~/.config/nvim/init.lua</code> — relative line numbers, system clipboard (Wayland), vim-style window navigation (<code>Ctrl+hjkl</code>), auto-trim whitespace, and habamax dark theme. For plugins, try <a href="https://github.com/nvim-lua/kickstart.nvim" target="_blank">kickstart.nvim</a> as a starter.'
+      },
+      {
+        keys: ['clipboard', 'copy paste', 'cliphist', 'wl-copy', 'wl-paste', 'pbcopy'],
+        answer: 'TorrentOS uses wl-clipboard + cliphist for a persistent clipboard history. The aliases <code>pbcopy</code> and <code>pbpaste</code> work like macOS. Access clipboard history with <code>Super+X</code> (rofi picker). cliphist stores both text and images.'
+      },
+      {
+        keys: ['notification', 'swaync', 'do not disturb', 'alert', 'bell'],
+        answer: 'Notifications are handled by swaync (SwayNotificationCenter). Open the notification centre with <code>Super+N</code> or clicking the bell icon in Waybar. Quick-settings buttons appear in the panel for WiFi, Bluetooth, audio, lock, sleep, and more. Right-click the bell to toggle Do Not Disturb.'
+      },
+      {
+        keys: ['screenshot', 'screen capture', 'capture', 'snip', 'region select'],
+        answer: 'Screenshot shortcuts: <code>Super+Shift+S</code> — region select (saves + copies); <code>Print</code> — full screen to clipboard; <code>Shift+Print</code> — region to clipboard; <code>Super+Print</code> — save full screen; <code>Super+Ctrl+S</code> — open the screenshot GUI with delay and preview. Saved to <code>~/Pictures/Screenshots/</code>.'
       },
     ];
 
