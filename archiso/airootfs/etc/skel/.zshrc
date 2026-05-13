@@ -325,7 +325,7 @@ if [[ -o interactive ]] && [[ -o login ]] \
         _dim='\033[2;37m'
         _white='\033[1;37m'
         _rst='\033[0m'
-        _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
+        _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.5)"
         echo
         printf "${_blue}  TorrentOS${_rst}  v${_ver}\n"
         printf "  ${_dim}Type ${_white}help${_dim} for shortcuts and commands.${_rst}\n\n"

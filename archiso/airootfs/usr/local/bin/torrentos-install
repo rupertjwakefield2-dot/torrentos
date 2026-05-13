@@ -17,7 +17,7 @@ warn() { printf "${YLW}[ warn ]${RST} %s\n" "$*"; }
 err()  { printf "${RED}[ err  ]${RST} %s\n" "$*" >&2; }
 step() { printf "\n${CYN}  ▸ %s${RST}\n" "$*"; }
 
-_ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
+_ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.5)"
 
 printf "${BLU}"
 cat <<'LOGO'

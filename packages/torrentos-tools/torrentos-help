@@ -18,7 +18,7 @@ HR="${D}  ───────────────────────�
 
 header() {
     echo
-    local _ver; _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
+    local _ver; _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.5)"
     printf "${B}  TorrentOS v${_ver} — $1${N}\n"
     echo "$HR"
     echo
