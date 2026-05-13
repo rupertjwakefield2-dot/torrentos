@@ -9,31 +9,48 @@
 set -euo pipefail
 
 RED='\033[1;31m'; GRN='\033[1;32m'; BLU='\033[1;34m'; YLW='\033[1;33m'
-CYN='\033[38;2;91;192;235m'; RST='\033[0m'
+CYN='\033[38;2;91;192;235m'; DIM='\033[2;37m'; RST='\033[0m'
 
 log()  { printf "${BLU}[install]${RST} %s\n" "$*"; }
 ok()   { printf "${GRN}[  ok  ]${RST} %s\n" "$*"; }
 warn() { printf "${YLW}[ warn ]${RST} %s\n" "$*"; }
 err()  { printf "${RED}[ err  ]${RST} %s\n" "$*" >&2; }
+step() { printf "\n${CYN}  ▸ %s${RST}\n" "$*"; }
 
 _ver="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.4)"
 
-cat << BANNER
+printf "${BLU}"
+cat <<'LOGO'
 
-  ████████  ████████  ████████  ████████  ████████  ██████   ██████  ██████
-     ██     ██     ██ ██     ██ ██     ██ ██        ██   ██ ██    ██ ██
-     ██     ██     ██ ████████  ████████  ████      ██   ██ ██    ██ ███████
-     ██     ██     ██ ██   ██   ██   ██   ██        ██   ██ ██    ██      ██
-     ██      ████████ ██    ██  ██    ██  ████████  ██████   ██████  ███████
+  ████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗ ██████╗ ███████╗
+     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔════╝
+     ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   ██║   ██║███████╗
+     ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ██║   ██║╚════██║
+     ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ╚██████╔╝███████║
+     ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝
 
-                     Install TorrentOS to Disk — v${_ver}
-
-BANNER
+LOGO
+printf "${RST}"
+printf "${DIM}                     Install TorrentOS to Disk — v${_ver}${RST}\n\n"
 
 # ── Pre-flight checks ────────────────────────────────────────────────────────
 
 if [[ $EUID -ne 0 ]]; then
     err "This installer must run as root. Try: sudo torrentos-install"
+    exit 1
+fi
+
+step "Checking prerequisites"
+
+# Check archinstall is available
+if ! command -v archinstall >/dev/null 2>&1; then
+    err "archinstall not found. Install it with: sudo pacman -S archinstall"
+    exit 1
+fi
+
+# Check jq (needed to build JSON config)
+if ! command -v jq >/dev/null 2>&1; then
+    err "jq not found. Install it with: sudo pacman -S jq"
     exit 1
 fi
 
@@ -51,8 +68,23 @@ else
     [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 fi
 
-echo
-log "Available block devices:"
+# Check UEFI vs BIOS
+if [[ -d /sys/firmware/efi ]]; then
+    ok "UEFI firmware detected — GRUB with EFI will be used."
+    BOOT_MODE="uefi"
+else
+    ok "Legacy BIOS detected — GRUB with MBR will be used."
+    BOOT_MODE="bios"
+fi
+
+# Detect NVIDIA GPU
+NVIDIA_DETECTED=false
+if lspci 2>/dev/null | grep -qi nvidia; then
+    NVIDIA_DETECTED=true
+    ok "NVIDIA GPU detected — nvidia-dkms will be installed."
+fi
+
+step "Available block devices"
 lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS -e 7,11 | grep -v "^loop"
 echo
 
@@ -64,7 +96,7 @@ read -r ans
 [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
 # ── Locate local TorrentOS repo ───────────────────────────────────────────────
-# Try common locations where the repo might be on the live ISO.
+step "Locating local TorrentOS package repo"
 LOCAL_REPO=""
 for candidate in \
     "/run/archiso/bootmnt/repo/x86_64" \
@@ -83,7 +115,6 @@ CONF_DIR=$(mktemp -d /tmp/torrentos-install.XXXXX)
 trap 'rm -rf "$CONF_DIR"' EXIT
 
 # Additional packages to install on the new system (on top of Desktop/Hyprland)
-# The list matches packages.x86_64 minus those already pulled by the profile.
 EXTRA_PACKAGES=(
     # TorrentOS custom packages
     torrentos-base
@@ -92,40 +123,105 @@ EXTRA_PACKAGES=(
     torrentos-first-boot
     torrentos-settings
     torrentos-tools
-    # Essentials that archinstall might skip
+    # Python deps for settings app
     python
     python-gobject
     python-tomli-w
+    # Fonts
+    inter-font
+    ttf-jetbrains-mono-nerd
+    noto-fonts
+    noto-fonts-emoji
+    # System utils
     libnotify
     pacman-contrib
     papirus-icon-theme
-    inter-font
-    ttf-jetbrains-mono-nerd
+    # Terminal & shell
+    ghostty
+    zsh
+    zsh-completions
+    starship
     btop
+    htop
     bat
     eza
     fzf
     zoxide
     ripgrep
-    zsh
-    starship
-    ghostty
-    gammastep
-    wl-clip-persist
-    cliphist
-    nwg-dock-hyprland
+    fd
+    tmux
+    fastfetch
+    # Desktop components
+    waybar
     swaync
     rofi-wayland
+    hyprpaper
+    hypridle
+    hyprlock
     hyprpicker
-    pavucontrol
-    blueman
+    nwg-dock-hyprland
+    # Media
     playerctl
+    pavucontrol
+    pipewire
+    pipewire-pulse
+    pipewire-alsa
+    wireplumber
+    # Clipboard
+    wl-clipboard
+    cliphist
+    wl-clip-persist
+    # Bluetooth
+    bluez
+    bluez-utils
+    blueman
+    # Network
+    networkmanager
+    network-manager-applet
+    # Display / colour
     brightnessctl
+    gammastep
+    # Qt / GTK theming
     qt6ct
     kvantum
-    vte4
+    gtk4
+    libadwaita
+    # Graphics tools
+    grim
+    slurp
+    imv
+    # Files
+    nautilus
+    file-roller
+    # Productivity
+    gedit
+    gnome-calculator
+    gnome-font-viewer
+    # Gaming
+    gamemode
+    lib32-gamemode
+    mangohud
+    lib32-mangohud
+    # Flatpak
     flatpak
+    # Wayland compat
+    xdg-desktop-portal-hyprland
+    xdg-user-dirs
+    # Accessibility
+    magnus
 )
+
+# Add NVIDIA packages if detected
+if [[ "$NVIDIA_DETECTED" == "true" ]]; then
+    EXTRA_PACKAGES+=(
+        nvidia-dkms
+        nvidia-utils
+        lib32-nvidia-utils
+        nvidia-settings
+        nvidia-prime
+        libva-nvidia-driver
+    )
+fi
 
 # Build additional-repositories JSON block (include local repo if found)
 ADD_REPOS="[]"
@@ -133,20 +229,29 @@ if [[ -n "$LOCAL_REPO" ]]; then
     ok "Found local TorrentOS repo: $LOCAL_REPO"
     ADD_REPOS="[{\"name\":\"torrentos\",\"url\":\"file://$LOCAL_REPO\",\"sign_check\":\"Never\",\"sign_option\":\"Never\"}]"
 else
-    warn "Local TorrentOS package repo not found."
-    warn "After installation, the TorrentOS packages will need to be installed manually."
-    warn "  sudo pacman -S torrentos-base torrentos-settings torrentos-tools ..."
+    warn "Local TorrentOS package repo not found on live media."
+    warn "The installer will try to fetch TorrentOS packages from the internet."
+    warn "If that fails, run after reboot: sudo pacman -S torrentos-base torrentos-settings ..."
 fi
 
 PKG_JSON="$(printf '%s\n' "${EXTRA_PACKAGES[@]}" | jq -R . | jq -s .)"
 
 # Post-install custom commands (run inside the new system chroot)
-# Enable zsh for the primary user and set up user services.
 CUSTOM_CMDS='[
-  "chsh -s /usr/bin/zsh $(getent passwd 1000 | cut -d: -f1) 2>/dev/null || true",
+  "chsh -s /usr/bin/zsh $(getent passwd 1000 | cut -d: -f1 2>/dev/null) 2>/dev/null || true",
   "systemctl enable NetworkManager 2>/dev/null || true",
-  "systemctl enable bluetooth 2>/dev/null || true"
+  "systemctl enable bluetooth 2>/dev/null || true",
+  "systemctl enable fstrim.timer 2>/dev/null || true",
+  "systemctl enable systemd-resolved 2>/dev/null || true",
+  "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true",
+  "ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true"
 ]'
+
+# Build graphics driver string
+GFX_DRIVER="All open-source (default)"
+if [[ "$NVIDIA_DETECTED" == "true" ]]; then
+    GFX_DRIVER="Nvidia"
+fi
 
 cat > "$CONF_DIR/user_configuration.json" << JSON
 {
@@ -167,7 +272,7 @@ cat > "$CONF_DIR/user_configuration.json" << JSON
       "details": ["Hyprland"],
       "main": "Desktop"
     },
-    "gfx_driver": "All open-source (default)"
+    "gfx_driver": "$GFX_DRIVER"
   },
   "custom-commands": $CUSTOM_CMDS,
   "swap": true,
@@ -176,8 +281,7 @@ cat > "$CONF_DIR/user_configuration.json" << JSON
 JSON
 
 # ── Launch archinstall ────────────────────────────────────────────────────────
-
-log "Launching archinstall with TorrentOS defaults..."
+step "Launching archinstall with TorrentOS defaults"
 log "(You will be prompted to choose your disk, user, and password.)"
 echo
 
@@ -185,8 +289,7 @@ archinstall --config "$CONF_DIR/user_configuration.json"
 
 echo
 ok "Installation complete!"
-printf "  ${GRN}➜${RST}  Remove the live media and reboot to your new system.\n"
-printf "\n   ${BLU}reboot${RST}\n\n"
-
+printf "\n  ${GRN}➜${RST}  Remove the live media and reboot to your new system:\n"
+printf "\n     ${BLU}reboot${RST}\n\n"
 printf "${CYN}  After first login, the TorrentOS first-boot wizard will guide you\n"
-printf "  through personalisation (keyboard, WiFi, user account).${RST}\n\n"
+printf "  through personalisation (keyboard, timezone, browser, etc.).${RST}\n\n"

@@ -1,7 +1,8 @@
-# TorrentOS — default Ghostty config
-# All settings are flat key=value — Ghostty has no INI sections.
+# TorrentOS — Ghostty terminal config
+# Font
 font-family = JetBrainsMono Nerd Font
 font-size = 13.5
+font-thicken = true
 
 # OpenType features: contextual alternates, ligatures, slashed zero
 font-feature = calt
@@ -12,23 +13,33 @@ font-feature = zero
 background-opacity = 0.92
 background-blur-radius = 20
 
+# Window
 window-decoration = false
 window-padding-x = 12
 window-padding-y = 10
 window-padding-balance = true
+window-title-font-family = Inter
 
 # Use xterm-256color for maximum app compatibility.
 # Ghostty's native term (xterm-ghostty) isn't in many terminfo DBs yet.
 term = xterm-256color
 
+# Cursor
 cursor-style = block
 cursor-style-blink = false
+cursor-opacity = 1.0
+
+# Shell integration
 shell-integration = zsh
 shell-integration-features = cursor,sudo,title
 # Run as login shell so the .zshrc banner fires and /etc/profile is sourced
 login-shell = true
+
+# Clipboard
 copy-on-select = clipboard
 confirm-close-surface = false
+clipboard-read = allow
+clipboard-write = allow
 
 # Window state persistence — restore size/position on relaunch
 window-save-state = always
@@ -48,7 +59,26 @@ tab-bar-style = auto
 window-new-tab-position = end
 
 # Scrollback
-scrollback-limit = 50000
+scrollback-limit = 100000
+
+# Keybinds — macOS-feel on Linux
+keybind = ctrl+shift+t=new_tab
+keybind = ctrl+shift+w=close_surface
+keybind = ctrl+shift+n=new_window
+keybind = ctrl+shift+c=copy_to_clipboard
+keybind = ctrl+shift+v=paste_from_clipboard
+keybind = ctrl+page_up=previous_tab
+keybind = ctrl+page_down=next_tab
+keybind = ctrl+shift+page_up=move_tab:-1
+keybind = ctrl+shift+page_down=move_tab:1
+keybind = ctrl+plus=increase_font_size:1
+keybind = ctrl+minus=decrease_font_size:1
+keybind = ctrl+equal=reset_font_size
+keybind = ctrl+shift+f=toggle_fullscreen
+keybind = ctrl+shift+up=scroll_page_up
+keybind = ctrl+shift+down=scroll_page_down
+keybind = ctrl+shift+home=scroll_to_top
+keybind = ctrl+shift+end=scroll_to_bottom
 
 # ── TorrentOS colour palette ──────────────────────────────────────────────────
 background             = 0A1628

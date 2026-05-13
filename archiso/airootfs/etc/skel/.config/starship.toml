@@ -9,12 +9,19 @@ $os\
 $directory\
 $git_branch\
 $git_status\
+$git_state\
 $python\
 $nodejs\
 $rust\
 $golang\
+$java\
+$kotlin\
+$ruby\
+$php\
+$c\
 $docker_context\
 $kubernetes\
+$terraform\
 $cmd_duration\
 $line_break\
 $battery\
@@ -26,7 +33,7 @@ disabled = false
 style = "bold #1E6FFF"
 
 [os.symbols]
-Arch = " "
+Arch    = " "
 Unknown = " "
 
 # ── Directory ────────────────────────────────────────────────────────────────
@@ -57,6 +64,11 @@ staged   = "+${count}"
 untracked = "?${count}"
 deleted   = "✘${count}"
 format = "([$all_status$ahead_behind]($style) )"
+
+# ── Git state (rebasing, merging, etc.) ──────────────────────────────────────
+[git_state]
+format = "[$state($progress_current/$progress_total)]($style) "
+style = "bold #FFB454"
 
 # ── Command duration ─────────────────────────────────────────────────────────
 [cmd_duration]
@@ -94,7 +106,7 @@ symbol = " "
 style = "bold #5BC0EB"
 format = "[$symbol$pyenv_prefix($version )(\\($virtualenv\\) )]($style)"
 detect_extensions = ["py"]
-detect_files = ["requirements.txt", "pyproject.toml", ".python-version", "Pipfile"]
+detect_files = ["requirements.txt", "pyproject.toml", ".python-version", "Pipfile", "setup.py"]
 
 # ── Node.js ──────────────────────────────────────────────────────────────────
 [nodejs]
@@ -115,6 +127,40 @@ symbol = " "
 style = "bold #5BC0EB"
 detect_files = ["go.mod", "go.sum"]
 
+# ── Java ─────────────────────────────────────────────────────────────────────
+[java]
+symbol = " "
+style = "bold #FF8585"
+detect_files = ["pom.xml", "build.gradle", "build.gradle.kts", ".java-version"]
+detect_extensions = ["java", "class", "jar"]
+
+# ── Kotlin ───────────────────────────────────────────────────────────────────
+[kotlin]
+symbol = " "
+style = "bold #C678DD"
+detect_files = ["build.gradle", "build.gradle.kts"]
+detect_extensions = ["kt", "kts"]
+
+# ── Ruby ─────────────────────────────────────────────────────────────────────
+[ruby]
+symbol = " "
+style = "bold #FF6B6B"
+detect_files = ["Gemfile", ".ruby-version"]
+detect_extensions = ["rb"]
+
+# ── PHP ──────────────────────────────────────────────────────────────────────
+[php]
+symbol = " "
+style = "bold #C678DD"
+detect_files = ["composer.json", ".php-version"]
+detect_extensions = ["php"]
+
+# ── C / C++ ──────────────────────────────────────────────────────────────────
+[c]
+symbol = " "
+style = "bold #7AADFF"
+detect_extensions = ["c", "h", "cpp", "hpp", "cc", "cxx"]
+
 # ── Docker ───────────────────────────────────────────────────────────────────
 [docker_context]
 symbol = " "
@@ -131,6 +177,14 @@ detect_files = ["Dockerfile"]
 detect_folders = [".kube"]
 format = "[$symbol$context( \\($namespace\\))]($style) "
 
+# ── Terraform ────────────────────────────────────────────────────────────────
+[terraform]
+symbol = "󱁢 "
+style = "bold #C678DD"
+detect_files = ["*.tf", "*.tfvars"]
+detect_folders = [".terraform"]
+format = "[$symbol$workspace]($style) "
+
 # ── Disabled modules (keep prompt fast) ──────────────────────────────────────
 [package]
 disabled = true
@@ -139,4 +193,7 @@ disabled = true
 disabled = true
 
 [gcloud]
+disabled = true
+
+[azure]
 disabled = true

@@ -6,46 +6,57 @@
 
 ROFI_THEME="$HOME/.config/rofi/torrentos.rasi"
 
+# Check if hibernate is available (swap must exist and kernel supports it)
+_can_hibernate() {
+    [[ -f /sys/power/state ]] && grep -q disk /sys/power/state 2>/dev/null \
+        && (swapon --show --noheadings 2>/dev/null | grep -q .)
+}
+
 declare -A CMDS=(
     ["󰌾  Lock Screen"]="hyprlock"
     ["󰒲  Sleep"]="systemctl suspend"
+    ["󰒾  Hibernate"]="systemctl hibernate"
     ["󰜉  Restart"]="systemctl reboot"
     ["⏻  Shut Down"]="systemctl poweroff"
     ["󰍃  Log Out"]="hyprctl dispatch exit"
 )
 
-# Ordered list so the menu is predictable
+# Build ordered entry list, conditionally including hibernate
 ENTRIES=(
     "󰌾  Lock Screen"
     "󰒲  Sleep"
+)
+_can_hibernate && ENTRIES+=("󰒾  Hibernate")
+ENTRIES+=(
     "󰜉  Restart"
     "⏻  Shut Down"
     "󰍃  Log Out"
 )
 
 # ── Direct / --rofi mode ─────────────────────────────────────────────────────
-if [[ "$1" == "--rofi" ]]; then
+if [[ "${1:-}" == "--rofi" ]]; then
     CHOSEN=$(printf '%s\n' "${ENTRIES[@]}" | \
         rofi -dmenu \
-             -p "Power" \
+             -p "⏻  Power" \
              -theme "$ROFI_THEME" \
              -theme-str '
                 window   { width: 300px; }
-                listview { lines: 5; scrollbar: false; }
-                element  { padding: 10px 16px; font-size: 13px; }
+                listview { lines: 6; scrollbar: false; }
+                element  { padding: 10px 16px; }
              ' \
              -no-custom)
     [[ -z "$CHOSEN" ]] && exit 0
-    eval "${CMDS[$CHOSEN]}"
+    CMD="${CMDS[$CHOSEN]}"
+    [[ -n "$CMD" ]] && exec bash -c "$CMD"
     exit 0
 fi
 
 # ── Script mode (rofi calls with no args → list; with arg → execute) ─────────
-if [[ -z "$1" ]]; then
+if [[ -z "${1:-}" ]]; then
     for entry in "${ENTRIES[@]}"; do
         echo "$entry"
     done
 else
-    CMD="${CMDS[$1]}"
+    CMD="${CMDS[$1]:-}"
     [[ -n "$CMD" ]] && exec bash -c "$CMD"
 fi
