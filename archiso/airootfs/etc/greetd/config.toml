@@ -7,5 +7,5 @@ vt = 1
 # --remember     remember last username
 # --asterisks    show * for password chars
 # --greeting     custom welcome text
-command = "tuigreet --time --remember --asterisks --greeting 'Welcome to TorrentOS' --cmd Hyprland"
+command = "tuigreet --time --remember --asterisks --greeting 'Welcome to TorrentOS 0.5 · Riptide' --cmd Hyprland"
 user = "greeter"

@@ -5,7 +5,7 @@
       ██    ██    ██ ██   ██ ██   ██ ██      ██  ██ ██    ██    ██    ██      ██
       ██     ██████  ██   ██ ██   ██ ███████ ██   ████    ██     ██████  ███████
 
-   TorrentOS 0.4 · riptide                              https://torrentos.org
+   TorrentOS 0.5 · riptide                              https://torrentos.org
 
    Quick start:
      • Desktop              already launching — wait a moment
@@ -16,7 +16,8 @@
      • Super + Return       open a terminal (in desktop)
      • Super + ,            TorrentOS Settings
      • Super + Shift + S    screenshot (region select)
-     • Super + P            colour picker (hyprpicker)
+     • Super + N            notification centre
+     • Super + X            clipboard history
 
    Live image — changes don't persist. Run torrentos-install to keep them.
 
