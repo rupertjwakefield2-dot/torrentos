@@ -129,6 +129,44 @@ check_gpu() {
     fi
 }
 
+check_nvidia() {
+    # Only run if an NVIDIA GPU is present
+    if ! lspci 2>/dev/null | grep -qi nvidia; then
+        return
+    fi
+    printf "${W}  NVIDIA${N}\n"
+    # Check kernel module is loaded
+    if lsmod 2>/dev/null | grep -q "^nvidia "; then
+        ok "nvidia kernel module loaded"
+    else
+        fail "nvidia module not loaded — Hyprland will not start"
+        hint "sudo modprobe nvidia && sudo modprobe nvidia_drm modeset=1"
+        if [[ $FIX -eq 1 ]]; then
+            printf "${Y}  Attempting to load NVIDIA modules…${N}\n"
+            sudo modprobe nvidia nvidia_modeset nvidia_uvm nvidia_drm 2>/dev/null && \
+                printf "${G}  ✔  Modules loaded.${N}\n" || \
+                printf "${R}  ✘  Failed — is nvidia-dkms installed?${N}\n"
+        fi
+    fi
+    # Check DRM modeset is enabled (required for Wayland)
+    local modeset
+    modeset="$(cat /sys/module/nvidia_drm/parameters/modeset 2>/dev/null || echo '?')"
+    if [[ "$modeset" == "Y" ]]; then
+        ok "nvidia_drm modeset=1 (Wayland KMS active)"
+    else
+        warn "nvidia_drm modeset not enabled (current: ${modeset})"
+        hint "Add 'options nvidia_drm modeset=1' to /etc/modprobe.d/nvidia.conf"
+    fi
+    # Check WLR_NO_HARDWARE_CURSORS is set (prevents invisible cursor)
+    if [[ "${WLR_NO_HARDWARE_CURSORS:-}" == "1" ]]; then
+        ok "WLR_NO_HARDWARE_CURSORS=1 set (cursor fix active)"
+    else
+        warn "WLR_NO_HARDWARE_CURSORS not set — cursor may be invisible"
+        hint "Add WLR_NO_HARDWARE_CURSORS=1 to /etc/environment.d/91-torrentos-nvidia.conf"
+    fi
+    echo
+}
+
 check_audio() {
     if command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1; then
         ok "PipeWire/PulseAudio audio server running"
@@ -274,6 +312,8 @@ check_gpu
 check_audio
 check_hyprland_socket
 echo
+
+check_nvidia
 
 printf "${W}  Pacman & AUR${N}\n"
 check_pacman_lock

@@ -65,7 +65,7 @@ The ISO lands in `./out/torrentos-YYYY.MM.DD-x86_64.iso`.
 | Stage | Script | Output |
 |-------|--------|--------|
 | Custom packages | `build-pkgs.sh` | `./repo/x86_64/torrentos-*.pkg.tar.zst` — indexed as a local pacman repo |
-| AUR packages | `build-aur.sh` | `paru-bin`, `libinput-gestures`, `magnus`, `bibata-cursor-theme-bin`, `google-chrome` |
+| AUR packages | `build-aur.sh` | `paru-bin`, `libinput-gestures`, `magnus`, `bibata-cursor-theme-bin`, `ttf-inter`, `google-chrome` |
 | Live ISO | `build-iso.sh` | `./out/torrentos-*.iso` |
 | Smoke test | `test-iso.sh` | Boots the newest ISO in QEMU |
 
@@ -78,7 +78,7 @@ The ISO lands in `./out/torrentos-YYYY.MM.DD-x86_64.iso`.
 | `torrentos-hyprland-config` | All skel dotfiles — Hyprland, Waybar, rofi, swaync, ghostty, zsh, starship, fonts, mimeapps |
 | `torrentos-first-boot` | GTK4/libadwaita setup wizard |
 | `torrentos-settings` | GTK4/libadwaita settings application |
-| `torrentos-tools` | GUI tools — screenshot, system update, help reference |
+| `torrentos-tools` | GUI tools — screenshot, system update, help reference, browser installer, health check |
 
 ---
 
@@ -127,6 +127,16 @@ but sufficient for a basic boot check.
 Hyprland requires hardware GL (EGL/GLES). Without virtio-gl, QEMU falls back to
 llvmpipe — expect low FPS but it should still render.
 
+**NVIDIA GPU — Hyprland won't start / invisible cursor**
+The ISO includes `nvidia-dkms` which builds the kernel module via DKMS at install
+time. If the module isn't loaded, run:
+```bash
+sudo modprobe nvidia nvidia_drm modeset=1
+export WLR_NO_HARDWARE_CURSORS=1
+Hyprland
+```
+Run `torrentos-doctor` to diagnose NVIDIA issues automatically.
+
 **`file conflict` error during pacstrap**
 A file in `airootfs/` is also owned by a custom package. Check the pruning section
 in `scripts/ci-build.sh` and add a `rm -f` line for the conflicting path.
@@ -162,10 +172,13 @@ QEMU_CPUS=2 QEMU_MEM=3072 QEMU_GL=0 QEMU_AUDIO=0 ./scripts/test-iso.sh
 git tag -a v0.4.0 -m "TorrentOS v0.4.0 — Riptide"
 git push origin v0.4.0
 
-# GitHub Actions will automatically build the ISO and attach it to the release.
-# To upload manually:
+# GitHub Actions builds the ISO and uploads to Internet Archive automatically
+# when IA_ACCESS_KEY and IA_SECRET_KEY secrets are set in the repo settings.
+# Get your keys at: https://archive.org/account/s3.php
+#
+# To upload manually after building:
 sha256sum out/*.iso > out/SHA256SUMS
-gh release create v0.4.0 out/*.iso out/SHA256SUMS \
-    --title "TorrentOS v0.4.0 — Riptide" \
-    --notes-file CHANGELOG.md
+ia upload torrentos-v0.4.0-x86_64 out/*.iso out/SHA256SUMS \
+    --metadata="mediatype:software" \
+    --metadata="title:TorrentOS v0.4.0 (x86_64 ISO)"
 ```

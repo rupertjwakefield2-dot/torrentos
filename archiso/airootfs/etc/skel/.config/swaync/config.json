@@ -76,6 +76,10 @@
                 {
                     "label": "󰖟 Browser",
                     "command": "ghostty -e torrentos-get-browser"
+                },
+                {
+                    "label": "󰹑 Screenshot",
+                    "command": "torrentos-screenshot"
                 }
             ]
         },
