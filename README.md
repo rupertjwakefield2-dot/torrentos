@@ -95,6 +95,8 @@ Pre-built ISOs are on the [Releases page](https://github.com/rupertjwakefield2-d
 | `Super + B` | Browser |
 | `Super + L` | Lock screen |
 | `Super + Q` | Close window |
+| `Super + N` | Notification centre |
+| `Super + X` | Clipboard history |
 | `Super + Shift + S` | Region screenshot |
 | `Super + Ctrl + S` | Screenshot GUI |
 | `Super + P` | Colour picker |
@@ -105,9 +107,10 @@ Pre-built ISOs are on the [Releases page](https://github.com/rupertjwakefield2-d
 
 ## Status
 
-**v0.4 — Riptide** · Active development. Boots reliably to a polished Hyprland desktop
+**v0.5 — Riptide** · Active development. Boots reliably to a polished Hyprland desktop
 with first-boot wizard, GTK4 settings app, screenshot tool, system update GUI, and a
-full developer baseline. Hardware-polish and installer UX improvements ongoing.
+full developer baseline. Includes tmux, Neovim, libinput gesture support, and a
+comprehensive zsh environment. Hardware-polish and installer UX improvements ongoing.
 
 ---
 
