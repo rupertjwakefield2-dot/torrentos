@@ -2,18 +2,18 @@
 # TorrentOS first-boot setup wizard
 # Runs once on first Hyprland start; tries the GTK wizard first, then this TUI.
 
-DONE_FLAG="$HOME/.config/torrentos/.firstboot-done"
+DONE_FLAG="$HOME/.config/torrentos/first-boot-done"
 USER_CONF="$HOME/.config/hypr/user.conf"
 VERSION="$(grep '^TORRENTOS_VERSION=' /etc/torrentos/version 2>/dev/null | cut -d= -f2 | tr -d '"' || echo 0.5)"
+
+# ── Already completed? (check before launching anything) ─────────────────────
+[ -f "$DONE_FLAG" ] && exit 0
 
 # ── Try the GTK wizard first ──────────────────────────────────────────────────
 if command -v torrentos-first-boot-wizard >/dev/null 2>&1; then
     torrentos-first-boot-wizard
     exit 0
 fi
-
-# ── Already completed? ────────────────────────────────────────────────────────
-[ -f "$DONE_FLAG" ] && exit 0
 
 mkdir -p "$HOME/.config/torrentos" "$HOME/.config/hypr"
 touch "$USER_CONF" 2>/dev/null

@@ -38,8 +38,9 @@ source=(
     'torrentos-get-browser'
     'torrentos-get-browser.desktop'
     'torrentos-install'
+    'torrentos-gpu-setup'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     # Executables
@@ -51,6 +52,7 @@ package() {
     install -Dm755 "$srcdir/torrentos-get-browser"     "$pkgdir/usr/local/bin/torrentos-get-browser"
 
     install -Dm755 "$srcdir/torrentos-install"           "$pkgdir/usr/local/bin/torrentos-install"
+    install -Dm755 "$srcdir/torrentos-gpu-setup"         "$pkgdir/usr/local/bin/torrentos-gpu-setup"
 
     # Desktop entries
     install -Dm644 "$srcdir/torrentos-update-gui.desktop"  \
