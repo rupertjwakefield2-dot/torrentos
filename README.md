@@ -100,6 +100,8 @@ Pre-built ISOs are on the [Releases page](https://github.com/rupertjwakefield2-d
 | `Super + Q` | Close window |
 | `Super + N` | Notification centre |
 | `Super + X` | Clipboard history |
+| `Super + H/J/K / ↑↓←→` | Move focus |
+| `Super + Shift + H/J/K/L` | Move window |
 | `Super + Shift + S` | Region screenshot |
 | `Super + Ctrl + S` | Screenshot GUI |
 | `Super + P` | Colour picker |

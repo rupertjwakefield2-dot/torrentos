@@ -59,7 +59,7 @@ topic_keys() {
     printf "${D}  %-30s${N} %s\n" "Super + P"           "Colour picker (hyprpicker)"
     echo
     printf "${C}  Focus & layout${N}\n"
-    printf "${D}  %-30s${N} %s\n" "Super + H/J/K/L"     "Move focus (vim-style)"
+    printf "${D}  %-30s${N} %s\n" "Super + H/J/K / arrows"  "Move focus (vim-style; L=lock)"
     printf "${D}  %-30s${N} %s\n" "Super + Shift + H/J/K/L" "Move window"
     printf "${D}  %-30s${N} %s\n" "Super + Ctrl + H/J/K/L"  "Resize window"
     echo
