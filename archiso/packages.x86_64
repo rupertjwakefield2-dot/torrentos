@@ -135,10 +135,13 @@ unzip
 unrar
 p7zip
 
-# --- media players (referenced in mimeapps.list) ---
+# --- media players / viewers ---
 mpv
+imv
 evince
 gnome-text-editor
+gnome-calculator
+gnome-font-viewer
 
 # --- accessibility ---
 orca
@@ -189,6 +192,23 @@ man-pages
 tree
 which
 sudo
+# Extra dev tools
+strace
+ltrace
+lsof
+iproute2
+nmap
+socat
+git-delta
+tokei
+hyperfine
+# Archive tools
+zip
+unzip
+unrar
+p7zip
+# Wayland screenshot / clipboard
+wf-recorder
 
 # --- container / virt baseline ---
 docker

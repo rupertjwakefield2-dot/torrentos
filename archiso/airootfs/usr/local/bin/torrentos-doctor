@@ -255,6 +255,110 @@ check_aur_helper() {
     fi
 }
 
+check_gamemode() {
+    if command -v gamemoded >/dev/null 2>&1; then
+        ok "GameMode installed"
+        if systemctl --user is-active --quiet gamemoded 2>/dev/null || \
+           systemctl is-active --quiet gamemoded 2>/dev/null; then
+            ok "gamemoded is running"
+        else
+            ok "gamemoded is available (D-Bus activated on demand)"
+        fi
+    else
+        warn "GameMode not installed"
+        hint "sudo pacman -S gamemode lib32-gamemode"
+    fi
+}
+
+check_mangohud() {
+    if command -v mangohud >/dev/null 2>&1; then
+        ok "MangoHud installed"
+    else
+        warn "MangoHud not installed"
+        hint "sudo pacman -S mangohud lib32-mangohud"
+    fi
+}
+
+check_nvidia_smi() {
+    # Only run if NVIDIA GPU present
+    if ! lspci 2>/dev/null | grep -qi nvidia; then return; fi
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        local info
+        info="$(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1 || echo 'error')"
+        ok "nvidia-smi: $info"
+    else
+        fail "nvidia-smi not found (nvidia-utils not installed?)"
+        hint "sudo pacman -S nvidia-utils"
+    fi
+}
+
+check_pipewire() {
+    if systemctl --user is-active --quiet pipewire 2>/dev/null; then
+        ok "PipeWire is running"
+    else
+        warn "PipeWire user service not active"
+        hint "systemctl --user enable --now pipewire pipewire-pulse wireplumber"
+    fi
+    if systemctl --user is-active --quiet wireplumber 2>/dev/null; then
+        ok "WirePlumber (session manager) is running"
+    else
+        warn "WirePlumber is not active"
+        hint "systemctl --user enable --now wireplumber"
+    fi
+}
+
+check_xdg_portal() {
+    if command -v /usr/lib/xdg-desktop-portal-hyprland >/dev/null 2>&1 || \
+       [[ -f /usr/lib/xdg-desktop-portal-hyprland ]]; then
+        ok "xdg-desktop-portal-hyprland installed"
+    else
+        warn "xdg-desktop-portal-hyprland not found"
+        hint "sudo pacman -S xdg-desktop-portal-hyprland"
+    fi
+    if systemctl --user is-active --quiet xdg-desktop-portal 2>/dev/null; then
+        ok "xdg-desktop-portal running"
+    else
+        warn "xdg-desktop-portal not running"
+        hint "systemctl --user enable --now xdg-desktop-portal"
+    fi
+}
+
+check_bluetooth() {
+    if systemctl is-active --quiet bluetooth 2>/dev/null; then
+        ok "Bluetooth service running"
+    else
+        warn "Bluetooth service not active"
+        hint "sudo systemctl enable --now bluetooth"
+    fi
+}
+
+check_swap() {
+    local swap_kb
+    swap_kb=$(free | awk '/^Swap:/{print $2}')
+    if (( swap_kb > 0 )); then
+        local swap_gb=$(( swap_kb / 1024 / 1024 ))
+        ok "Swap available: ${swap_gb} GB"
+    else
+        warn "No swap configured (hibernate unavailable; low-RAM systems may OOM)"
+        hint "Consider: sudo systemctl enable systemd-swap  or add a swapfile"
+    fi
+}
+
+check_wayland_env() {
+    local ok_count=0
+    for var in WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP; do
+        if [[ -n "${!var:-}" ]]; then
+            (( ok_count++ ))
+        fi
+    done
+    if (( ok_count == 3 )); then
+        ok "Wayland session variables set (WAYLAND_DISPLAY, XDG_SESSION_TYPE, XDG_CURRENT_DESKTOP)"
+    else
+        warn "Some Wayland session variables are missing"
+        hint "Ensure you are running inside a Hyprland session"
+    fi
+}
+
 check_hyprlock() {
     if command -v hyprlock >/dev/null 2>&1; then
         local ver
@@ -308,12 +412,21 @@ echo
 printf "${W}  Hardware${N}\n"
 check_internet
 check_disk_space
+check_swap
 check_gpu
 check_audio
 check_hyprland_socket
 echo
 
 check_nvidia
+check_nvidia_smi
+
+printf "${W}  Session${N}\n"
+check_wayland_env
+check_xdg_portal
+check_pipewire
+check_bluetooth
+echo
 
 printf "${W}  Pacman & AUR${N}\n"
 check_pacman_lock
@@ -324,6 +437,8 @@ echo
 printf "${W}  Extra tools${N}\n"
 check_flatpak
 check_hyprlock
+check_gamemode
+check_mangohud
 echo
 
 # ── summary ───────────────────────────────────────────────────────────────────
@@ -376,10 +491,28 @@ if [[ $FIX -eq 1 ]] && (( FAIL > 0 || WARN > 0 )); then
         printf "${D}    sudo rm /var/lib/pacman/db.lck${N}\n"
     fi
 
-    # audio
+    # audio / pipewire
     if ! (command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1); then
         printf "${Y}  Restart audio:${N}\n"
         printf "${D}    systemctl --user restart pipewire pipewire-pulse wireplumber${N}\n"
+    fi
+
+    # bluetooth
+    if ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+        printf "${Y}  Enable Bluetooth:${N}\n"
+        printf "${D}    sudo systemctl enable --now bluetooth${N}\n"
+    fi
+
+    # xdg-desktop-portal
+    if ! systemctl --user is-active --quiet xdg-desktop-portal 2>/dev/null; then
+        printf "${Y}  Start XDG portal:${N}\n"
+        printf "${D}    systemctl --user enable --now xdg-desktop-portal xdg-desktop-portal-hyprland${N}\n"
+    fi
+
+    # gamemode / mangohud
+    if ! command -v gamemoded >/dev/null 2>&1; then
+        printf "${Y}  Install GameMode:${N}\n"
+        printf "${D}    sudo pacman -S gamemode lib32-gamemode${N}\n"
     fi
 
     echo

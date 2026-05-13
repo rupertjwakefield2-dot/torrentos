@@ -288,22 +288,54 @@
     background: rgba(255, 107, 107, 0.14);
 }
 
+/* ── Urgency tints ──────────────────────────────────────────── */
+.notification.low {
+    opacity: 0.80;
+}
+
+.notification.normal {
+    /* default — no override */
+}
+
+.notification.critical {
+    border-color: rgba(255, 107, 107, 0.55) !important;
+    background: rgba(255, 107, 107, 0.09) !important;
+}
+
+/* ── Notification image ─────────────────────────────────────── */
+.notification-body-image {
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+/* ── Separator between notifications ────────────────────────── */
+.notification-row + .notification-row {
+    margin-top: 2px;
+}
+
 /* ── Popup notifications (floating) ─────────────────────────── */
 .floating-notifications {
     background: transparent;
 }
 
 .notification-popup {
-    background: rgba(7, 15, 29, 0.95);
-    border: 1px solid rgba(30, 111, 255, 0.25);
+    background: rgba(7, 15, 29, 0.96);
+    border: 1px solid rgba(30, 111, 255, 0.28);
     border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.65),
+                0 0 0 1px rgba(30, 111, 255, 0.08);
     padding: 12px 14px;
     margin: 6px;
 }
 
 .notification-popup.critical {
-    border-color: rgba(255, 107, 107, 0.55);
+    border-color: rgba(255, 107, 107, 0.60);
+    box-shadow: 0 8px 40px rgba(255, 107, 107, 0.15),
+                0 0 0 1px rgba(255, 107, 107, 0.12);
+}
+
+.notification-popup.low {
+    opacity: 0.88;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
