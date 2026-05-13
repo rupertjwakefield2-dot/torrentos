@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import threading
 
@@ -39,10 +40,13 @@ def _get_wifi_networks() -> list[dict]:
         )
         nets = []
         seen = set()
+        # nmcli -t uses ':' as delimiter and escapes literal ':' in values as '\:'
+        # Split on unescaped colons only, then unescape.
+        _split_re = re.compile(r'(?<!\\):')
         for line in out.splitlines():
-            parts = line.split(":")
+            parts = _split_re.split(line, maxsplit=3)
             if len(parts) >= 4:
-                ssid = parts[0].strip()
+                ssid = parts[0].replace(r'\:', ':').strip()
                 if not ssid or ssid in seen:
                     continue
                 seen.add(ssid)
@@ -50,7 +54,7 @@ def _get_wifi_networks() -> list[dict]:
                     signal = int(parts[1])
                 except ValueError:
                     signal = 0
-                security = parts[2].strip()
+                security = parts[2].replace(r'\:', ':').strip()
                 in_use = parts[3].strip() == "*"
                 nets.append({
                     "ssid": ssid,

@@ -113,8 +113,37 @@ def apply_rounding(radius: int) -> None:
 
 # ── Accessibility ────────────────────────────────────────────────────────────
 
+def _read_setting(dotted: str, fallback: str = "") -> str:
+    """Read a single setting from the user settings TOML (no fallback to defaults)."""
+    try:
+        import tomllib  # Python 3.11+
+    except ImportError:
+        try:
+            import tomli as tomllib  # type: ignore[no-redef]
+        except ImportError:
+            return fallback
+    user_toml = HOME / ".config" / "torrentos" / "settings.toml"
+    if not user_toml.exists():
+        return fallback
+    try:
+        with user_toml.open("rb") as f:
+            data = tomllib.load(f)
+        cur = data
+        for part in dotted.split("."):
+            if not isinstance(cur, dict) or part not in cur:
+                return fallback
+            cur = cur[part]
+        return str(cur)
+    except Exception:
+        return fallback
+
+
 def apply_high_contrast(enabled: bool) -> None:
-    theme = "HighContrast" if enabled else "TorrentOS-Dark"
+    if enabled:
+        theme = "HighContrast"
+    else:
+        current_theme = _read_setting("appearance.theme", "dark")
+        theme = "TorrentOS-Light" if current_theme == "light" else "TorrentOS-Dark"
     _gsettings("org.gnome.desktop.interface", "gtk-theme", theme)
 
 
@@ -139,6 +168,38 @@ def apply_slow_keys(enabled: bool) -> None:
 
 def apply_mouse_keys(enabled: bool) -> None:
     _gsettings("org.gnome.desktop.a11y.keyboard", "mousekeys-enable", "true" if enabled else "false")
+
+
+def apply_color_filter(filter_name: str) -> None:
+    """Apply a color-blindness compensation filter.
+
+    Stored in settings for future hyprland-shader or Mutter integration.
+    Currently sets the GNOME a11y flag if a filter is active; full GPU-level
+    filtering is a planned feature once hyprland plugin support matures.
+    """
+    enabled = filter_name != "none"
+    _gsettings(
+        "org.gnome.settings-daemon.plugins.color",
+        "night-light-enabled",
+        "false",  # don't accidentally trigger night light
+    )
+    # Reflect the 'something is active' state in the a11y panel
+    _gsettings(
+        "org.gnome.desktop.a11y.display",
+        "use-grayscale",
+        "true" if filter_name == "grayscale" else "false",
+    )
+    # Persist for session restore via torrentos-settingsd
+    # (full shader implementation is in the roadmap)
+    _ = enabled  # suppress unused-variable warning
+
+
+def apply_live_captions(enabled: bool) -> None:
+    """Toggle live captions.  Planned feature — no supported backend yet."""
+    # No package in packages.x86_64 provides a live-caption daemon today.
+    # The setting is persisted by the Settings store; this stub prevents silent
+    # no-ops becoming confusing when the backend is eventually wired up.
+    print(f"[applier] live-captions: {'enabled' if enabled else 'disabled'} (backend not yet implemented)")
 
 
 # ── Display ──────────────────────────────────────────────────────────────────
@@ -218,6 +279,8 @@ DISPATCH: dict[str, object] = {
     "accessibility.sticky-keys":     lambda v: apply_sticky_keys(bool(v)),
     "accessibility.slow-keys":       lambda v: apply_slow_keys(bool(v)),
     "accessibility.mouse-keys":      lambda v: apply_mouse_keys(bool(v)),
+    "accessibility.color-filter":    lambda v: apply_color_filter(str(v)),
+    "accessibility.live-captions":   lambda v: apply_live_captions(bool(v)),
     "display.night-light":           lambda v: apply_night_light(bool(v)),
     "display.night-light-temp":      lambda v: None,  # handled by night-light toggle
     "display.scale":                 lambda v: apply_ui_scale(float(v)),

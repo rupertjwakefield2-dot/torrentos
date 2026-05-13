@@ -93,6 +93,9 @@ Pre-built ISOs are on the [Releases page](https://github.com/rupertjwakefield2-d
 | `Super + ,` | Settings |
 | `Super + E` | File manager |
 | `Super + B` | Browser |
+| `Super + T` | Torrent client |
+| `Super + C` | VS Code |
+| `Super + U` | System updates |
 | `Super + L` | Lock screen |
 | `Super + Q` | Close window |
 | `Super + N` | Notification centre |

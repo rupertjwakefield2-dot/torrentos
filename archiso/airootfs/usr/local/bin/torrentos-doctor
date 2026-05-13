@@ -7,7 +7,7 @@ set -euo pipefail
 
 QUIET=0
 FIX=0
-for arg in "${@:-}"; do
+for arg in "$@"; do
     case "$arg" in
         --quiet) QUIET=1 ;;
         --fix)   FIX=1   ;;
