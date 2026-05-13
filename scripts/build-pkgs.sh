@@ -75,6 +75,10 @@ stage_hyprland_config() {
     require_file "$skel/user-dirs.dirs"
     require_file "$skel/qt6ct/qt6ct.conf"
     require_file "$skel/libinput-gestures.conf"
+    require_file "$skel/tmux/tmux.conf"
+    require_file "$skel/nvim/init.lua"
+    require_file "$AIROOT/etc/skel/.gitconfig"
+    require_file "$skel/btop/btop.conf"
 
     cp "$skel/hypr/hyprland.conf"                 "$pkg/hyprland.conf"
     cp "$skel/hypr/user.conf"                     "$pkg/user.conf"
@@ -98,6 +102,10 @@ stage_hyprland_config() {
     cp "$skel/user-dirs.dirs"                     "$pkg/user-dirs.dirs"
     cp "$skel/qt6ct/qt6ct.conf"                   "$pkg/qt6ct.conf"
     cp "$skel/libinput-gestures.conf"             "$pkg/libinput-gestures.conf"
+    cp "$skel/tmux/tmux.conf"                     "$pkg/tmux.conf"
+    cp "$skel/nvim/init.lua"                      "$pkg/nvim-init.lua"
+    cp "$AIROOT/etc/skel/.gitconfig"              "$pkg/gitconfig"
+    cp "$skel/btop/btop.conf"                     "$pkg/btop.conf"
 }
 
 # 3. torrentos-settings: stage Python package, launcher, and assets.
@@ -134,6 +142,7 @@ stage_tools() {
     require_file "$bin/torrentos-update-check"
     require_file "$bin/torrentos-doctor"
     require_file "$bin/torrentos-get-browser"
+    require_file "$bin/torrentos-install"
     require_file "$apps/torrentos-update.desktop"
     require_file "$apps/torrentos-screenshot.desktop"
     require_file "$apps/torrentos-help.desktop"
@@ -145,6 +154,7 @@ stage_tools() {
     cp "$bin/torrentos-update-check"         "$pkg/torrentos-update-check"
     cp "$bin/torrentos-doctor"               "$pkg/torrentos-doctor"
     cp "$bin/torrentos-get-browser"          "$pkg/torrentos-get-browser"
+    cp "$bin/torrentos-install"              "$pkg/torrentos-install"
     cp "$apps/torrentos-update.desktop"      "$pkg/torrentos-update-gui.desktop"
     cp "$apps/torrentos-screenshot.desktop"  "$pkg/torrentos-screenshot.desktop"
     cp "$apps/torrentos-help.desktop"        "$pkg/torrentos-help.desktop"
