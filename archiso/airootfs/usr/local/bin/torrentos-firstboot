@@ -338,6 +338,21 @@ command -v xdg-user-dirs-update >/dev/null 2>&1 && xdg-user-dirs-update 2>/dev/n
     echo "}"
 } > "$USER_CONF"
 
+# ── Persist keyboard layout to settings.toml so settingsd doesn't override ────
+_SETTINGS_DIR="$HOME/.config/torrentos"
+_SETTINGS_FILE="$_SETTINGS_DIR/settings.toml"
+mkdir -p "$_SETTINGS_DIR"
+# Write only if the file doesn't already have a [keyboard] section
+if ! grep -q '^\[keyboard\]' "$_SETTINGS_FILE" 2>/dev/null; then
+    {
+        if [[ -s "$_SETTINGS_FILE" ]]; then
+            cat "$_SETTINGS_FILE"
+            printf '\n'
+        fi
+        printf '[keyboard]\nlayout = "%s"\n' "$KB"
+    } > "${_SETTINGS_FILE}.tmp" && mv "${_SETTINGS_FILE}.tmp" "$_SETTINGS_FILE"
+fi
+
 touch "$DONE_FLAG"
 
 # ── Done screen ───────────────────────────────────────────────────────────────
