@@ -11,6 +11,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk, GLib  # noqa: E402
 
+from .. import applier
 from ..settings import Settings
 
 
@@ -235,24 +236,11 @@ class NetworkPage(Adw.PreferencesPage):
         v = row.get_active()
         self.settings.set("network.proxy-enabled", v)
         self._proxy_row.set_sensitive(v)
-        if not v:
-            self._clear_proxy()
+        proxy = self.settings.get("network.proxy", "")
+        applier.apply_proxy(v, proxy)
 
     def _on_proxy_apply(self, _row):
         proxy = self._proxy_row.get_text().strip()
         self.settings.set("network.proxy", proxy)
-        if proxy and self._proxy_switch.get_active():
-            self._set_proxy(proxy)
-
-    def _set_proxy(self, proxy: str):
-        try:
-            subprocess.run(["gsettings", "set", "org.gnome.system.proxy", "mode", "manual"])
-            subprocess.run(["gsettings", "set", "org.gnome.system.proxy.http", "host", proxy])
-        except Exception:
-            pass
-
-    def _clear_proxy(self):
-        try:
-            subprocess.run(["gsettings", "set", "org.gnome.system.proxy", "mode", "none"])
-        except Exception:
-            pass
+        enabled = self._proxy_switch.get_active()
+        applier.apply_proxy(enabled, proxy)

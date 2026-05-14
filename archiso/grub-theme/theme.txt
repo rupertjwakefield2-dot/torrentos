@@ -61,7 +61,7 @@ desktop-image: "background.png"
     width = 400
     align = "center"
 
-    text  = "v0.4  ·  riptide"
+    text  = "v0.5  ·  Riptide"
     font  = "Inter Regular 14"
     color = "#5BC0EB"
 }

@@ -12,38 +12,6 @@ set -euo pipefail
 NOTIF_APP="TorrentOS Update"
 NOTIF_ICON="software-update-available-symbolic"
 
-# ── helpers ───────────────────────────────────────────────────────────────────
-
-notify() {
-    local urgency="${1:-normal}" title="$2" body="$3"
-    if command -v notify-send >/dev/null 2>&1; then
-        notify-send \
-            --app-name="$NOTIF_APP" \
-            --icon="$NOTIF_ICON" \
-            --urgency="$urgency" \
-            --action="open=Open Update GUI" \
-            "$title" "$body" &
-        # Launch updater if user clicks the notification action
-        wait $!
-        local rv=$?
-        if [[ $rv -eq 0 ]]; then
-            # libnotify 0.8+ returns 0 and prints action key to stdout
-            :
-        fi
-    fi
-}
-
-notify_simple() {
-    local title="$1" body="$2"
-    command -v notify-send >/dev/null 2>&1 || return 0
-    notify-send \
-        --app-name="$NOTIF_APP" \
-        --icon="$NOTIF_ICON" \
-        "$title" "$body" \
-        --action="open=Open Update GUI" \
-        2>/dev/null &
-}
-
 # ── pacman updates via checkupdates (never touches the database) ──────────────
 
 pacman_updates=""
