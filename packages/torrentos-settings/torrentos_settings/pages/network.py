@@ -143,6 +143,9 @@ class NetworkPage(Adw.PreferencesPage):
         self._proxy_row = Adw.EntryRow()
         self._proxy_row.set_title("Proxy address")
         self._proxy_row.set_text(settings.get("network.proxy", ""))
+        # Gtk.Text (inner widget) receives the placeholder; use set_tooltip_text
+        # as a hint since AdwEntryRow has no dedicated placeholder API in 1.x.
+        self._proxy_row.set_tooltip_text("Format: host:port  or  http://host:port")
         self._proxy_row.set_show_apply_button(True)
         self._proxy_row.connect("apply", self._on_proxy_apply)
         self._proxy_row.set_sensitive(bool(settings.get("network.proxy-enabled", False)))

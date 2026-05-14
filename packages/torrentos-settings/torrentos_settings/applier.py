@@ -291,10 +291,14 @@ def apply_proxy(enabled: bool, address: str) -> None:
     """Apply or clear HTTP proxy via gsettings."""
     if enabled and address:
         _gsettings("org.gnome.system.proxy", "mode", "manual")
+        # Strip optional scheme (http://, https://, etc.) before splitting.
+        # Without this, 'http://host:8080'.rpartition(':') yields
+        # host='http://host' which gsettings would use verbatim.
+        addr = re.sub(r"^https?://", "", address)
         # Split optional port from host
-        host, _, port = address.rpartition(":")
+        host, _, port = addr.rpartition(":")
         if not host:
-            host = address
+            host = addr
             port = "8080"
         try:
             port_int = int(port)
