@@ -75,7 +75,9 @@ archiso/airootfs/etc/gshadow
 # Bootloader dirs (generated at build time from releng)
 archiso/grub/
 archiso/syslinux/
-archiso/efiboot/
+# efiboot/EFI/ contains binary bootloaders copied from releng at build time.
+# efiboot/loader/ contains source text configs that ARE tracked.
+archiso/efiboot/EFI/
 
 # Build logs
 *.log
