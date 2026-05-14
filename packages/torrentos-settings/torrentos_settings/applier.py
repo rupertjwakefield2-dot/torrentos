@@ -343,8 +343,8 @@ DISPATCH: dict[str, object] = {
     "display.refresh-rate":          lambda v: apply_refresh_rate(int(v)) if str(v) not in ("0", "auto") else None,
     # Network proxy — read both keys together so we have the full picture.
     # proxy-enabled fires first (alphabetical); proxy fires second and triggers apply.
-    "network.proxy-enabled":         lambda v: apply_proxy(bool(v), _read_setting("network.proxy", "")),
-    "network.proxy":                 lambda v: apply_proxy(bool(_read_setting("network.proxy-enabled", "false") == "True"), str(v)),
+    "network.proxy-enabled":         lambda v: apply_proxy(str(v) == "True", _read_setting("network.proxy", "")),
+    "network.proxy":                 lambda v: apply_proxy(_read_setting("network.proxy-enabled", "False") == "True", str(v)),
     # Settings that don't drive live system state — stored only
     "dev-mode.enabled":              lambda v: None,
     "ai.provider":                   lambda v: None,

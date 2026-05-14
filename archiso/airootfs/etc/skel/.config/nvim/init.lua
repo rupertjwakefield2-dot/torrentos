@@ -55,7 +55,7 @@ o.undodir        = vim.fn.stdpath('data') .. '/undodir'
 -- Performance
 o.updatetime     = 250
 o.timeoutlen     = 400
-o.lazyredraw     = false
+-- Note: lazyredraw was removed in Neovim 0.10 — do not set it
 
 -- Split direction
 o.splitright     = true

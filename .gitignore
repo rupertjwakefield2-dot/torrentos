@@ -27,7 +27,23 @@ packages/torrentos-hyprland-config/rofi-power-menu.sh
 packages/torrentos-hyprland-config/ghostty-config
 packages/torrentos-hyprland-config/starship.toml
 packages/torrentos-hyprland-config/zshrc
+packages/torrentos-hyprland-config/nwg-dock-style.css
+packages/torrentos-hyprland-config/gtk3-settings.ini
+packages/torrentos-hyprland-config/gtk4-settings.ini
+packages/torrentos-hyprland-config/fonts.conf
+packages/torrentos-hyprland-config/mimeapps.list
+packages/torrentos-hyprland-config/user-dirs.dirs
+packages/torrentos-hyprland-config/qt6ct.conf
+packages/torrentos-hyprland-config/libinput-gestures.conf
+packages/torrentos-hyprland-config/tmux.conf
+packages/torrentos-hyprland-config/nvim-init.lua
+packages/torrentos-hyprland-config/gitconfig
+packages/torrentos-hyprland-config/btop.conf
 packages/torrentos-base/greetd-config.toml
+packages/torrentos-settings/torrentos-settings
+packages/torrentos-settings/torrentos-settings.desktop
+packages/torrentos-settings/torrentos-settings.svg
+packages/torrentos-settings/torrentos_settings.tar.gz
 
 # makepkg build dirs
 packages/*/pkg/
