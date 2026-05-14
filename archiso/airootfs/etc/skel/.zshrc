@@ -118,7 +118,7 @@ alias torrentos-update='torrentos-update-gui'
 # Quick open
 alias settings='torrentos-settings & disown'
 alias files='nautilus & disown'
-alias browser='xdg-open https:// 2>/dev/null & disown'
+alias browser='xdg-open about:blank 2>/dev/null & disown'
 alias screenshot='torrentos-screenshot & disown'
 alias doctor='torrentos-doctor'
 alias get-browser='torrentos-get-browser'

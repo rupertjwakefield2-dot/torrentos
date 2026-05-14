@@ -25,7 +25,7 @@ live-captions = false
 color-filter = "none"   # "none" | "protanopia" | "deuteranopia" | "tritanopia"
 
 [keyboard]
-layout = "gb"
+layout = "us"
 repeat-delay = 300
 repeat-rate = 50
 numlock = true

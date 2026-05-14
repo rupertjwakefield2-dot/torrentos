@@ -245,7 +245,6 @@ class AboutPage(Adw.PreferencesPage):
 
     def _launch_updater(self, _btn: Gtk.Button) -> None:
         try:
-            import subprocess
             subprocess.Popen(
                 ["torrentos-update-gui"],
                 start_new_session=True,
