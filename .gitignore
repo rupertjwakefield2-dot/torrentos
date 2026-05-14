@@ -44,6 +44,18 @@ packages/torrentos-settings/torrentos-settings
 packages/torrentos-settings/torrentos-settings.desktop
 packages/torrentos-settings/torrentos-settings.svg
 packages/torrentos-settings/torrentos_settings.tar.gz
+packages/torrentos-tools/torrentos-update-gui
+packages/torrentos-tools/torrentos-screenshot
+packages/torrentos-tools/torrentos-help
+packages/torrentos-tools/torrentos-update-check
+packages/torrentos-tools/torrentos-doctor
+packages/torrentos-tools/torrentos-get-browser
+packages/torrentos-tools/torrentos-install
+packages/torrentos-tools/torrentos-gpu-setup
+packages/torrentos-tools/torrentos-update-gui.desktop
+packages/torrentos-tools/torrentos-screenshot.desktop
+packages/torrentos-tools/torrentos-help.desktop
+packages/torrentos-tools/torrentos-get-browser.desktop
 
 # makepkg build dirs
 packages/*/pkg/
