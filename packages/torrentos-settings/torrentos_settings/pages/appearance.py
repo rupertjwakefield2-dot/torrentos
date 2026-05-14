@@ -32,6 +32,20 @@ ACCENTS = [
 
 FONT_SIZES = [9, 10, 11, 12, 13, 14, 16]
 
+ICON_THEMES = [
+    ("Papirus-Dark",  "Papirus Dark"),
+    ("Papirus",       "Papirus"),
+    ("Papirus-Light", "Papirus Light"),
+    ("Adwaita",       "Adwaita"),
+    ("hicolor",       "hicolor (minimal)"),
+]
+
+CURSOR_THEMES = [
+    ("Bibata-Modern-Classic", "Bibata Modern Classic"),
+    ("Adwaita",               "Adwaita"),
+    ("default",               "System default"),
+]
+
 
 class AppearancePage(Adw.PreferencesPage):
     def __init__(self, settings: Settings) -> None:
@@ -125,6 +139,39 @@ class AppearancePage(Adw.PreferencesPage):
         rounding_row.connect("notify::value", self._on_rounding_changed)
         effects_group.add(rounding_row)
 
+        # ── Icons & cursors group ────────────────────────────────────────────
+        icons_group = Adw.PreferencesGroup()
+        icons_group.set_title("Icons & Cursors")
+        self.add(icons_group)
+
+        icon_row = Adw.ComboRow()
+        icon_row.set_title("Icon theme")
+        icon_row.set_subtitle("System-wide icon set for apps and the dock")
+        icon_model = Gtk.StringList()
+        for _, label in ICON_THEMES:
+            icon_model.append(label)
+        icon_row.set_model(icon_model)
+        current_icon = settings.get("appearance.icon-theme", "Papirus-Dark")
+        icon_row.set_selected(
+            next((i for i, (k, _) in enumerate(ICON_THEMES) if k == current_icon), 0)
+        )
+        icon_row.connect("notify::selected", self._on_icon_theme_changed)
+        icons_group.add(icon_row)
+
+        cursor_row = Adw.ComboRow()
+        cursor_row.set_title("Cursor theme")
+        cursor_row.set_subtitle("Mouse pointer style — takes effect immediately")
+        cursor_model = Gtk.StringList()
+        for _, label in CURSOR_THEMES:
+            cursor_model.append(label)
+        cursor_row.set_model(cursor_model)
+        current_cursor = settings.get("appearance.cursor-theme", "Bibata-Modern-Classic")
+        cursor_row.set_selected(
+            next((i for i, (k, _) in enumerate(CURSOR_THEMES) if k == current_cursor), 0)
+        )
+        cursor_row.connect("notify::selected", self._on_cursor_theme_changed)
+        icons_group.add(cursor_row)
+
         # ── Wallpaper group ──────────────────────────────────────────────────
         wallpaper_group = Adw.PreferencesGroup()
         wallpaper_group.set_title("Wallpaper")
@@ -214,6 +261,16 @@ class AppearancePage(Adw.PreferencesPage):
         v = int(row.get_value())
         self.settings.set("appearance.rounding", v)
         applier.apply("appearance.rounding", v)
+
+    def _on_icon_theme_changed(self, row: Adw.ComboRow, _pspec) -> None:
+        key = ICON_THEMES[row.get_selected()][0]
+        self.settings.set("appearance.icon-theme", key)
+        applier.apply("appearance.icon-theme", key)
+
+    def _on_cursor_theme_changed(self, row: Adw.ComboRow, _pspec) -> None:
+        key = CURSOR_THEMES[row.get_selected()][0]
+        self.settings.set("appearance.cursor-theme", key)
+        applier.apply("appearance.cursor-theme", key)
 
     def _on_wallpaper_clicked(self, _btn: Gtk.Button) -> None:
         dialog = Gtk.FileDialog()
