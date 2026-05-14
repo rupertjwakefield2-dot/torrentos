@@ -316,7 +316,7 @@ help() {
 # ---- welcome banner (only in interactive login shells, only after first-boot) ----
 # Shows fastfetch system info. Suppressed during first-boot so it doesn't collide with the wizard.
 if [[ -o interactive ]] && [[ -o login ]] \
-   && [[ -f "$HOME/.config/torrentos/.firstboot-done" ]]; then
+   && [[ -f "$HOME/.config/torrentos/first-boot-done" ]]; then
     if command -v fastfetch >/dev/null 2>&1; then
         fastfetch
     else

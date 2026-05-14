@@ -5,6 +5,7 @@ Pages: Welcome → Keyboard → Timezone → Appearance → WiFi → Shortcuts �
 """
 
 import sys, os, subprocess, threading, re
+_nmcli_split = re.compile(r'(?<!\\):')
 from pathlib import Path
 
 import gi
@@ -186,7 +187,7 @@ SHORTCUTS = [
     ("Super + F",             "Fullscreen"),
     ("Super + E",             "File manager"),
     ("Super + B",             "Browser"),
-    ("Super + V",             "Clipboard history"),
+    ("Super + X",             "Clipboard history"),
     ("Super + L",             "Lock screen"),
     ("Super + ,",             "Settings"),
     ("Super + Tab",           "Window switcher"),
@@ -649,13 +650,15 @@ class WiFiPage(Gtk.Box):
         networks, seen = [], set()
         raw = []
         for line in result.stdout.splitlines():
-            parts = line.split(":")
-            ssid = parts[0].strip() if parts else ""
+            # nmcli -t escapes literal ':' in values as '\:'; split only on
+            # unescaped colons to avoid breaking SSIDs that contain colons.
+            parts = _nmcli_split.split(line, maxsplit=3)
+            ssid = parts[0].replace(r'\:', ':').strip() if parts else ""
             if not ssid or ssid in seen:
                 continue
             seen.add(ssid)
-            sig  = parts[1] if len(parts) > 1 else "0"
-            sec  = parts[2] if len(parts) > 2 else ""
+            sig  = parts[1].replace(r'\:', ':') if len(parts) > 1 else "0"
+            sec  = parts[2].replace(r'\:', ':') if len(parts) > 2 else ""
             inuse = parts[3].strip() == "*" if len(parts) > 3 else False
             networks.append((ssid, sig, sec, inuse))
             raw.append(ssid)

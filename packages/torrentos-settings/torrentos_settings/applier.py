@@ -111,6 +111,19 @@ def apply_rounding(radius: int) -> None:
     _hyprctl("decoration:rounding", str(radius))
 
 
+def apply_icon_theme(theme: str) -> None:
+    _gsettings("org.gnome.desktop.interface", "icon-theme", theme)
+    _write_gtk_settings("gtk-icon-theme-name", theme)
+
+
+def apply_cursor_theme(theme: str) -> None:
+    _gsettings("org.gnome.desktop.interface", "cursor-theme", theme)
+    _write_gtk_settings("gtk-cursor-theme-name", theme)
+    # Tell Hyprland to reload the cursor theme live
+    _hyprctl("cursor:default_monitor", "")   # no-op trigger; actual cursor name via env
+    _run(["hyprctl", "setcursor", theme, "24"])
+
+
 # ── Accessibility ────────────────────────────────────────────────────────────
 
 def _read_setting(dotted: str, fallback: str = "") -> str:
@@ -168,6 +181,17 @@ def apply_slow_keys(enabled: bool) -> None:
 
 def apply_mouse_keys(enabled: bool) -> None:
     _gsettings("org.gnome.desktop.a11y.keyboard", "mousekeys-enable", "true" if enabled else "false")
+
+
+def apply_magnifier(enabled: bool) -> None:
+    """Toggle the Magnus pixel magnifier."""
+    if enabled:
+        _run(["pkill", "-x", "magnus"])   # kill any stale instance
+        import subprocess as _sp
+        _sp.Popen(["magnus"], start_new_session=True,
+                  stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    else:
+        _run(["pkill", "-x", "magnus"])
 
 
 def apply_color_filter(filter_name: str) -> None:
@@ -266,15 +290,18 @@ def apply_vrr(enabled: bool) -> None:
 # ── Dispatch table ────────────────────────────────────────────────────────────
 
 DISPATCH: dict[str, object] = {
-    "appearance.theme":         lambda v: apply_theme(v),
-    "appearance.accent":        lambda v: apply_accent(v),
-    "appearance.wallpaper":     lambda v: apply_wallpaper(v),
-    "appearance.font-size":     lambda v: apply_font_size(int(v)),
-    "appearance.animations":    lambda v: apply_animations(bool(v)),
-    "appearance.blur":          lambda v: apply_blur(bool(v)),
-    "appearance.rounding":      lambda v: apply_rounding(int(v)),
+    "appearance.theme":          lambda v: apply_theme(v),
+    "appearance.accent":         lambda v: apply_accent(v),
+    "appearance.wallpaper":      lambda v: apply_wallpaper(v),
+    "appearance.font-size":      lambda v: apply_font_size(int(v)),
+    "appearance.animations":     lambda v: apply_animations(bool(v)),
+    "appearance.blur":           lambda v: apply_blur(bool(v)),
+    "appearance.rounding":       lambda v: apply_rounding(int(v)),
+    "appearance.icon-theme":     lambda v: apply_icon_theme(str(v)),
+    "appearance.cursor-theme":   lambda v: apply_cursor_theme(str(v)),
     "accessibility.high-contrast":   lambda v: apply_high_contrast(bool(v)),
     "accessibility.screen-reader":   lambda v: apply_screen_reader(bool(v)),
+    "accessibility.magnifier":       lambda v: apply_magnifier(bool(v)),
     "accessibility.ui-scale":        lambda v: apply_ui_scale(float(v)),
     "accessibility.sticky-keys":     lambda v: apply_sticky_keys(bool(v)),
     "accessibility.slow-keys":       lambda v: apply_slow_keys(bool(v)),
@@ -284,6 +311,8 @@ DISPATCH: dict[str, object] = {
     "display.night-light":           lambda v: apply_night_light(bool(v)),
     "display.night-light-temp":      lambda v: None,  # handled by night-light toggle
     "display.scale":                 lambda v: apply_ui_scale(float(v)),
+    "display.custom-scale":          lambda v: apply_ui_scale(float(v)) if float(v) != 0.0 else None,
+    "display.overscan":              lambda v: None,  # Hyprland overscan requires full monitor rule; stored for future use
     "display.vrr":                   lambda v: apply_vrr(bool(v)),
     "display.refresh-rate":          lambda v: apply_refresh_rate(int(v)) if str(v) not in ("0", "auto") else None,
     "keyboard.layout":               lambda v: apply_kb_layout(str(v)),
