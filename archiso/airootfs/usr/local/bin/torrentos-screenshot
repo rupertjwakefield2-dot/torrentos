@@ -13,7 +13,7 @@ from pathlib import Path
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GdkPixbuf, Gio, GLib, Gtk
+from gi.repository import Adw, Gio, GLib, Gtk
 
 
 APP_ID      = "org.torrentos.Screenshot"
@@ -294,6 +294,9 @@ class ScreenshotWindow(Adw.ApplicationWindow):
         filter_ = Gtk.FileFilter()
         filter_.add_mime_type("image/png")
         filter_.set_name("PNG Images")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(filter_)
+        dialog.set_filters(filters)
         dialog.save(self, None, self._save_as_done)
 
     def _save_as_done(self, dialog: Gtk.FileDialog, result: Gio.AsyncResult) -> None:

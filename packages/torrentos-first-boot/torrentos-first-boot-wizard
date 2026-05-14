@@ -1014,18 +1014,19 @@ class FirstBootWindow(Adw.ApplicationWindow):
         self._step_label.set_label(f"{i + 1} of {n}")
 
     def _finish(self):
-        self._persist_appearance()
+        self._persist_settings()
         MARKER.parent.mkdir(parents=True, exist_ok=True)
         MARKER.touch()
         self.get_application().quit()
 
-    def _persist_appearance(self):
-        """Write appearance choices to settings.toml and apply live."""
+    def _persist_settings(self):
+        """Write wizard choices to settings.toml and apply them live."""
         ap      = self._app_page
         theme   = ap.get_theme()
         accent  = ap.get_accent()
         fsize   = ap.get_font_size()
         animate = ap.get_animations()
+        kb      = self._kb_page.get_selected()
 
         # Apply live via gsettings / hyprctl
         pref = "prefer-dark" if theme == "dark" else "prefer-light"
@@ -1035,35 +1036,41 @@ class FirstBootWindow(Adw.ApplicationWindow):
         run(["gsettings", "set", "org.gnome.desktop.interface", "font-name", f"Inter {fsize}"])
         run(["hyprctl", "keyword", "animations:enabled", "1" if animate else "0"])
 
-        # Persist to ~/.config/torrentos/settings.toml (minimal TOML)
+        # Persist to ~/.config/torrentos/settings.toml (minimal TOML).
+        # We rewrite the [appearance] and [keyboard] sections; all other sections
+        # (if the file already exists from a previous partial run) are preserved.
         settings_dir = Path.home() / ".config" / "torrentos"
         settings_dir.mkdir(parents=True, exist_ok=True)
         settings_file = settings_dir / "settings.toml"
 
+        MANAGED = {"[appearance]", "[keyboard]"}
         existing_lines: list[str] = []
-        in_appearance = False
+        in_managed = False
         if settings_file.exists():
             for line in settings_file.read_text().splitlines():
                 stripped = line.strip()
-                if stripped == "[appearance]":
-                    in_appearance = True
+                if stripped in MANAGED:
+                    in_managed = True
                     continue
                 if stripped.startswith("[") and stripped.endswith("]"):
-                    in_appearance = False
-                if not in_appearance:
+                    in_managed = False
+                if not in_managed:
                     existing_lines.append(line)
 
-        appearance_block = (
+        new_blocks = (
             "[appearance]\n"
             f'theme = "{theme}"\n'
             f'accent = "{accent}"\n'
             f"font-size = {fsize}\n"
             f"animations = {'true' if animate else 'false'}\n"
+            "\n"
+            "[keyboard]\n"
+            f'layout = "{kb}"\n'
         )
         content = "\n".join(existing_lines).rstrip("\n")
         if content:
             content += "\n\n"
-        content += appearance_block
+        content += new_blocks
         settings_file.write_text(content)
 
 

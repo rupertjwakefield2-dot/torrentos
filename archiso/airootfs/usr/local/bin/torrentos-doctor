@@ -157,12 +157,17 @@ check_nvidia() {
         warn "nvidia_drm modeset not enabled (current: ${modeset})"
         hint "Add 'options nvidia_drm modeset=1' to /etc/modprobe.d/nvidia.conf"
     fi
-    # Check WLR_NO_HARDWARE_CURSORS is set (prevents invisible cursor)
-    if [[ "${WLR_NO_HARDWARE_CURSORS:-}" == "1" ]]; then
-        ok "WLR_NO_HARDWARE_CURSORS=1 set (cursor fix active)"
+    # Check hardware cursors are disabled (prevents invisible cursor on NVIDIA/Wayland).
+    # torrentos-gpu-setup sets this via `hyprctl setenv` / `hyprctl keyword` at login;
+    # the shell env var may or may not be inherited depending on when the terminal opened.
+    local _hw_cursor_ok=0
+    [[ "${WLR_NO_HARDWARE_CURSORS:-}" == "1" ]] && _hw_cursor_ok=1
+    hyprctl getoption cursor:no_hardware_cursors 2>/dev/null | grep -q "int: 1" && _hw_cursor_ok=1
+    if (( _hw_cursor_ok )); then
+        ok "NVIDIA cursor fix active (no_hardware_cursors)"
     else
-        warn "WLR_NO_HARDWARE_CURSORS not set — cursor may be invisible"
-        hint "Add WLR_NO_HARDWARE_CURSORS=1 to /etc/environment.d/91-torrentos-nvidia.conf"
+        warn "NVIDIA cursor fix not detected — cursor may be invisible"
+        hint "Run: torrentos-gpu-setup  (called automatically by exec-once in hyprland.conf)"
     fi
     echo
 }
