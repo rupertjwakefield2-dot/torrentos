@@ -42,7 +42,10 @@ if _is_nvidia; then
     hyprctl setenv GBM_BACKEND nvidia-drm
     hyprctl setenv __GLX_VENDOR_LIBRARY_NAME nvidia
     hyprctl setenv NVD_BACKEND direct
-    hyprctl setenv WLR_NO_HARDWARE_CURSORS 1
+    hyprctl setenv WLR_NO_HARDWARE_CURSORS 1   # legacy wlroots compat
+    # Modern Hyprland cursor option — must be set at runtime since the config default
+    # is false (hardware cursors enabled); NVIDIA needs software cursors on Wayland.
+    hyprctl keyword cursor:no_hardware_cursors true
 elif _is_amd; then
     hyprctl setenv LIBVA_DRIVER_NAME radeonsi
 elif _is_intel; then

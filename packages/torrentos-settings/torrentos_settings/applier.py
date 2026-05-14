@@ -119,8 +119,7 @@ def apply_icon_theme(theme: str) -> None:
 def apply_cursor_theme(theme: str) -> None:
     _gsettings("org.gnome.desktop.interface", "cursor-theme", theme)
     _write_gtk_settings("gtk-cursor-theme-name", theme)
-    # Tell Hyprland to reload the cursor theme live
-    _hyprctl("cursor:default_monitor", "")   # no-op trigger; actual cursor name via env
+    # Apply to Hyprland compositor live (sets cursor theme and size 24)
     _run(["hyprctl", "setcursor", theme, "24"])
 
 
@@ -185,13 +184,10 @@ def apply_mouse_keys(enabled: bool) -> None:
 
 def apply_magnifier(enabled: bool) -> None:
     """Toggle the Magnus pixel magnifier."""
+    _run(["pkill", "-x", "magnus"])   # kill any stale/existing instance
     if enabled:
-        _run(["pkill", "-x", "magnus"])   # kill any stale instance
-        import subprocess as _sp
-        _sp.Popen(["magnus"], start_new_session=True,
-                  stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
-    else:
-        _run(["pkill", "-x", "magnus"])
+        subprocess.Popen(["magnus"], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def apply_color_filter(filter_name: str) -> None:

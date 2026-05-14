@@ -209,6 +209,17 @@ EXTRA_PACKAGES=(
     xdg-user-dirs
     # Accessibility
     magnus
+    # Browsers & media (default apps per mimeapps.list)
+    firefox
+    qbittorrent
+    mpv
+    # Desktop integration
+    polkit-gnome          # exec-once polkit auth agent in hyprland.conf
+    libinput-gestures     # exec-once libinput-gestures-setup start
+    nm-connection-editor  # network settings from waybar
+    xdg-desktop-portal-gtk  # file chooser fallback for GTK apps
+    # Editor
+    neovim                # nvim config deployed by torrentos-hyprland-config
 )
 
 # Add NVIDIA packages if detected
