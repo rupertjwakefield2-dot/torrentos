@@ -402,7 +402,7 @@ check_file /etc/torrentos/default-settings.toml "Default settings"
 check_file /usr/share/torrentos-settings/torrentos_settings/__init__.py \
     "torrentos-settings Python package" \
     "sudo pacman -S torrentos-settings"
-check_file /usr/local/bin/torrentos-firstboot "firstboot launcher"
+check_file /usr/bin/torrentos-first-boot-wizard "first-boot wizard"
 check_file /usr/local/bin/torrentos-update-gui "update GUI launcher"
 check_settings_file
 echo

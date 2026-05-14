@@ -239,7 +239,9 @@ def apply_night_light(enabled: bool, temp: int = 4000) -> None:
 
 
 def apply_refresh_rate(hz: int) -> None:
-    _hyprctl("monitor", f",preferred,auto,auto,{hz}")
+    # Hyprland monitor keyword format: name,resolution@hz,position,scale
+    # Embed Hz in the resolution field; leave name/position/scale as auto/1.
+    _hyprctl("monitor", f",preferred@{hz},auto,1")
 
 
 # ── Keyboard / Mouse ─────────────────────────────────────────────────────────
@@ -287,6 +289,30 @@ def apply_vrr(enabled: bool) -> None:
     _hyprctl("misc:vrr", "1" if enabled else "0")
 
 
+# ── Network ──────────────────────────────────────────────────────────────────
+
+def apply_proxy(enabled: bool, address: str) -> None:
+    """Apply or clear HTTP proxy via gsettings."""
+    if enabled and address:
+        _gsettings("org.gnome.system.proxy", "mode", "manual")
+        # Split optional port from host
+        host, _, port = address.rpartition(":")
+        if not host:
+            host = address
+            port = "8080"
+        try:
+            port_int = int(port)
+        except ValueError:
+            host = address
+            port_int = 8080
+        _gsettings("org.gnome.system.proxy.http", "host", host)
+        _gsettings("org.gnome.system.proxy.http", "port", str(port_int))
+        _gsettings("org.gnome.system.proxy.https", "host", host)
+        _gsettings("org.gnome.system.proxy.https", "port", str(port_int))
+    else:
+        _gsettings("org.gnome.system.proxy", "mode", "none")
+
+
 # ── Dispatch table ────────────────────────────────────────────────────────────
 
 DISPATCH: dict[str, object] = {
@@ -308,13 +334,21 @@ DISPATCH: dict[str, object] = {
     "accessibility.mouse-keys":      lambda v: apply_mouse_keys(bool(v)),
     "accessibility.color-filter":    lambda v: apply_color_filter(str(v)),
     "accessibility.live-captions":   lambda v: apply_live_captions(bool(v)),
-    "display.night-light":           lambda v: apply_night_light(bool(v)),
+    "display.night-light":           lambda v: apply_night_light(bool(v), int(_read_setting("display.night-light-temp", "4000"))),
     "display.night-light-temp":      lambda v: None,  # handled by night-light toggle
     "display.scale":                 lambda v: apply_ui_scale(float(v)),
     "display.custom-scale":          lambda v: apply_ui_scale(float(v)) if float(v) != 0.0 else None,
     "display.overscan":              lambda v: None,  # Hyprland overscan requires full monitor rule; stored for future use
     "display.vrr":                   lambda v: apply_vrr(bool(v)),
     "display.refresh-rate":          lambda v: apply_refresh_rate(int(v)) if str(v) not in ("0", "auto") else None,
+    # Network proxy — read both keys together so we have the full picture.
+    # proxy-enabled fires first (alphabetical); proxy fires second and triggers apply.
+    "network.proxy-enabled":         lambda v: apply_proxy(bool(v), _read_setting("network.proxy", "")),
+    "network.proxy":                 lambda v: apply_proxy(bool(_read_setting("network.proxy-enabled", "false") == "True"), str(v)),
+    # Settings that don't drive live system state — stored only
+    "dev-mode.enabled":              lambda v: None,
+    "ai.provider":                   lambda v: None,
+    "telemetry.enabled":             lambda v: None,
     "keyboard.layout":               lambda v: apply_kb_layout(str(v)),
     "keyboard.natural-scroll":       lambda v: apply_natural_scroll(bool(v)),
     "keyboard.mouse-sensitivity":    lambda v: apply_mouse_sensitivity(float(v)),
