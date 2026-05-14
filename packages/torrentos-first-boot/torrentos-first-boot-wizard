@@ -24,7 +24,7 @@ CSS = b"""
     font-weight: 900;
     letter-spacing: -1px;
 }
-.hero-title-blue { color: #2f7fff; }
+.hero-title-blue { color: #1E6FFF; }
 .hero-sub {
     font-size: 15px;
     opacity: 0.6;
@@ -69,11 +69,11 @@ CSS = b"""
     transition: border-color 200ms;
 }
 .option-card:hover {
-    border-color: alpha(#2f7fff, 0.35);
+    border-color: alpha(#1E6FFF, 0.35);
 }
 .option-card.selected {
-    border-color: #2f7fff;
-    background: alpha(#2f7fff, 0.08);
+    border-color: #1E6FFF;
+    background: alpha(#1E6FFF, 0.08);
 }
 
 /* WiFi list */
@@ -170,7 +170,7 @@ TIMEZONES = [
 ]
 
 ACCENT_COLOURS = [
-    ("#2f7fff", "Blue"),
+    ("#1E6FFF", "Blue"),
     ("#9b59b6", "Purple"),
     ("#e74c3c", "Red"),
     ("#e67e22", "Orange"),
@@ -444,13 +444,15 @@ class TimezonePage(Gtk.Box):
         if row is None:
             return
         self._selected_tz = row._tz
-        try:
-            run(["timedatectl", "set-timezone", self._selected_tz])
-        except Exception:
-            pass
+        # Apply timedatectl off the UI thread — D-Bus call to systemd-timedated
+        # can stall briefly; mirrors how KeyboardPage handles localectl.
+        threading.Thread(target=self._apply_tz, args=(self._selected_tz,), daemon=True).start()
         self._status.set_text(f"✓  Timezone set to {self._selected_tz}")
         self._status.remove_css_class("status-err")
         self._status.add_css_class("status-ok")
+
+    def _apply_tz(self, tz: str) -> None:
+        run(["timedatectl", "set-timezone", tz])
 
 
 class AppearancePage(Gtk.Box):
