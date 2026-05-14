@@ -190,6 +190,7 @@ EXTRA_PACKAGES=(
     grim
     slurp
     imv
+    loupe              # default image viewer for torrentos-screenshot "Open in Loupe"
     # Files
     nautilus
     file-roller
@@ -209,6 +210,7 @@ EXTRA_PACKAGES=(
     xdg-user-dirs
     # Accessibility
     magnus
+    expac              # package query tool — used by pkgsize alias in .zshrc
     # Browsers & media (default apps per mimeapps.list)
     firefox
     qbittorrent
