@@ -71,12 +71,19 @@ class AccessibilityPage(Adw.PreferencesPage):
             filter_model.append(label)
         filter_row.set_model(filter_model)
         current_filter = settings.get("accessibility.color-filter", "none")
-        filter_keys = ["none", "protanopia", "deuteranopia", "tritanopia"]
-        filter_row.set_selected(filter_keys.index(current_filter) if current_filter in filter_keys else 0)
-        filter_row.connect("notify::selected",
-                           lambda r, _: self.settings.set("accessibility.color-filter",
-                                                          filter_keys[r.get_selected()]))
+        self._filter_keys = ["none", "protanopia", "deuteranopia", "tritanopia"]
+        filter_row.set_selected(self._filter_keys.index(current_filter) if current_filter in self._filter_keys else 0)
+        filter_row.connect("notify::selected", self._on_filter_changed)
         vision.add(filter_row)
+
+        # Magnifier
+        self._add_switch(
+            vision,
+            title="Magnifier",
+            subtitle="Pixel magnifier overlay (Magnus) — Super+= to toggle",
+            key="accessibility.magnifier",
+            default=False,
+        )
 
         # ----- Keyboard -----
         keyboard = Adw.PreferencesGroup()
@@ -128,6 +135,11 @@ class AccessibilityPage(Adw.PreferencesPage):
         row.connect("notify::active", lambda r, _: self._on_switch(r, key))
         group.add(row)
         return row
+
+    def _on_filter_changed(self, row: Adw.ComboRow, _pspec) -> None:
+        value = self._filter_keys[row.get_selected()]
+        self.settings.set("accessibility.color-filter", value)
+        applier.apply("accessibility.color-filter", value)
 
     def _on_switch(self, row: Adw.SwitchRow, key: str) -> None:
         v = row.get_active()
