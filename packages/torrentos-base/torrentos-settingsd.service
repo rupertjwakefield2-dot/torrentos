@@ -1,0 +1,24 @@
+[Unit]
+Description=TorrentOS Settings Daemon
+Documentation=https://torrentos.org/docs
+# Must start after the graphical session is ready — Hyprland writes its
+# socket to XDG_RUNTIME_DIR/hypr/ which we poll on startup.
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/torrentos/settingsd
+# Restart if it crashes, but don't spin endlessly
+Restart=on-failure
+RestartSec=5
+# Hard cap: if it can't start 3 times in 60 s, give up
+StartLimitIntervalSec=60
+StartLimitBurst=3
+# Log to the user journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=torrentos-settingsd
+
+[Install]
+WantedBy=graphical-session.target
