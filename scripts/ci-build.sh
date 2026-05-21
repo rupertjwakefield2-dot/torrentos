@@ -111,6 +111,62 @@ cp -rn "$RELENG_AIROOTFS/root/.gnupg"                          /workspace/archis
 # Hostname (we ship our own, but ensure it exists)
 echo torrentos > /workspace/archiso/airootfs/etc/hostname
 
+log "Setting up liveuser (Hyprland ≥0.40 refuses to run as root)"
+# Modern Hyprland removed the --i-am-really-stupid flag and will not start as root.
+# The live ISO needs a non-privileged user for the Hyprland session.
+# greetd is configured with [initial_session] → torrentos-live-session → liveuser.
+AROOT=/workspace/archiso/airootfs
+
+# 1. Append liveuser to the releng-sourced passwd / shadow / group files.
+#    UID/GID 1000 is the standard first-user slot, safe to claim on the live ISO.
+grep -q '^liveuser:' "$AROOT/etc/passwd" || \
+    echo 'liveuser:x:1000:1000:Live User:/home/liveuser:/bin/zsh' >> "$AROOT/etc/passwd"
+grep -q '^liveuser:' "$AROOT/etc/shadow" || \
+    echo 'liveuser::19000:0:99999:7:::' >> "$AROOT/etc/shadow"       # no password
+grep -q '^liveuser:' "$AROOT/etc/group"  || \
+    echo 'liveuser:x:1000:'             >> "$AROOT/etc/group"
+
+# 2. Add liveuser to key secondary groups (video, audio, input, wheel, storage…).
+#    These groups already exist in the releng passwd; append liveuser to each member list.
+python3 - "$AROOT/etc/group" << 'PYEOF'
+import sys
+GROUPS = {'wheel','video','audio','input','storage','optical','network','power','sys','tty','lp'}
+path   = sys.argv[1]
+lines  = open(path).readlines()
+out    = []
+for line in lines:
+    parts = line.rstrip('\n').split(':')
+    if len(parts) == 4 and parts[0] in GROUPS:
+        members = [m for m in parts[3].split(',') if m]
+        if 'liveuser' not in members:
+            members.append('liveuser')
+        parts[3] = ','.join(members)
+    out.append(':'.join(parts) + '\n')
+open(path, 'w').writelines(out)
+print("  Updated group memberships for liveuser")
+PYEOF
+
+# 3. Give liveuser passwordless sudo (needed for torrentos-install, GPU setup, etc.)
+grep -q '^liveuser' "$AROOT/etc/sudoers" 2>/dev/null || \
+    echo 'liveuser ALL=(ALL) NOPASSWD: ALL' >> "$AROOT/etc/sudoers"
+
+# 4. Create liveuser's home directory.
+#    Skel is NOT copied here because torrentos-hyprland-config hasn't run yet
+#    (packages are built/installed later by mkarchiso/pacstrap).
+#    torrentos-live-session copies from /etc/skel at first Hyprland launch.
+mkdir -p "$AROOT/home/liveuser"
+# Set ownership so systemd/greetd can access it (uid:gid 1000:1000)
+chown 1000:1000 "$AROOT/home/liveuser"
+chmod 750       "$AROOT/home/liveuser"
+
+# 5. Enable greetd as the display manager.
+#    Can't use 'systemctl enable --root=' because greetd's unit isn't installed
+#    in the overlay yet (it arrives via pacstrap later).  Create the symlink
+#    directly — it resolves against the real installed unit at runtime.
+mkdir -p "$AROOT/etc/systemd/system/multi-user.target.wants"
+ln -sf /usr/lib/systemd/system/greetd.service \
+    "$AROOT/etc/systemd/system/multi-user.target.wants/greetd.service" 2>/dev/null || true
+
 log "Building custom packages (as builder)"
 # Use absolute paths — sudo doesn't preserve cwd so relative paths fail
 chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh

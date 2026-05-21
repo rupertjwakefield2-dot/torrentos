@@ -1,6 +1,16 @@
 [terminal]
 vt = 1
 
+# On the live ISO, greetd autologs in as liveuser so Hyprland can start without
+# root privileges.  Modern Hyprland (≥0.40) refuses to run as root and removed
+# the --i-am-really-stupid flag entirely.
+#
+# On installed systems the [initial_session] block is absent (removed by the
+# installer after first boot), so greetd falls through to the tuigreet prompt.
+[initial_session]
+command = "torrentos-live-session"
+user = "liveuser"
+
 [default_session]
 # tuigreet — TUI login screen shown at boot on installed systems.
 # --time         show clock

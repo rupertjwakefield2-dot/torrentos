@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# torrentos-live-session — launched by greetd as "liveuser" on the live ISO.
+#
+# greetd runs Hyprland directly without going through a login shell, so skel
+# is never copied automatically.  This wrapper copies it on first run.
+#
+# On installed systems this script is not used (greetd uses tuigreet instead).
+
+set -euo pipefail
+
+# ── 1. Populate home from skel (idempotent) ──────────────────────────────────
+# torrentos-hyprland-config installs configs to /etc/skel — copy them once.
+if [[ ! -d "$HOME/.config/hypr" ]]; then
+    cp -r /etc/skel/.config "$HOME/.config" 2>/dev/null || true
+    cp /etc/skel/.zshrc     "$HOME/.zshrc"   2>/dev/null || true
+    cp /etc/skel/.gitconfig  "$HOME/"         2>/dev/null || true
+
+    # Apply default cursor theme so Hyprland doesn't inherit an ugly X cursor
+    gsettings set org.gnome.desktop.interface cursor-theme  'Bibata-Modern-Classic' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-size   24                       2>/dev/null || true
+fi
+
+# ── 2. Apply keyboard layout preference ──────────────────────────────────────
+# If the user already has a keyboard section in settings.toml, honour it;
+# otherwise fall back to the systemd locale (set by localectl at boot).
+SETTINGS="$HOME/.config/torrentos/settings.toml"
+if [[ -f "$SETTINGS" ]] && grep -q '^\[keyboard\]' "$SETTINGS" 2>/dev/null; then
+    : # settingsd will apply it after Hyprland starts
+else
+    # Auto-detect UK keyboard from systemd locale
+    if localectl 2>/dev/null | grep -qi 'gb\|uk'; then
+        mkdir -p "$HOME/.config/torrentos"
+        printf '[keyboard]\nlayout = "gb"\n' > "$SETTINGS"
+    fi
+fi
+
+# ── 3. XDG runtime dir (greetd should set this, but guarantee it) ────────────
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+# ── 4. Launch Hyprland ───────────────────────────────────────────────────────
+# No --i-am-really-stupid needed — we are not root.
+exec Hyprland

@@ -26,6 +26,7 @@ file_permissions=(
     # TorrentOS installer scripts (live in airootfs, not in packages)
     ["/usr/local/bin/torrentos-install"]="0:0:755"
     ["/usr/local/bin/torrentos-install-gui"]="0:0:755"
+    ["/usr/local/bin/torrentos-live-session"]="0:0:755"
     # NOTE: torrentos-firstboot, torrentos-update-gui, torrentos-screenshot,
     # torrentos-help, and rofi/power-menu.sh are owned by torrentos-* packages
     # and pruned from airootfs before mkarchiso runs — do NOT list them here.
