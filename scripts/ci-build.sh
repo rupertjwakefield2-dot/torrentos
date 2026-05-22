@@ -85,9 +85,8 @@ for f in /workspace/archiso/grub/grub.cfg \
         -e 's/Boot Arch Linux/Boot TorrentOS/g' \
         -e 's/archlinux/torrentos/g' \
         -e 's/Boot existing operating system/Boot existing OS/g' \
-        -e 's/(x86_64, BIOS)/(x86_64, Live)/g' \
-        -e 's/(x86_64, UEFI)/(x86_64, Live)/g' \
-        -e 's/MENU LABEL TorrentOS (x86_64, Live)/MENU LABEL Start TorrentOS/g' \
+        -e 's/MENU LABEL TorrentOS (x86_64, BIOS)/MENU LABEL Start TorrentOS/g' \
+        -e 's/MENU LABEL TorrentOS (x86_64, UEFI)/MENU LABEL Start TorrentOS/g' \
         -e 's/MENU LABEL TorrentOS/MENU LABEL Start TorrentOS/g' \
         -e 's/menuentry "TorrentOS/menuentry "Start TorrentOS/g' \
         "$f"
@@ -117,22 +116,24 @@ cp -rn "$RELENG_AIROOTFS/root/.gnupg"                          /workspace/archis
 # Hostname (we ship our own, but ensure it exists)
 echo torrentos > /workspace/archiso/airootfs/etc/hostname
 
+# Single canonical prefix for the airootfs overlay — used throughout this section.
+AROOT=/workspace/archiso/airootfs
+
 # greetd requires a 'greeter' system user to run tuigreet (the default_session).
 # The releng passwd we copied above doesn't include it — add it now so greetd
 # doesn't fail at startup with "daemon failed to start".
-APASSWD=/workspace/archiso/airootfs/etc/passwd
-ASHADOW=/workspace/archiso/airootfs/etc/shadow
-AGROUP=/workspace/archiso/airootfs/etc/group
-grep -q '^greeter:' "$APASSWD" || echo 'greeter:x:972:972:greetd greeter:/var/lib/greeter:/sbin/nologin' >> "$APASSWD"
-grep -q '^greeter:' "$ASHADOW" || echo 'greeter:!:19000::::::' >> "$ASHADOW"
-grep -q '^greeter:' "$AGROUP"  || echo 'greeter:x:972:' >> "$AGROUP"
-mkdir -p /workspace/archiso/airootfs/var/lib/greeter
+# UID/GID 972 follows the systemd-sysusers range for system accounts
+# (below 1000); greetd's upstream sysusers.d uses 65534 on some distros but
+# Arch's greetd package allocates 972 via its sysusers.d drop-in.
+grep -q '^greeter:' "$AROOT/etc/passwd" || echo 'greeter:x:972:972:greetd greeter:/var/lib/greeter:/sbin/nologin' >> "$AROOT/etc/passwd"
+grep -q '^greeter:' "$AROOT/etc/shadow" || echo 'greeter:!:19000::::::' >> "$AROOT/etc/shadow"
+grep -q '^greeter:' "$AROOT/etc/group"  || echo 'greeter:x:972:' >> "$AROOT/etc/group"
+mkdir -p "$AROOT/var/lib/greeter"
 
 log "Setting up liveuser (Hyprland ≥0.40 refuses to run as root)"
 # Modern Hyprland removed the --i-am-really-stupid flag and will not start as root.
 # The live ISO needs a non-privileged user for the Hyprland session.
 # greetd is configured with [initial_session] → torrentos-live-session → liveuser.
-AROOT=/workspace/archiso/airootfs
 
 # 1. Append liveuser to the releng-sourced passwd / shadow / group files.
 #    UID/GID 1000 is the standard first-user slot, safe to claim on the live ISO.

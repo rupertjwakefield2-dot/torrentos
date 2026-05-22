@@ -325,7 +325,7 @@ ok "greetd enabled"
 step "Enabling services"
 sudo systemctl enable NetworkManager.service
 sudo systemctl enable bluetooth.service
-sudo systemctl enable mbpfan.service 2>/dev/null || true  # Mac fan control
+sudo systemctl enable mbpfan.service || warn "could not enable mbpfan — fan control will not start automatically"
 
 # libinput gestures (needs user in 'input' group)
 sudo usermod -aG input "$USER" 2>/dev/null && ok "Added $USER to 'input' group for gestures" || true
