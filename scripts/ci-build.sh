@@ -117,6 +117,17 @@ cp -rn "$RELENG_AIROOTFS/root/.gnupg"                          /workspace/archis
 # Hostname (we ship our own, but ensure it exists)
 echo torrentos > /workspace/archiso/airootfs/etc/hostname
 
+# greetd requires a 'greeter' system user to run tuigreet (the default_session).
+# The releng passwd we copied above doesn't include it — add it now so greetd
+# doesn't fail at startup with "daemon failed to start".
+APASSWD=/workspace/archiso/airootfs/etc/passwd
+ASHADOW=/workspace/archiso/airootfs/etc/shadow
+AGROUP=/workspace/archiso/airootfs/etc/group
+grep -q '^greeter:' "$APASSWD" || echo 'greeter:x:972:972:greetd greeter:/var/lib/greeter:/sbin/nologin' >> "$APASSWD"
+grep -q '^greeter:' "$ASHADOW" || echo 'greeter:!:19000::::::' >> "$ASHADOW"
+grep -q '^greeter:' "$AGROUP"  || echo 'greeter:x:972:' >> "$AGROUP"
+mkdir -p /workspace/archiso/airootfs/var/lib/greeter
+
 log "Setting up liveuser (Hyprland ≥0.40 refuses to run as root)"
 # Modern Hyprland removed the --i-am-really-stupid flag and will not start as root.
 # The live ISO needs a non-privileged user for the Hyprland session.

@@ -6,7 +6,7 @@
 #
 # On installed systems this script is not used (greetd uses tuigreet instead).
 
-set -euo pipefail
+set -uo pipefail
 
 # ── 1. Populate home from skel (idempotent) ──────────────────────────────────
 # torrentos-hyprland-config installs configs to /etc/skel — copy them once.
@@ -39,6 +39,32 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
-# ── 4. Launch Hyprland ───────────────────────────────────────────────────────
-# No --i-am-really-stupid needed — we are not root.
-exec Hyprland
+# ── 4. Launch Hyprland (with GPU fallbacks) ──────────────────────────────────
+# Attempt 1: hardware GL (AMD/Intel)
+NVIDIA_NO_DRV=0
+if lspci 2>/dev/null | grep -qi 'nvidia'; then
+    if ! lsmod 2>/dev/null | grep -q '^nvidia '; then
+        NVIDIA_NO_DRV=1
+    fi
+fi
+
+if [[ $NVIDIA_NO_DRV -eq 0 ]]; then
+    Hyprland 2>/tmp/hyprland-attempt1.log && exit 0
+fi
+
+# Attempt 2: software renderer (QEMU, Nvidia without driver, older hardware)
+WLR_NO_HARDWARE_CURSORS=1 WLR_RENDERER=pixman LIBGL_ALWAYS_SOFTWARE=1 \
+    Hyprland 2>/tmp/hyprland-attempt2.log && exit 0
+
+# Attempt 3: headless fallback
+WLR_NO_HARDWARE_CURSORS=1 WLR_RENDERER=pixman LIBGL_ALWAYS_SOFTWARE=1 \
+WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 \
+    Hyprland 2>/tmp/hyprland-attempt3.log && exit 0
+
+# All attempts failed — show error on tty1
+clear
+echo
+echo "  TorrentOS — Desktop could not start."
+echo "  GPU log: cat /tmp/hyprland-attempt1.log | tail -20"
+echo "  You can still use the terminal. WiFi: nmtui"
+echo "  Retry: torrentos-live-session"
