@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║   TorrentOS — Apple Silicon (M1 / M2 / M3) Bootstrap Installer             ║
+# ║   TorrentOS — Apple Silicon (M1 / M2 / M3 / M4) Bootstrap Installer        ║
 # ║                                                                             ║
 # ║   Requires:  Arch Linux (Asahi) already installed via the Asahi installer.  ║
 # ║   Run as:    Your normal user (will sudo when needed).                      ║
@@ -26,7 +26,7 @@ step() { echo; printf "${W}══ %s ══${N}\n" "$*"; echo; }
 # ── pre-flight ────────────────────────────────────────────────────────────────
 
 step "TorrentOS for Apple Silicon"
-printf "${D}  Arch Linux (Asahi) bootstrapper — v0.5.0 Riptide${N}\n"
+printf "${D}  Arch Linux (Asahi) bootstrapper — v0.5.0 Riptide  (M1/M2/M3/M4)${N}\n"
 echo
 
 # Must be aarch64
@@ -57,6 +57,8 @@ if [[ -f /proc/device-tree/compatible ]]; then
         *t6020*|*t6021*) SOC="M2 Pro/Max/Ultra" ;;
         *t8122*) SOC="M3" ;;
         *t6030*|*t6031*) SOC="M3 Pro/Max/Ultra" ;;
+        *t8132*) SOC="M4" ;;
+        *t6040*|*t6041*) SOC="M4 Pro/Max/Ultra" ;;
         *) SOC="Apple Silicon (unknown model)" ;;
     esac
 fi
@@ -178,6 +180,13 @@ BASE_PKGS=(
 
     # Python (for torrentos-settings)
     python python-pip gtk4 libadwaita vte4 python-gobject
+
+    # Apple Silicon GPU acceleration (Asahi mesa — provides OpenGL/Vulkan via Apple GPU)
+    asahi-mesa
+
+    # Mac-specific hardware
+    mbpfan            # fan control for MacBook Pro/Air
+    iio-sensor-proxy  # ambient light sensor (keyboard backlight auto-adjust)
 
     # Other
     sudo base-devel git imagemagick which file mtools dosfstools
@@ -316,6 +325,7 @@ ok "greetd enabled"
 step "Enabling services"
 sudo systemctl enable NetworkManager.service
 sudo systemctl enable bluetooth.service
+sudo systemctl enable mbpfan.service 2>/dev/null || true  # Mac fan control
 
 # libinput gestures (needs user in 'input' group)
 sudo usermod -aG input "$USER" 2>/dev/null && ok "Added $USER to 'input' group for gestures" || true
@@ -339,7 +349,7 @@ SDL_VIDEODRIVER=wayland
 CLUTTER_BACKEND=wayland
 
 # Hardware video decode via Apple Silicon GPU (requires asahi-mesa)
-LIBVA_DRIVER_NAME=d3d12
+LIBVA_DRIVER_NAME=asahi
 
 # Cursor theme
 XCURSOR_THEME=Bibata-Modern-Ice

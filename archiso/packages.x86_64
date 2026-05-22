@@ -4,6 +4,7 @@ base-devel
 linux
 linux-firmware
 linux-headers
+dkms
 intel-ucode
 amd-ucode
 mkinitcpio
@@ -109,6 +110,13 @@ wl-clipboard
 cliphist
 wl-clip-persist
 gammastep
+
+# --- Mac hardware support ---
+# mbpfan: fan control for MacBook Pro/Air (Intel Macs)
+mbpfan
+# iio-sensor-proxy: ambient light + gyroscope sensor (keyboard backlight auto-brightness)
+iio-sensor-proxy
+# apple-bce-dkms is built via build-aur.sh — T2 keyboard/WiFi/Touch Bar (2018-2020 MacBooks)
 
 # --- GPU drivers (broad hardware support) ---
 xf86-video-amdgpu

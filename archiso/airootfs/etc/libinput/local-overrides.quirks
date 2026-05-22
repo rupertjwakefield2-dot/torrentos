@@ -1,0 +1,16 @@
+# TorrentOS — Apple trackpad / Magic Trackpad libinput quirks
+# Improves multi-touch feel and palm rejection on MacBook internal trackpads.
+
+[Apple MacBook internal touchpad]
+MatchName=*Apple SPI Touchpad*
+MatchDMIModalias=dmi:*svnApple*
+ModelAppleInternal=1
+
+[Apple MacBook butterfly keyboard internal touchpad]
+MatchName=*bcm5974*
+MatchDMIModalias=dmi:*svnApple*
+ModelAppleInternal=1
+
+[Apple Magic Trackpad 2]
+MatchName=*Apple Magic Trackpad 2*
+AttrPalmSizeThreshold=5

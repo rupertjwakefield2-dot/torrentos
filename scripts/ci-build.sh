@@ -184,6 +184,11 @@ mkdir -p "$AROOT/etc/systemd/system/multi-user.target.wants"
 ln -sf /usr/lib/systemd/system/greetd.service \
     "$AROOT/etc/systemd/system/multi-user.target.wants/greetd.service" 2>/dev/null || true
 
+# 6. Enable mbpfan on the live ISO for MacBook fan control.
+#    Silently ignored on non-Mac hardware.
+ln -sf /usr/lib/systemd/system/mbpfan.service \
+    "$AROOT/etc/systemd/system/multi-user.target.wants/mbpfan.service" 2>/dev/null || true
+
 log "Building custom packages (as builder)"
 # Use absolute paths — sudo doesn't preserve cwd so relative paths fail
 chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh
@@ -198,7 +203,8 @@ fi
 log "Pre-installing AUR build deps as root (makepkg -s can't use sudo on nosuid NTFS mount)"
 pacman -S --needed --noconfirm \
     libinput python-gobject hicolor-icon-theme xdotool \
-    gtk4 libadwaita vte4 >/dev/null
+    gtk4 libadwaita vte4 \
+    dkms linux-headers >/dev/null
 
 log "Building AUR packages (paru-bin, libinput-gestures, magnus, bibata, google-chrome) (as builder)"
 sudo -u builder bash /workspace/scripts/build-aur.sh
