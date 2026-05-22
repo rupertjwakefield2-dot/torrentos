@@ -84,6 +84,12 @@ for f in /workspace/archiso/grub/grub.cfg \
         -e 's/Arch Linux/TorrentOS/g' \
         -e 's/Boot Arch Linux/Boot TorrentOS/g' \
         -e 's/archlinux/torrentos/g' \
+        -e 's/Boot existing operating system/Boot existing OS/g' \
+        -e 's/(x86_64, BIOS)/(x86_64, Live)/g' \
+        -e 's/(x86_64, UEFI)/(x86_64, Live)/g' \
+        -e 's/MENU LABEL TorrentOS (x86_64, Live)/MENU LABEL Start TorrentOS/g' \
+        -e 's/MENU LABEL TorrentOS/MENU LABEL Start TorrentOS/g' \
+        -e 's/menuentry "TorrentOS/menuentry "Start TorrentOS/g' \
         "$f"
 done
 
