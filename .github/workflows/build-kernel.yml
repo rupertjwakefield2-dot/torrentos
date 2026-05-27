@@ -25,6 +25,7 @@ on:
     branches: [main]
     paths:
       - 'packages/linux-torrentos/**'
+      - '.github/workflows/build-kernel.yml'   # re-test when the workflow itself changes
 
 jobs:
   build-kernel:
