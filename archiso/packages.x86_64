@@ -188,7 +188,7 @@ zsh
 zsh-completions
 zsh-syntax-highlighting
 zsh-autosuggestions
-whiptail
+# whiptail is provided by libnewt — no separate 'whiptail' package in Arch
 libnewt
 starship
 fzf

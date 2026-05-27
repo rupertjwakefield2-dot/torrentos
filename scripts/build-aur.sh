@@ -25,6 +25,7 @@ AUR_PKGS=(
     magnus
     bibata-cursor-theme-bin
     google-chrome          # binary repackage of Google's official .deb — no compilation
+    mbpfan                 # MacBook Pro/Air fan control — AUR only, not in official repos
     # apple-bce-dkms: AUR repo is currently empty (no PKGBUILD) — disabled until fixed upstream
     # apple-bce-dkms         # T2 chip: keyboard / WiFi / Touch Bar for 2018-2020 Intel MacBooks
     # walker-bin needs 'elephant' (AUR Go build) — add back with native x86_64 builder
