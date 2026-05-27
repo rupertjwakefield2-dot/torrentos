@@ -56,12 +56,27 @@ jobs:
           path: kernel-packages/
           key: linux-torrentos-${{ steps.config_hash.outputs.hash }}
 
+      # Validate the cache: a previous failed build may have saved an empty
+      # kernel-packages/ directory, making cache-hit=true but with no packages.
+      # If the cache is poisoned, force a rebuild by unsetting cache-hit.
+      - name: Validate cache contents
+        id: cache_validate
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          if ls kernel-packages/*.pkg.tar.zst >/dev/null 2>&1; then
+            echo "Cache hit and packages present — skipping build."
+            echo "valid=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cache hit but no .pkg.tar.zst files found — treating as cache miss."
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Pull Arch Linux Docker image
-        if: steps.cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
+        if: steps.cache.outputs.cache-hit != 'true' || steps.cache_validate.outputs.valid == 'false' || inputs.force_rebuild == 'true'
         run: docker pull archlinux:latest
 
       - name: Build kernel inside Arch Linux container
-        if: steps.cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
+        if: steps.cache.outputs.cache-hit != 'true' || steps.cache_validate.outputs.valid == 'false' || inputs.force_rebuild == 'true'
         run: |
           mkdir -p kernel-packages
           docker run --rm \

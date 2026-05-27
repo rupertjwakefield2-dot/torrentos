@@ -28,9 +28,14 @@ err()  { printf '\033[1;31m[kernel]\033[0m %s\n' "$*" >&2; exit 1; }
 #    will fail with "signature is unknown trust" without this.
 # -----------------------------------------------------------------------
 log "Initialising pacman keyring..."
-pacman-key --init
-pacman-key --populate archlinux
+# Order matters: init the keyring skeleton first, then install the latest
+# archlinux-keyring package (which carries the current Arch master keys),
+# then populate so all developer keys are trusted.  Reversing steps 2 & 3
+# causes "signature is unknown trust" because populate runs before the
+# package delivers the keys it needs.
+pacman-key --init 2>/dev/null || true
 pacman -Sy --noconfirm archlinux-keyring
+pacman-key --populate archlinux
 
 log "Upgrading base system and installing build dependencies..."
 pacman -Syu --noconfirm --needed \

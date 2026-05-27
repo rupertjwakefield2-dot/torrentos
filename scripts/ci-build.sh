@@ -265,6 +265,12 @@ if [[ "$USING_CUSTOM_KERNEL" == false ]]; then
         -e 's/^linux-torrentos-headers$/linux-headers/' \
         -e 's/^linux-torrentos$/linux/' \
         "$PROFILE_STAGED/packages.x86_64"
+    # Remove the linux-torrentos mkinitcpio preset from the staged profile.
+    # In bootstrap mode only 'linux' is installed — vmlinuz-linux-torrentos does
+    # not exist, so mkarchiso's mkinitcpio run would fail trying to generate its
+    # initramfs.  The upstream linux.preset (copied above) is sufficient.
+    rm -f "$PROFILE_STAGED/airootfs/etc/mkinitcpio.d/linux-torrentos.preset"
+    log "  Removed linux-torrentos.preset (not needed without custom kernel)"
 fi
 
 cd "$PROFILE_STAGED/airootfs"

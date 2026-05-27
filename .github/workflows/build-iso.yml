@@ -173,12 +173,19 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Publish latest build to GitHub Releases
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true   # don't fail the whole job if release publish fails
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           cd out
           ISO="torrentos-${VERSION}-x86_64.iso"
+
+          # Guard: if the ISO doesn't exist (mkarchiso failed earlier) skip silently
+          if [[ ! -f "$ISO" ]]; then
+            echo "⚠️  ISO not found: $ISO — skipping release publish."
+            exit 0
+          fi
 
           # Split into 1900 MB chunks
           split -b 1900m "$ISO" "${ISO}.part"
