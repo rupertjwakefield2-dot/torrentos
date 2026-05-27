@@ -53,8 +53,19 @@ jobs:
           path: kernel-packages/
           key: linux-torrentos-${{ steps.config_hash.outputs.hash }}
 
-      - name: Download kernel from kernel-latest release (cache miss)
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Validate cache contents
+        id: cache_validate
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          if ls kernel-packages/*.pkg.tar.zst >/dev/null 2>&1; then
+            echo "valid=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cache hit but empty (poisoned by a prior failed build) — will download from release."
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download kernel from kernel-latest release (cache miss or empty cache)
+        if: steps.cache.outputs.cache-hit != 'true' || steps.cache_validate.outputs.valid == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

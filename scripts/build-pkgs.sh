@@ -44,7 +44,9 @@ stage_base() {
     cp "$AIROOT/etc/systemd/system/torrentos-settingsd.service" "$pkg/torrentos-settingsd.service"
     # greetd config for installed systems — lives in the package dir (not airootfs).
     # The airootfs overlay has a different config with [initial_session] for the live ISO.
-    cp "$ROOT/packages/torrentos-base/greetd-config.toml"      "$pkg/greetd-config.toml"
+    # NOTE: $pkg == "$ROOT/packages/torrentos-base" so this is a no-op copy that is
+    # intentionally skipped to avoid "cp: same file" errors. The file is already in place.
+    # cp "$ROOT/packages/torrentos-base/greetd-config.toml"  "$pkg/greetd-config.toml"
 }
 
 # 2. torrentos-hyprland-config: stage configs from airootfs.
