@@ -7,9 +7,8 @@ arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
 depends=(
-    # Kernel — the TorrentOS custom kernel (1000Hz, BBR, ZSTD, full preemption)
-    # Falls through to upstream 'linux' via provides= if linux-torrentos isn't available.
-    'linux-torrentos'
+    # Kernel — intentionally NOT listed here; handled via packages.x86_64 so the
+    # ISO build works in both bootstrap mode (upstream linux) and with linux-torrentos.
     # Compositor & shell
     'hyprland'
     'waybar'
@@ -57,7 +56,7 @@ depends=(
     'zsh-completions'
     'zsh-syntax-highlighting'
     'zsh-autosuggestions'
-    'whiptail'
+    'libnewt'            # provides whiptail — no standalone 'whiptail' package in Arch
     'starship'
     'fastfetch'
     'fzf'
