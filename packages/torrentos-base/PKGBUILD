@@ -102,7 +102,6 @@ depends=(
 backup=(
     'etc/torrentos/default-settings.toml'
     'etc/torrentos/version'
-    'etc/greetd/config.toml'
 )
 source=(
     'version'
@@ -112,9 +111,8 @@ source=(
     'settingsd'
     'firstboot'
     'torrentos-settingsd.service'
-    'greetd-config.toml'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     install -Dm644 "$srcdir/version"               "$pkgdir/etc/torrentos/version"
@@ -127,10 +125,10 @@ package() {
     install -Dm644 "$srcdir/torrentos-settingsd.service" \
         "$pkgdir/usr/lib/systemd/user/torrentos-settingsd.service"
 
-    # greetd config for installed systems — tuigreet with Hyprland.
-    # The live ISO airootfs overlay uses a different config (with [initial_session]
-    # for liveuser autologin); this version is for real installs only.
-    install -Dm644 "$srcdir/greetd-config.toml" "$pkgdir/etc/greetd/config.toml"
+    # greetd config: intentionally NOT installed here — greetd owns /etc/greetd/config.toml.
+    # Installing it from torrentos-base causes a file conflict with the greetd package.
+    # The live ISO gets the TorrentOS greetd config from the airootfs overlay.
+    # For installed systems, the torrentos-install script configures greetd post-install.
 
     # Enable greetd and bluetooth at boot on installed systems.
     install -dm755 "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"

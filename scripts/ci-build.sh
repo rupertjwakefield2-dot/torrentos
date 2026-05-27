@@ -332,21 +332,6 @@ find usr/share/torrentos -type d -empty -delete 2>/dev/null || true
 find usr/local/bin -type d -empty -delete 2>/dev/null || true
 cd /workspace
 
-log "Restoring DKMS pacman hooks into airootfs overlay"
-# pacman.conf has NoExtract for the DKMS hooks so they are skipped during
-# mkarchiso's pacstrap phase (prevents hundreds of 'kernel headers not found'
-# errors caused by uname -r returning the CI host kernel, not the Arch kernel).
-# We copy the real hooks from the host (dkms was installed as a build dep above)
-# into the staged airootfs so DKMS works correctly on the user's installed system.
-DKMS_HOOKS_SRC=/usr/share/libalpm/hooks
-DKMS_HOOKS_DST="$PROFILE_STAGED/airootfs/usr/share/libalpm/hooks"
-mkdir -p "$DKMS_HOOKS_DST"
-for hook in 70-dkms-install.hook 71-dkms-remove.hook 72-dkms-upgrade.hook; do
-    [[ -f "$DKMS_HOOKS_SRC/$hook" ]] && \
-        cp "$DKMS_HOOKS_SRC/$hook" "$DKMS_HOOKS_DST/$hook" && \
-        log "  restored $hook"
-done
-
 log "Building ISO (as root)"
 # Use /tmp for the work directory — mkarchiso needs to chmod/chown airootfs files,
 # and the Docker bind-mount of /workspace from the host runner blocks permission changes.
