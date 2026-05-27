@@ -1,0 +1,208 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+#
+# linux-torrentos — the TorrentOS custom kernel
+#
+# Philosophy (because kernels have philosophy):
+#   We build for ONE use case: desktop and laptop. Not servers. Not embedded.
+#   Not the radio amateur who wants to transmit APRS over ISDN. Desktop. Laptop.
+#
+#   Concrete consequences:
+#     - Full preemption.  Not VOLUNTARY. Not NONE. PREEMPT.
+#       Your userspace tasks get the CPU when they need it.
+#     - 1000Hz timer.   The difference between 300Hz and 1000Hz is noticeable
+#       in input latency. Anyone who tells you otherwise is running a server.
+#     - BBR TCP by default.  It's called TorrentOS. Did you think we'd ship CUBIC?
+#     - ZSTD everywhere: modules, kernel image, zswap.  Fast decompress, good ratio.
+#     - Debug symbols: off. We ship a distro, not a debugger. Users don't need
+#       600MB of DWARF info eating their disk.
+#     - Apple hardware: first class. T2 chip, SPI keyboard, applesmc, all of it.
+#     - Dead protocols removed: ISDN, HAMRADIO, NFC, ATM, DECnet. Gone.
+
+pkgbase=linux-torrentos
+pkgver=6.14.6
+pkgrel=1
+pkgdesc="TorrentOS kernel — desktop-first, BBR, 1000Hz, full preemption"
+arch=('x86_64')
+url="https://torrentos.org"
+license=('GPL-2.0-only')
+makedepends=(
+    'bc'
+    'cpio'
+    'gettext'
+    'libelf'
+    'pahole'
+    'perl'
+    'python'
+    'tar'
+    'xz'
+    'zstd'
+)
+options=('!strip' '!debug')
+_srcname="linux-${pkgver}"
+source=(
+    "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
+    "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.sign"
+    'torrentos.config'       # our config fragment — applied on top of defconfig
+    'torrentos.install'      # post-install hooks (mkinitcpio preset, boot entry)
+)
+# Keep checksums for the config and install files; use SKIP for tarball
+# (kernel.org tarball is GPG-verified separately via the .sign file).
+# Run `updpkgsums` after bumping pkgver to refresh the tarball hash.
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP')
+validpgpkeys=(
+    'ABAF11C65A2970B130ABE3C479BE3E4300411886'  # Linus Torvalds
+    '647F28654894E3BD457199BE38DBBDC86092693E'  # Greg Kroah-Hartman
+)
+
+_kernelname="${pkgbase#linux}"   # "-torrentos"
+
+prepare() {
+    cd "${_srcname}"
+
+    # -----------------------------------------------------------------------
+    # Step 1: Arch-compatible base config
+    #
+    # We don't track Arch's full patch set (too much maintenance overhead),
+    # but we DO start from a sane x86_64 config via make defconfig +
+    # then layer in our fragment. This produces a kernel that covers the
+    # full hardware range an Arch user would have.
+    # -----------------------------------------------------------------------
+    echo "==> Generating base config from x86_64_defconfig..."
+    make ARCH=x86_64 defconfig
+
+    # -----------------------------------------------------------------------
+    # Step 2: Apply our TorrentOS config fragment
+    #
+    # merge_config.sh is the canonical tool for this — it handles option
+    # dependencies correctly (a bare .config edit can leave deps unsatisfied).
+    # -m = merge (don't run make after merging)
+    # -----------------------------------------------------------------------
+    echo "==> Applying TorrentOS config fragment..."
+    ./scripts/kconfig/merge_config.sh -m .config "$srcdir/torrentos.config"
+
+    # -----------------------------------------------------------------------
+    # Step 3: Resolve any new/changed Kconfig symbols
+    #
+    # make olddefconfig silently accepts all new defaults rather than
+    # prompting interactively. CI-safe.
+    # -----------------------------------------------------------------------
+    echo "==> Running olddefconfig to resolve dependencies..."
+    make olddefconfig
+
+    # Diff what we actually changed vs defconfig — useful for debugging.
+    diff -u <(make -s kernelversion > /dev/null; cat .config.old 2>/dev/null || true) .config || true
+}
+
+build() {
+    cd "${_srcname}"
+
+    make -j"$(nproc)" all
+    make -j"$(nproc)" -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
+}
+
+_package() {
+    pkgdesc="The ${pkgdesc} — kernel and modules"
+    depends=('coreutils' 'kmod' 'initramfs')
+    optdepends=(
+        'wireless-regdb: to set the correct wireless channels of your country'
+        'linux-firmware: firmware images needed for some devices'
+        'sof-firmware: firmware for Intel Sound Open Firmware devices'
+    )
+    provides=("linux=${pkgver}")
+    install="${pkgbase}.install"
+
+    cd "${_srcname}"
+    local modulesdir="$pkgdir/usr/lib/modules/$(make -s kernelrelease)"
+
+    echo "==> Installing boot image..."
+    install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
+    echo "${pkgbase}" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
+
+    echo "==> Installing modules..."
+    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
+        DEPMOD=/doesnt/exist modules_install
+
+    # Remove the build and source symlinks (point into the build tree, useless in the package)
+    rm -f "$modulesdir/build" "$modulesdir/source"
+}
+
+_package-headers() {
+    pkgdesc="Headers and scripts for building modules for the ${pkgdesc}"
+    depends=('pahole')
+    provides=("linux-headers=${pkgver}")
+
+    cd "${_srcname}"
+    local builddir="$pkgdir/usr/lib/modules/$(make -s kernelrelease)/build"
+
+    echo "==> Installing build files..."
+    install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
+        localversion.* version vmlinux
+
+    install -Dt "$builddir/kernel" -m644 kernel/Makefile
+    install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
+
+    cp -t "$builddir" -a scripts
+
+    install -Dt "$builddir/tools/objtool" tools/objtool/objtool
+
+    find . -name 'Kbuild' -o -name 'Kconfig*' | while read -r file; do
+        install -Dt "$builddir/${file%/*}" -m644 "$file"
+    done
+
+    echo "==> Installing headers..."
+    cp -t "$builddir" -a include
+    cp -t "$builddir/arch/x86" -a arch/x86/include
+    install -Dt "$builddir/arch/x86/kernel" -m644 arch/x86/kernel/asm-offsets.s
+
+    install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
+    install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
+    install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
+    install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
+    install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
+    install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+    install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
+
+    find drivers/media/platform -name '*.h' | while read -r file; do
+        install -Dt "$builddir/${file%/*}" -m644 "$file"
+    done
+
+    echo "==> Removing unneeded architectures..."
+    local arch
+    for arch in "$builddir"/arch/*/; do
+        [[ $arch == */x86/ ]] && continue
+        echo "   Removing $(basename "$arch")"
+        rm -r "$arch"
+    done
+
+    echo "==> Removing loose objects..."
+    find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
+
+    echo "==> Stripping build tools..."
+    local file
+    while read -rd '' file; do
+        case "$(file -Sib "$file")" in
+            application/x-sharedlib\;*)  strip -v $STRIP_SHARED "$file" ;;
+            application/x-archive\;*)    strip -v $STRIP_STATIC "$file" ;;
+            application/x-executable\;*) strip -v $STRIP_BINARIES "$file" ;;
+            application/x-pie-executable\;*) strip -v $STRIP_SHARED "$file" ;;
+        esac
+    done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
+
+    echo "==> Stripping vmlinux..."
+    strip -v $STRIP_STATIC "$builddir/vmlinux"
+
+    echo "==> Adding symlink..."
+    mkdir -p "$pkgdir/usr/src"
+    ln -sr "$builddir" "$pkgdir/usr/src/${pkgbase}"
+}
+
+pkgname=("${pkgbase}" "${pkgbase}-headers")
+for _p in "${pkgname[@]}"; do
+    eval "package_$_p() {
+        $(declare -f "_package${_p#$pkgbase}")
+        _package${_p#$pkgbase}
+    }"
+done

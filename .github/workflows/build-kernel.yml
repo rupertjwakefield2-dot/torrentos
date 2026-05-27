@@ -1,0 +1,120 @@
+name: Build TorrentOS Kernel
+
+# The kernel build is SEPARATE from the ISO build.
+# Rationale: kernel compilation takes 20-40 min. The ISO build takes ~14 min.
+# Rebuilding the kernel on every commit that touches a README is a waste.
+#
+# Strategy:
+#   - This workflow triggers ONLY when packages/linux-torrentos/** changes,
+#     or on manual dispatch (for bumping the kernel version).
+#   - It builds linux-torrentos and linux-torrentos-headers .pkg.tar.zst files.
+#   - It uploads them to a GitHub Release tagged "kernel-latest" (overwriting
+#     the previous build). The ISO build downloads from that release.
+#   - The kernel packages are ALSO cached by the config hash so the ISO build
+#     can get them as a workflow artifact when both run in the same pipeline.
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild even if config unchanged'
+        required: false
+        default: 'false'
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - 'packages/linux-torrentos/**'
+
+jobs:
+  build-kernel:
+    name: Build linux-torrentos kernel
+    runs-on: ubuntu-latest
+    timeout-minutes: 90          # kernel compilation: 35min on 2-core, 20min on 4-core
+    permissions:
+      contents: write            # needed to create/update the kernel-latest release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute config hash
+        id: config_hash
+        run: |
+          hash=$(sha256sum packages/linux-torrentos/PKGBUILD \
+                           packages/linux-torrentos/torrentos.config \
+                 | sha256sum | cut -d' ' -f1)
+          echo "hash=${hash}" >> "$GITHUB_OUTPUT"
+          echo "Config hash: ${hash}"
+
+      # Check if we already have a build for this exact config
+      - name: Restore kernel package cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: kernel-packages/
+          key: linux-torrentos-${{ steps.config_hash.outputs.hash }}
+
+      - name: Pull Arch Linux Docker image
+        if: steps.cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
+        run: docker pull archlinux:latest
+
+      - name: Build kernel inside Arch Linux container
+        if: steps.cache.outputs.cache-hit != 'true' || inputs.force_rebuild == 'true'
+        run: |
+          mkdir -p kernel-packages
+          docker run --rm \
+            --volume "${{ github.workspace }}:/workspace" \
+            --workdir /workspace \
+            archlinux:latest \
+            bash /workspace/scripts/build-kernel.sh
+
+      - name: List built packages
+        run: ls -lh kernel-packages/
+
+      - name: Upload kernel packages as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-torrentos-kernel-${{ steps.config_hash.outputs.hash }}
+          path: kernel-packages/
+          if-no-files-found: error
+          retention-days: 90
+
+      # -----------------------------------------------------------------------
+      # Publish to the "kernel-latest" release so the ISO build can always
+      # find the most recent kernel packages, even when building from a commit
+      # that didn't touch the kernel config.
+      # -----------------------------------------------------------------------
+      - name: Get kernel version from PKGBUILD
+        id: kver
+        run: |
+          ver=$(grep '^pkgver=' packages/linux-torrentos/PKGBUILD | cut -d= -f2)
+          rel=$(grep '^pkgrel=' packages/linux-torrentos/PKGBUILD | cut -d= -f2)
+          echo "pkgver=${ver}" >> "$GITHUB_OUTPUT"
+          echo "pkgrel=${rel}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update kernel-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KVER: ${{ steps.kver.outputs.pkgver }}
+          KREL: ${{ steps.kver.outputs.pkgrel }}
+        run: |
+          TAG="kernel-latest"
+          TITLE="linux-torrentos ${KVER}-${KREL} (latest)"
+
+          # Delete the old release if it exists (we overwrite with the new build)
+          gh release delete "$TAG" --yes 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+
+          gh release create "$TAG" \
+            --title "$TITLE" \
+            --notes "Pre-built linux-torrentos kernel packages for TorrentOS ISO builds.
+
+**Kernel version:** ${KVER}-${KREL}
+**Config hash:** ${{ steps.config_hash.outputs.hash }}
+
+These packages are downloaded automatically by the ISO build workflow.
+Do not install manually unless you know what you're doing." \
+            --prerelease \
+            kernel-packages/*.pkg.tar.zst \
+            kernel-packages/SHA256SUMS

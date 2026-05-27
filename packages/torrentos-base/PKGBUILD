@@ -7,6 +7,9 @@ arch=('any')
 url="https://torrentos.org"
 license=('GPL3')
 depends=(
+    # Kernel — the TorrentOS custom kernel (1000Hz, BBR, ZSTD, full preemption)
+    # Falls through to upstream 'linux' via provides= if linux-torrentos isn't available.
+    'linux-torrentos'
     # Compositor & shell
     'hyprland'
     'waybar'

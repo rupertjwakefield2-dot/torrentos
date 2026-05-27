@@ -101,6 +101,14 @@ mkdir -p /workspace/archiso/airootfs/etc/mkinitcpio.d \
          /workspace/archiso/airootfs/etc/modprobe.d \
          /workspace/archiso/airootfs/root
 cp -f "$RELENG_AIROOTFS/etc/mkinitcpio.d/linux.preset"        /workspace/archiso/airootfs/etc/mkinitcpio.d/linux.preset
+# Also create a linux-torrentos preset (mirrors the linux preset but points at our kernel).
+# mkinitcpio uses the preset filename to determine which kernel to generate the initramfs for.
+# The live ISO's archiso.conf hook looks for ALL *.preset files in mkinitcpio.d.
+sed 's|/boot/vmlinuz-linux\b|/boot/vmlinuz-linux-torrentos|g;
+     s|initramfs-linux\b|initramfs-linux-torrentos|g;
+     s|linux\.kver|linux-torrentos.kver|g' \
+    "$RELENG_AIROOTFS/etc/mkinitcpio.d/linux.preset" \
+    > /workspace/archiso/airootfs/etc/mkinitcpio.d/linux-torrentos.preset
 cp -f "$RELENG_AIROOTFS/etc/mkinitcpio.conf.d/archiso.conf"   /workspace/archiso/airootfs/etc/mkinitcpio.conf.d/archiso.conf
 cp -f "$RELENG_AIROOTFS/etc/passwd"                            /workspace/archiso/airootfs/etc/passwd
 cp -f "$RELENG_AIROOTFS/etc/shadow"                            /workspace/archiso/airootfs/etc/shadow
@@ -216,6 +224,24 @@ pacman -S --needed --noconfirm \
 log "Building AUR packages (paru-bin, libinput-gestures, magnus, bibata, google-chrome) (as builder)"
 sudo -u builder bash /workspace/scripts/build-aur.sh
 
+log "Injecting pre-built linux-torrentos kernel packages (if available)"
+# The build-kernel workflow pre-builds the kernel and uploads it as an artifact.
+# The ISO build workflow downloads those packages and passes TORRENTOS_KERNEL_PKGS.
+# If the variable is set and packages exist, copy them into the local repo so
+# mkarchiso can install linux-torrentos from packages.x86_64.
+# If not set (bootstrap mode: first run before kernel was ever built), fall back
+# to upstream linux + linux-headers so the ISO build doesn't hard-fail.
+USING_CUSTOM_KERNEL=false
+if [[ -n "${TORRENTOS_KERNEL_PKGS:-}" ]] && \
+   ls "${TORRENTOS_KERNEL_PKGS}"/*.pkg.tar.zst >/dev/null 2>&1; then
+    log "  Copying kernel packages from $TORRENTOS_KERNEL_PKGS"
+    cp "${TORRENTOS_KERNEL_PKGS}"/*.pkg.tar.zst /workspace/repo/x86_64/
+    USING_CUSTOM_KERNEL=true
+else
+    log "  No pre-built kernel found — bootstrap mode: using upstream linux package"
+    log "  To build linux-torrentos, trigger the 'Build TorrentOS Kernel' workflow."
+fi
+
 log "Re-indexing local repo (defends against stale db.tar.gz)"
 cd /workspace/repo/x86_64
 rm -f torrentos.db* torrentos.files*
@@ -223,12 +249,24 @@ repo-add torrentos.db.tar.gz *.pkg.tar.zst
 cd /workspace
 
 log "Staging profile and pruning package-owned paths from airootfs"
+# Patch packages.x86_64 in the staged profile if we don't have the custom kernel.
+# We only ever patch the staged copy — never the source tree.
+# (USING_CUSTOM_KERNEL is set by the injection step above.)
 # Files that are installed by torrentos-* packages must NOT also be present in
 # airootfs/ — pacstrap rejects file conflicts. Build-pkgs.sh staged the canonical
 # sources from airootfs into the PKGBUILDs already, so we can safely prune now.
 PROFILE_STAGED=/tmp/torrentos-profile
 rm -rf "$PROFILE_STAGED"
 cp -a /workspace/archiso "$PROFILE_STAGED"
+
+if [[ "$USING_CUSTOM_KERNEL" == false ]]; then
+    log "  Patching packages.x86_64: linux-torrentos → linux (bootstrap fallback)"
+    sed -i \
+        -e 's/^linux-torrentos-headers$/linux-headers/' \
+        -e 's/^linux-torrentos$/linux/' \
+        "$PROFILE_STAGED/packages.x86_64"
+fi
+
 cd "$PROFILE_STAGED/airootfs"
 # torrentos-hyprland-config owns these skel dotfiles:
 rm -rf etc/skel/.config/hypr \

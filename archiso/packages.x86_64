@@ -1,9 +1,13 @@
 # --- base ---
 base
 base-devel
-linux
+# linux-torrentos: TorrentOS custom kernel (desktop-first, 1000Hz, BBR, ZSTD, Apple T2).
+# Built separately via build-kernel.yml and injected into the local repo by ci-build.sh.
+# Falls back to upstream 'linux' automatically if no pre-built package is available
+# (bootstrap mode — see scripts/ci-build.sh for the patching logic).
+linux-torrentos
+linux-torrentos-headers
 linux-firmware
-linux-headers
 dkms
 intel-ucode
 amd-ucode

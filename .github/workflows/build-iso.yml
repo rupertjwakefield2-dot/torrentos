@@ -13,7 +13,77 @@ on:
     types: [created]
 
 jobs:
+  # -------------------------------------------------------------------------
+  # Job 1: Resolve the pre-built kernel packages.
+  #
+  # The kernel takes 20-40 minutes to compile. We don't recompile it on every
+  # ISO build — only when packages/linux-torrentos/** changes (handled by the
+  # build-kernel.yml workflow). Here we just download the cached packages.
+  #
+  # If the cache is cold (first run, or kernel config just changed), we fall
+  # back to downloading from the kernel-latest GitHub release. If that also
+  # doesn't exist yet, we set a flag to skip linux-torrentos and use the
+  # upstream Arch linux package instead (bootstrap mode).
+  # -------------------------------------------------------------------------
+  resolve-kernel:
+    name: Resolve kernel packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+      config-hash: ${{ steps.config_hash.outputs.hash }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute kernel config hash
+        id: config_hash
+        run: |
+          hash=$(sha256sum packages/linux-torrentos/PKGBUILD \
+                           packages/linux-torrentos/torrentos.config \
+                 | sha256sum | cut -d' ' -f1)
+          echo "hash=${hash}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore kernel package cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: kernel-packages/
+          key: linux-torrentos-${{ steps.config_hash.outputs.hash }}
+
+      - name: Download kernel from kernel-latest release (cache miss)
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p kernel-packages
+          if gh release download kernel-latest \
+              --pattern '*.pkg.tar.zst' \
+              --dir kernel-packages/ 2>/dev/null; then
+            echo "Downloaded kernel packages from kernel-latest release."
+            ls -lh kernel-packages/
+          else
+            echo "No kernel-latest release found — ISO will use upstream Arch linux package."
+            echo "BOOTSTRAP_MODE=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Upload kernel packages for ISO job
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-packages-${{ steps.config_hash.outputs.hash }}
+          path: kernel-packages/
+          if-no-files-found: warn
+          retention-days: 1
+
+  # -------------------------------------------------------------------------
+  # Job 2: Build the ISO.
+  # -------------------------------------------------------------------------
   build:
+    name: Build ISO
+    needs: resolve-kernel
     runs-on: ubuntu-latest   # x86_64 — required for Arch Linux / mkarchiso
     timeout-minutes: 120
     permissions:
@@ -31,6 +101,31 @@ jobs:
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
           echo "Building TorrentOS v${ver}"
 
+      # -----------------------------------------------------------------------
+      # Download the pre-built kernel packages from the cache artifact.
+      # The resolve-kernel job uploaded them; we pull them here so ci-build.sh
+      # can add them to the local pacman repo before mkarchiso runs.
+      # If no kernel packages are available (bootstrap mode), ci-build.sh will
+      # fall back to the upstream Arch linux package automatically.
+      # -----------------------------------------------------------------------
+      - name: Download pre-built kernel packages
+        uses: actions/download-artifact@v4
+        with:
+          name: kernel-packages-${{ needs.resolve-kernel.outputs.config-hash }}
+          path: kernel-packages/
+        continue-on-error: true   # bootstrap mode: no kernel artifact yet
+
+      - name: Check kernel package availability
+        run: |
+          if ls kernel-packages/*.pkg.tar.zst 2>/dev/null; then
+            echo "TORRENTOS_KERNEL_PKGS=$(pwd)/kernel-packages" >> "$GITHUB_ENV"
+            echo "Pre-built kernel packages found:"
+            ls -lh kernel-packages/
+          else
+            echo "No pre-built kernel packages — ISO will use upstream linux package."
+            echo "To build the custom kernel, trigger the 'Build TorrentOS Kernel' workflow."
+          fi
+
       # Pull the Arch Linux image once so the timer doesn't count against the build
       - name: Pull Arch Linux image
         run: docker pull archlinux:latest
@@ -43,6 +138,7 @@ jobs:
             --privileged \
             --volume "${{ github.workspace }}:/workspace" \
             --workdir /workspace \
+            --env TORRENTOS_KERNEL_PKGS="${TORRENTOS_KERNEL_PKGS:-}" \
             archlinux:latest \
             bash /workspace/scripts/ci-build.sh
 

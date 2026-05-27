@@ -1,0 +1,90 @@
+post_install() {
+    # Generate the mkinitcpio preset for this kernel
+    local preset="/etc/mkinitcpio.d/linux-torrentos.preset"
+    if [[ ! -f "$preset" ]]; then
+        install -Dm644 /dev/stdin "$preset" <<'PRESET'
+ALL_config="/etc/mkinitcpio.conf"
+ALL_kver="/boot/vmlinuz-linux-torrentos"
+
+PRESETS=('default' 'fallback')
+
+default_image="/boot/initramfs-linux-torrentos.img"
+fallback_image="/boot/initramfs-linux-torrentos-fallback.img"
+fallback_options="-S autodetect"
+PRESET
+    fi
+
+    # Generate the initramfs
+    mkinitcpio -p linux-torrentos
+
+    # Add GRUB boot entry if GRUB is installed
+    if command -v grub-mkconfig &>/dev/null; then
+        grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
+    fi
+
+    # Add systemd-boot entry if systemd-boot is in use
+    local esp_dir=""
+    for d in /boot /efi /boot/efi; do
+        [[ -d "$d/EFI/systemd" ]] && { esp_dir="$d"; break; }
+    done
+
+    if [[ -n "$esp_dir" ]]; then
+        local kver
+        kver="$(ls /boot/vmlinuz-linux-torrentos 2>/dev/null && \
+                basename "$(readlink -f /usr/lib/modules/*/pkgbase 2>/dev/null | \
+                grep torrentos | head -1 | xargs dirname 2>/dev/null)" || \
+                uname -r)"
+
+        install -Dm644 /dev/stdin "$esp_dir/loader/entries/torrentos.conf" <<ENTRY
+title   TorrentOS
+linux   /vmlinuz-linux-torrentos
+initrd  /intel-ucode.img
+initrd  /amd-ucode.img
+initrd  /initramfs-linux-torrentos.img
+options root=LABEL=ROOT rw quiet splash loglevel=3 nowatchdog
+ENTRY
+
+        install -Dm644 /dev/stdin "$esp_dir/loader/entries/torrentos-fallback.conf" <<ENTRY
+title   TorrentOS (fallback initramfs)
+linux   /vmlinuz-linux-torrentos
+initrd  /intel-ucode.img
+initrd  /amd-ucode.img
+initrd  /initramfs-linux-torrentos-fallback.img
+options root=LABEL=ROOT rw
+ENTRY
+
+        # Copy vmlinuz to ESP so systemd-boot can find it
+        install -Dm644 /boot/vmlinuz-linux-torrentos "$esp_dir/vmlinuz-linux-torrentos"
+        install -Dm644 /boot/initramfs-linux-torrentos.img "$esp_dir/initramfs-linux-torrentos.img"
+        install -Dm644 /boot/initramfs-linux-torrentos-fallback.img \
+            "$esp_dir/initramfs-linux-torrentos-fallback.img"
+    fi
+}
+
+post_upgrade() {
+    post_install
+}
+
+pre_remove() {
+    # Remove initramfs files
+    rm -f /boot/initramfs-linux-torrentos.img
+    rm -f /boot/initramfs-linux-torrentos-fallback.img
+    rm -f /boot/vmlinuz-linux-torrentos
+
+    # Remove preset
+    rm -f /etc/mkinitcpio.d/linux-torrentos.preset
+
+    # Remove systemd-boot entries if present
+    for d in /boot /efi /boot/efi; do
+        rm -f "$d/loader/entries/torrentos.conf"
+        rm -f "$d/loader/entries/torrentos-fallback.conf"
+        rm -f "$d/vmlinuz-linux-torrentos"
+        rm -f "$d/initramfs-linux-torrentos.img"
+        rm -f "$d/initramfs-linux-torrentos-fallback.img"
+    done
+
+    # Regenerate GRUB config without this kernel
+    if command -v grub-mkconfig &>/dev/null; then
+        grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
+    fi
+}
