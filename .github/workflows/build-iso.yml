@@ -187,8 +187,8 @@ jobs:
             --secret-key "$IA_SECRET_KEY" \
             --metadata="mediatype:software" \
             --metadata="title:TorrentOS ${VERSION} (x86_64 ISO)" \
-            --metadata="description:TorrentOS ${VERSION} — Arch-based Linux with Hyprland, built for downloading. Direct ISO download." \
-            --metadata="subject:linux;operating system;arch linux;hyprland;wayland;torrentos" \
+            --metadata="description:TorrentOS ${VERSION} — A fast, beautiful desktop OS with Hyprland and Wayland. Built for downloading. Direct ISO." \
+            --metadata="subject:operating system;torrentos;hyprland;wayland;desktop;torrenting" \
             --metadata="licenseurl:https://www.gnu.org/licenses/gpl-3.0.html" \
             --metadata="creator:TorrentOS" \
             --no-derive

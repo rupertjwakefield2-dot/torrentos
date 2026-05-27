@@ -98,23 +98,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           KVER: ${{ steps.kver.outputs.pkgver }}
           KREL: ${{ steps.kver.outputs.pkgrel }}
+          CONFIG_HASH: ${{ steps.config_hash.outputs.hash }}
         run: |
           TAG="kernel-latest"
           TITLE="linux-torrentos ${KVER}-${KREL} (latest)"
 
-          # Delete the old release if it exists (we overwrite with the new build)
+          # Single-line notes — avoids the YAML indentation trap where multiline
+          # content inside --notes "..." at column 0 terminates the run: block early.
+          NOTES="Pre-built linux-torrentos ${KVER}-${KREL} kernel packages for TorrentOS ISO builds. Config hash: ${CONFIG_HASH}. Downloaded automatically by the ISO build workflow."
+
+          # Delete the old release and tag if they exist (we always overwrite)
           gh release delete "$TAG" --yes 2>/dev/null || true
           git push origin ":refs/tags/$TAG" 2>/dev/null || true
 
           gh release create "$TAG" \
             --title "$TITLE" \
-            --notes "Pre-built linux-torrentos kernel packages for TorrentOS ISO builds.
-
-**Kernel version:** ${KVER}-${KREL}
-**Config hash:** ${{ steps.config_hash.outputs.hash }}
-
-These packages are downloaded automatically by the ISO build workflow.
-Do not install manually unless you know what you're doing." \
+            --notes "$NOTES" \
             --prerelease \
             kernel-packages/*.pkg.tar.zst \
             kernel-packages/SHA256SUMS
