@@ -207,13 +207,23 @@ ln -sf /usr/lib/systemd/system/bluetooth.service \
 log "Building custom packages (as builder)"
 # Use absolute paths — sudo doesn't preserve cwd so relative paths fail
 chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh
-EXPECTED_PKGS=6
-if [[ -f /workspace/repo/x86_64/torrentos.db.tar.gz ]] && \
-   [[ $(ls /workspace/repo/x86_64/torrentos-*-*-*-any.pkg.tar.zst 2>/dev/null | wc -l) -ge $EXPECTED_PKGS ]]; then
-    log "Skipping torrentos-* — local repo already populated with all $EXPECTED_PKGS packages."
+# Check by specific name so a stale repo with duplicates (e.g. two versions of
+# torrentos-first-boot) doesn't fool the count into skipping a missing package.
+_need_build=false
+for _pkg in torrentos-base torrentos-theme torrentos-hyprland-config \
+            torrentos-first-boot torrentos-settings torrentos-tools; do
+    if ! ls /workspace/repo/x86_64/${_pkg}-*.pkg.tar.zst >/dev/null 2>&1; then
+        log "  Missing: ${_pkg} — will run build-pkgs.sh"
+        _need_build=true
+        break
+    fi
+done
+if [[ "$_need_build" == false ]] && [[ -f /workspace/repo/x86_64/torrentos.db.tar.gz ]]; then
+    log "Skipping torrentos-* — all 6 packages already present in local repo."
 else
     sudo -u builder bash /workspace/scripts/build-pkgs.sh
 fi
+unset _need_build _pkg
 
 log "Pre-installing AUR build deps as root (makepkg -s can't use sudo on nosuid NTFS mount)"
 pacman -S --needed --noconfirm \

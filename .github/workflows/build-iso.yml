@@ -70,7 +70,9 @@ jobs:
           fi
 
       - name: Upload kernel packages for ISO job
-        if: steps.cache.outputs.cache-hit != 'true'
+        # Always upload — even on cache hit the build job runs in a separate VM
+        # and cannot access this job's cache. Without this, a cache hit here means
+        # the build job finds no artifact and silently falls back to bootstrap mode.
         uses: actions/upload-artifact@v4
         with:
           name: kernel-packages-${{ steps.config_hash.outputs.hash }}
