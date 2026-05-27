@@ -182,6 +182,9 @@ neovim
 helix
 zsh
 zsh-completions
+zsh-syntax-highlighting
+zsh-autosuggestions
+whiptail
 libnewt
 starship
 fzf
@@ -230,6 +233,7 @@ gamemode
 lib32-gamemode
 mangohud
 lib32-mangohud
+lib32-mesa
 
 # --- fastfetch (system info) ---
 fastfetch

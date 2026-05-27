@@ -39,7 +39,6 @@ packages/torrentos-hyprland-config/tmux.conf
 packages/torrentos-hyprland-config/nvim-init.lua
 packages/torrentos-hyprland-config/gitconfig
 packages/torrentos-hyprland-config/btop.conf
-packages/torrentos-base/greetd-config.toml
 packages/torrentos-settings/torrentos-settings
 packages/torrentos-settings/torrentos-settings.desktop
 packages/torrentos-settings/torrentos-settings.svg

@@ -190,6 +190,12 @@ ln -sf /usr/lib/systemd/system/greetd.service \
 ln -sf /usr/lib/systemd/system/mbpfan.service \
     "$AROOT/etc/systemd/system/multi-user.target.wants/mbpfan.service" 2>/dev/null || true
 
+# 7. Enable bluetooth on the live ISO.
+#    The symlink is already in airootfs/ — this is a belt-and-suspenders ensure.
+mkdir -p "$AROOT/etc/systemd/system/multi-user.target.wants"
+ln -sf /usr/lib/systemd/system/bluetooth.service \
+    "$AROOT/etc/systemd/system/multi-user.target.wants/bluetooth.service" 2>/dev/null || true
+
 log "Building custom packages (as builder)"
 # Use absolute paths — sudo doesn't preserve cwd so relative paths fail
 chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh

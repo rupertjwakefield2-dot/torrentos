@@ -1,0 +1,19 @@
+# TorrentOS — greetd configuration for installed systems.
+# This file is installed by torrentos-base and provides a tuigreet login screen.
+#
+# The live ISO uses a different config (in airootfs/etc/greetd/config.toml)
+# that has [initial_session] for liveuser autologin.  That block must NOT
+# appear here — on installed systems liveuser doesn't exist.
+
+[terminal]
+vt = 1
+
+[default_session]
+# tuigreet — TUI login screen
+# --time         show clock in header
+# --remember     pre-fill last username
+# --asterisks    show * for password characters
+# --greeting     custom welcome message
+# --cmd          command to launch after successful login
+command = "tuigreet --time --remember --asterisks --greeting 'Welcome to TorrentOS' --cmd Hyprland"
+user = "greeter"

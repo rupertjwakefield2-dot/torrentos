@@ -36,7 +36,19 @@ fi
 # ---- integrations ----
 command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
 command -v fzf    >/dev/null && source <(fzf --zsh)
-command -v mise   >/dev/null && eval "$(mise activate zsh)"
+
+# ---- zsh plugins (installed via packages) ----
+# syntax highlighting must load AFTER all other ZLE widgets
+for _f in \
+    /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
+    /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+    [[ -f "$_f" ]] && source "$_f"
+done
+unset _f
+# Autosuggestion accept with right arrow or End key
+bindkey '^ ' autosuggest-accept   # Ctrl+Space also accepts
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#3a5278'
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # ---- fzf options ----
 export FZF_DEFAULT_OPTS="
@@ -280,6 +292,7 @@ help() {
     printf "${_cyan}  Desktop shortcuts:${_rst}\n"
     printf "${_dim}    Super + Space       ${_rst}${_white}App launcher (Spotlight)${_rst}\n"
     printf "${_dim}    Super + Return      ${_rst}${_white}Open terminal${_rst}\n"
+    printf "${_dim}    Super + C           ${_rst}${_white}Open float terminal (quick commands)${_rst}\n"
     printf "${_dim}    Super + E           ${_rst}${_white}Open file manager${_rst}\n"
     printf "${_dim}    Super + L           ${_rst}${_white}Lock screen${_rst}\n"
     printf "${_dim}    Super + Q           ${_rst}${_white}Close window${_rst}\n"

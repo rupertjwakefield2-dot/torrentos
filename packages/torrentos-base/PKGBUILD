@@ -52,6 +52,9 @@ depends=(
     # Shell & terminal tools
     'zsh'
     'zsh-completions'
+    'zsh-syntax-highlighting'
+    'zsh-autosuggestions'
+    'whiptail'
     'starship'
     'fastfetch'
     'fzf'
@@ -97,6 +100,7 @@ depends=(
 backup=(
     'etc/torrentos/default-settings.toml'
     'etc/torrentos/version'
+    'etc/greetd/config.toml'
 )
 source=(
     'version'
@@ -106,8 +110,9 @@ source=(
     'settingsd'
     'firstboot'
     'torrentos-settingsd.service'
+    'greetd-config.toml'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     install -Dm644 "$srcdir/version"               "$pkgdir/etc/torrentos/version"
@@ -120,10 +125,15 @@ package() {
     install -Dm644 "$srcdir/torrentos-settingsd.service" \
         "$pkgdir/usr/lib/systemd/user/torrentos-settingsd.service"
 
-    # Enable greetd at boot on installed system
-    # (greetd config is owned by the 'greetd' package; the live ISO airootfs
-    #  overlay applies our custom config on top after pacstrap.)
+    # greetd config for installed systems — tuigreet with Hyprland.
+    # The live ISO airootfs overlay uses a different config (with [initial_session]
+    # for liveuser autologin); this version is for real installs only.
+    install -Dm644 "$srcdir/greetd-config.toml" "$pkgdir/etc/greetd/config.toml"
+
+    # Enable greetd and bluetooth at boot on installed systems.
     install -dm755 "$pkgdir/usr/lib/systemd/system/multi-user.target.wants"
     ln -sf /usr/lib/systemd/system/greetd.service \
         "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/greetd.service"
+    ln -sf /usr/lib/systemd/system/bluetooth.service \
+        "$pkgdir/usr/lib/systemd/system/multi-user.target.wants/bluetooth.service"
 }
