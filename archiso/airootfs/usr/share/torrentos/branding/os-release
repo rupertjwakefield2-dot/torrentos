@@ -1,7 +1,6 @@
 NAME="TorrentOS"
 PRETTY_NAME="TorrentOS 0.5.0 (Riptide)"
 ID=torrentos
-ID_LIKE=arch
 BUILD_ID=rolling
 VERSION="0.5.0 (Riptide)"
 VERSION_ID="0.5.0"
