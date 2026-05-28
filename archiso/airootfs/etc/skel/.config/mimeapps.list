@@ -1,16 +1,16 @@
 [Default Applications]
 # Browser
-text/html=firefox.desktop
-x-scheme-handler/http=firefox.desktop
-x-scheme-handler/https=firefox.desktop
-x-scheme-handler/ftp=firefox.desktop
-x-scheme-handler/chrome=firefox.desktop
-application/x-extension-htm=firefox.desktop
-application/x-extension-html=firefox.desktop
-application/x-extension-shtml=firefox.desktop
-application/xhtml+xml=firefox.desktop
-application/x-extension-xhtml=firefox.desktop
-application/x-extension-xht=firefox.desktop
+text/html=torrent-browser.desktop
+x-scheme-handler/http=torrent-browser.desktop
+x-scheme-handler/https=torrent-browser.desktop
+x-scheme-handler/ftp=torrent-browser.desktop
+x-scheme-handler/chrome=torrent-browser.desktop
+application/x-extension-htm=torrent-browser.desktop
+application/x-extension-html=torrent-browser.desktop
+application/x-extension-shtml=torrent-browser.desktop
+application/xhtml+xml=torrent-browser.desktop
+application/x-extension-xhtml=torrent-browser.desktop
+application/x-extension-xht=torrent-browser.desktop
 
 # File manager
 inode/directory=org.gnome.Nautilus.desktop
@@ -77,8 +77,8 @@ application/x-bittorrent=org.qbittorrent.qBittorrent.desktop
 x-scheme-handler/magnet=org.qbittorrent.qBittorrent.desktop
 
 [Added Associations]
-text/html=firefox.desktop;
-x-scheme-handler/http=firefox.desktop;
-x-scheme-handler/https=firefox.desktop;
+text/html=torrent-browser.desktop;
+x-scheme-handler/http=torrent-browser.desktop;
+x-scheme-handler/https=torrent-browser.desktop;
 x-scheme-handler/magnet=org.qbittorrent.qBittorrent.desktop;
 application/x-bittorrent=org.qbittorrent.qBittorrent.desktop;

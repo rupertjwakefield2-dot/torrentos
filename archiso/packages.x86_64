@@ -243,7 +243,9 @@ lib32-mesa
 fastfetch
 
 # --- browsers ---
-firefox
+# Torrent Browser: TorrentOS built-in private browser (WebKit — not Chrome, not Firefox)
+webkitgtk-6.0
+torrentos-browser
 
 # --- torrent client (on-brand for TorrentOS) ---
 qbittorrent
@@ -269,6 +271,7 @@ torrentos-hyprland-config
 torrentos-first-boot
 torrentos-settings
 torrentos-tools
+torrentos-browser
 
 # --- AUR packages (built locally by scripts/build-aur.sh) ---
 paru-bin

@@ -209,6 +209,7 @@ build_one torrentos-hyprland-config
 build_one torrentos-first-boot
 build_one torrentos-settings
 build_one torrentos-tools
+build_one torrentos-browser
 
 log "Indexing local repo at $REPO_DIR"
 rm -f "$REPO_DIR"/torrentos.db* "$REPO_DIR"/torrentos.files*

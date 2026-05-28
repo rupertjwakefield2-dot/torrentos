@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""
+Torrent Browser — TorrentOS private browser
+Built on WebKitGTK (independent engine — not Chrome, not Firefox)
+"""
+import gi
+gi.require_version('Gtk', '4.0')
+gi.require_version('WebKit', '6.0')
+gi.require_version('Adw', '1')
+from gi.repository import Gtk, WebKit, GLib, Adw
+import sys
+import urllib.parse
+
+HOME  = "https://duckduckgo.com"
+TITLE = "Torrent Browser"
+APP_ID = "org.torrentos.browser"
+
+
+def resolve(text):
+    """Turn user input into a URL — search DuckDuckGo if it's not a URL."""
+    text = text.strip()
+    if not text:
+        return HOME
+    if text.startswith(('http://', 'https://', 'file://')):
+        return text
+    if '.' in text and ' ' not in text:
+        return 'https://' + text
+    return 'https://duckduckgo.com/?q=' + urllib.parse.quote_plus(text)
+
+
+class BrowserWindow(Gtk.ApplicationWindow):
+    def __init__(self, app, uri=None):
+        super().__init__(application=app, title=TITLE)
+        self.set_default_size(1280, 800)
+
+        # ── Navigation toolbar ────────────────────────────────────────────────
+        toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        toolbar.set_margin_start(8)
+        toolbar.set_margin_end(8)
+        toolbar.set_margin_top(6)
+        toolbar.set_margin_bottom(6)
+
+        self.btn_back    = Gtk.Button(icon_name='go-previous-symbolic',  tooltip_text='Back')
+        self.btn_forward = Gtk.Button(icon_name='go-next-symbolic',      tooltip_text='Forward')
+        self.btn_reload  = Gtk.Button(icon_name='view-refresh-symbolic', tooltip_text='Reload')
+        self.btn_home    = Gtk.Button(icon_name='user-home-symbolic',    tooltip_text='Home')
+
+        for btn in (self.btn_back, self.btn_forward, self.btn_reload, self.btn_home):
+            btn.add_css_class('flat')
+            toolbar.append(btn)
+
+        self.url_bar = Gtk.Entry()
+        self.url_bar.set_hexpand(True)
+        self.url_bar.set_placeholder_text("Search or enter address…")
+        toolbar.append(self.url_bar)
+
+        # ── Progress bar ──────────────────────────────────────────────────────
+        self.progress = Gtk.ProgressBar()
+        self.progress.set_visible(False)
+        self.progress.add_css_class('osd')
+
+        # ── WebView ───────────────────────────────────────────────────────────
+        self.webview = WebKit.WebView()
+        ws = self.webview.get_settings()
+        ws.set_enable_javascript(True)
+        ws.set_enable_developer_extras(False)
+        ws.set_user_agent_with_application_details("TorrentBrowser", "1.0")
+
+        # ── Layout ────────────────────────────────────────────────────────────
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        root.append(toolbar)
+        root.append(self.progress)
+        root.append(self.webview)
+        self.set_child(root)
+
+        # ── Connect signals ───────────────────────────────────────────────────
+        self.btn_back.connect('clicked',    lambda _: self.webview.go_back())
+        self.btn_forward.connect('clicked', lambda _: self.webview.go_forward())
+        self.btn_reload.connect('clicked',  self._on_reload_clicked)
+        self.btn_home.connect('clicked',    lambda _: self.webview.load_uri(HOME))
+        self.url_bar.connect('activate',    self._on_url_activate)
+
+        self.webview.connect('load-changed',                    self._on_load_changed)
+        self.webview.connect('notify::title',                   self._on_title_changed)
+        self.webview.connect('notify::uri',                     self._on_uri_changed)
+        self.webview.connect('notify::estimated-load-progress', self._on_progress_changed)
+        self.webview.connect('notify::is-loading',              self._on_loading_changed)
+
+        # ── Start page ────────────────────────────────────────────────────────
+        self.webview.load_uri(uri or HOME)
+
+    # ── Signal handlers ───────────────────────────────────────────────────────
+
+    def _on_url_activate(self, entry):
+        self.webview.load_uri(resolve(entry.get_text()))
+
+    def _on_reload_clicked(self, _):
+        if self.webview.is_loading():
+            self.webview.stop_loading()
+        else:
+            self.webview.reload()
+
+    def _on_load_changed(self, wv, _):
+        self.btn_back.set_sensitive(wv.can_go_back())
+        self.btn_forward.set_sensitive(wv.can_go_forward())
+
+    def _on_title_changed(self, wv, _):
+        t = wv.get_title()
+        self.set_title(f"{t} — {TITLE}" if t else TITLE)
+
+    def _on_uri_changed(self, wv, _):
+        self.url_bar.set_text(wv.get_uri() or '')
+
+    def _on_progress_changed(self, wv, _):
+        self.progress.set_fraction(wv.get_estimated_load_progress())
+
+    def _on_loading_changed(self, wv, _):
+        loading = wv.is_loading()
+        self.progress.set_visible(loading)
+        self.btn_reload.set_icon_name(
+            'process-stop-symbolic' if loading else 'view-refresh-symbolic'
+        )
+
+
+class TorrentBrowserApp(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id=APP_ID)
+        self.connect('activate', self._on_activate)
+
+    def _on_activate(self, _):
+        uri = sys.argv[1] if len(sys.argv) > 1 else None
+        win = BrowserWindow(self, uri)
+        win.present()
+
+
+sys.exit(TorrentBrowserApp().run(sys.argv))

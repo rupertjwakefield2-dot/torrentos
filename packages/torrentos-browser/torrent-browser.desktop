@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Torrent Browser
+Comment=Private browsing — TorrentOS built-in browser
+GenericName=Web Browser
+Keywords=Internet;WWW;Browser;Web;Torrent;Private;
+Exec=torrent-browser %u
+Terminal=false
+Type=Application
+Icon=applications-internet
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true

@@ -211,7 +211,8 @@ chmod +x /workspace/scripts/build-pkgs.sh /workspace/scripts/build-aur.sh
 # torrentos-first-boot) doesn't fool the count into skipping a missing package.
 _need_build=false
 for _pkg in torrentos-base torrentos-theme torrentos-hyprland-config \
-            torrentos-first-boot torrentos-settings torrentos-tools; do
+            torrentos-first-boot torrentos-settings torrentos-tools \
+            torrentos-browser; do
     if ! ls /workspace/repo/x86_64/${_pkg}-*.pkg.tar.zst >/dev/null 2>&1; then
         log "  Missing: ${_pkg} — will run build-pkgs.sh"
         _need_build=true
@@ -219,7 +220,7 @@ for _pkg in torrentos-base torrentos-theme torrentos-hyprland-config \
     fi
 done
 if [[ "$_need_build" == false ]] && [[ -f /workspace/repo/x86_64/torrentos.db.tar.gz ]]; then
-    log "Skipping torrentos-* — all 6 packages already present in local repo."
+    log "Skipping torrentos-* — all 7 packages already present in local repo."
 else
     sudo -u builder bash /workspace/scripts/build-pkgs.sh
 fi

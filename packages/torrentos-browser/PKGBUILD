@@ -1,0 +1,27 @@
+# Maintainer: TorrentOS <packages@torrentos.org>
+pkgname=torrentos-browser
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Torrent Browser — TorrentOS private browser (WebKit engine, not Chrome or Firefox)"
+arch=('any')
+url="https://torrentos.org"
+license=('GPL3')
+depends=(
+    'python'
+    'python-gobject'
+    'gtk4'
+    'libadwaita'
+    'webkitgtk-6.0'
+)
+source=(
+    'torrent-browser'
+    'torrent-browser.desktop'
+)
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+    install -Dm755 "$srcdir/torrent-browser" \
+        "$pkgdir/usr/bin/torrent-browser"
+    install -Dm644 "$srcdir/torrent-browser.desktop" \
+        "$pkgdir/usr/share/applications/torrent-browser.desktop"
+}

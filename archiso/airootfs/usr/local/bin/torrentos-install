@@ -270,7 +270,8 @@ EXTRA_PACKAGES=(
     magnus
     expac
     # Apps
-    firefox
+    torrentos-browser
+    webkitgtk-6.0
     qbittorrent
     mpv
     # Desktop integration
