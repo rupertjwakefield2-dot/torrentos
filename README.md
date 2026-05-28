@@ -28,7 +28,7 @@
 </div>
 
 1. Download the `.iso` from the link above
-2. Flash to a USB drive with [Rufus](https://rufus.ie) *(Windows)* or [Balena Etcher](https://etcher.balena.io) *(Mac/Windows/Linux)*
+2. Flash to a USB drive with [Rufus](https://rufus.ie) *(Windows)* or [Balena Etcher](https://etcher.balena.io) *(Mac/Windows)*
 3. Boot from USB — run `sudo torrentos-install` to install to disk
 
 > Minimum: 4 GB RAM · 20 GB storage · x86_64 processor
@@ -39,15 +39,15 @@
 
 | | |
 |---|---|
-| **Desktop** | Hyprland compositor · macOS-feel glass dock · Waybar status bar · notification centre |
-| **Browser** | Torrent Browser — built-in private browser with DuckDuckGo (independent engine, not Chrome or Firefox) |
-| **Terminal** | Ghostty · JetBrains Mono Nerd Font · starship prompt · full zsh environment |
+| **TorrentOS Desktop** | Smooth composited desktop · glass dock · status bar · notification centre |
+| **Torrent Browser** | Built-in private browser with DuckDuckGo — independent engine, not Chrome or Firefox |
+| **TorrentOS Terminal** | Fast GPU-accelerated terminal · JetBrains Mono Nerd Font · starship prompt |
 | **Installer** | Guided setup wizard — username, password, WiFi, timezone |
-| **Settings** | GTK4 settings app — appearance, display, keyboard, network, accessibility |
+| **TorrentOS Settings** | Settings app — appearance, display, keyboard, network, accessibility |
 | **Privacy** | 10-attempt login lockout · DuckDuckGo default · no telemetry |
-| **Gaming** | GameMode · MangoHud · Flatpak + Flathub |
-| **Dev tools** | Neovim · Helix · Docker · git · ripgrep · fzf · tmux · btop |
-| **Accessibility** | Orca screen reader · high-contrast · colour filters · espeak |
+| **Gaming** | Game optimisation · performance overlay · sandboxed app support |
+| **Dev tools** | Code editors · containers · version control · system tools |
+| **Accessibility** | Screen reader · high-contrast · colour filters · voice output |
 
 ---
 
@@ -86,7 +86,7 @@ CI builds run automatically on every push — pre-built ISOs are always availabl
 
 ## Status
 
-**v0.5 — Riptide** · Active development. Boots to a polished desktop with first-boot wizard, GTK4 settings app, Torrent Browser, screenshot tool, and system updater.
+**v0.5 — Riptide** · Active development. Boots to a polished desktop with first-boot wizard, TorrentOS Settings app, Torrent Browser, screenshot tool, and system updater.
 
 ---
 
