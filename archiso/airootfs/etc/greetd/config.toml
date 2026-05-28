@@ -5,8 +5,10 @@ vt = 1
 # root privileges.  Modern Hyprland (≥0.40) refuses to run as root and removed
 # the --i-am-really-stupid flag entirely.
 #
-# On installed systems the [initial_session] block is absent (removed by the
-# installer after first boot), so greetd falls through to the tuigreet prompt.
+# THIS FILE IS LIVE-ISO ONLY.  The installer (torrentos-install) writes a
+# separate config to the installed system's /etc/greetd/config.toml after
+# archinstall exits — that config has no [initial_session] block, because
+# liveuser does not exist on an installed system.
 [initial_session]
 command = "torrentos-live-session"
 user = "liveuser"

@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 #
-# TorrentOS Disk Installer
-# Wraps archinstall with TorrentOS defaults and a guided pre-flight check.
-# Also copies the local TorrentOS package repo into the installed system so
-# TorrentOS-specific packages (settings, tools, hyprland-config, etc.) are
-# available on first boot.
+# TorrentOS Installer
+# Installs TorrentOS to disk with a fully guided setup wizard.
 #
 set -euo pipefail
 
 RED='\033[1;31m'; GRN='\033[1;32m'; BLU='\033[1;34m'; YLW='\033[1;33m'
-CYN='\033[38;2;91;192;235m'; DIM='\033[2;37m'; RST='\033[0m'
+CYN='\033[38;2;91;192;235m'; DIM='\033[2;37m'; WHT='\033[1;37m'; RST='\033[0m'
 
-log()  { printf "${BLU}[install]${RST} %s\n" "$*"; }
+log()  { printf "${BLU}[TorrentOS]${RST} %s\n" "$*"; }
 ok()   { printf "${GRN}[  ok  ]${RST} %s\n" "$*"; }
 warn() { printf "${YLW}[ warn ]${RST} %s\n" "$*"; }
 err()  { printf "${RED}[ err  ]${RST} %s\n" "$*" >&2; }
@@ -33,31 +30,33 @@ LOGO
 printf "${RST}"
 printf "${DIM}                     Install TorrentOS to Disk — v${_ver}${RST}\n\n"
 
-# ── Pre-flight checks ────────────────────────────────────────────────────────
-
+# ── Must run as root ──────────────────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
     err "This installer must run as root. Try: sudo torrentos-install"
     exit 1
 fi
 
-step "Checking prerequisites"
+step "Checking system"
 
-# Check archinstall is available
+# Internal installer engine check — message is user-friendly, not technical
 if ! command -v archinstall >/dev/null 2>&1; then
-    err "archinstall not found. Install it with: sudo pacman -S archinstall"
+    err "TorrentOS installer is not available. Please use the official TorrentOS ISO."
     exit 1
 fi
-
-# Check jq (needed to build JSON config)
 if ! command -v jq >/dev/null 2>&1; then
-    err "jq not found. Install it with: sudo pacman -S jq"
+    err "A required component is missing. Please use the official TorrentOS ISO."
     exit 1
 fi
 
+# ── WiFi / internet check ─────────────────────────────────────────────────────
 log "Checking internet connection..."
-_check_internet() { curl -s --max-time 5 https://archlinux.org >/dev/null 2>&1 || curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; }
+_check_internet() {
+    curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1 || \
+    curl -s --max-time 5 https://google.com >/dev/null 2>&1
+}
+
 if _check_internet; then
-    ok "Internet reachable."
+    ok "Internet connected."
 else
     warn "No internet connection detected."
     echo
@@ -66,49 +65,50 @@ else
     log "Scanning for nearby WiFi networks..."
     nmcli device wifi list 2>/dev/null | head -20 || true
     echo
-    printf "${DIM}  Launching network manager (nmtui). Connect to WiFi, then choose Quit.${RST}\n"
+    printf "${DIM}  Opening network manager — choose your WiFi network, enter the password,${RST}\n"
+    printf "${DIM}  then select Quit when connected.${RST}\n\n"
     sleep 1
     nmtui 2>/dev/null || true
     echo
     if _check_internet; then
         ok "Internet connected!"
     else
-        warn "Still no internet — archinstall needs internet to download packages."
+        warn "Still no internet — TorrentOS needs internet to install."
         printf "  Continue anyway? [y/N] "
         read -r ans
         [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
     fi
 fi
 
-# Check UEFI vs BIOS
+# ── Hardware detection ────────────────────────────────────────────────────────
 if [[ -d /sys/firmware/efi ]]; then
-    ok "UEFI firmware detected — GRUB with EFI will be used."
+    ok "UEFI boot mode detected."
     BOOT_MODE="uefi"
 else
-    ok "Legacy BIOS detected — GRUB with MBR will be used."
+    ok "Legacy BIOS boot mode detected."
     BOOT_MODE="bios"
 fi
 
-# Detect NVIDIA GPU
 NVIDIA_DETECTED=false
 if lspci 2>/dev/null | grep -qi nvidia; then
     NVIDIA_DETECTED=true
-    ok "NVIDIA GPU detected — nvidia-dkms will be installed."
+    ok "NVIDIA graphics card detected — drivers will be installed automatically."
 fi
 
-step "Available block devices"
+# ── Disk selection ────────────────────────────────────────────────────────────
+step "Choose your install disk"
 lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS -e 7,11 | grep -v "^loop"
 echo
 
 printf "${YLW}  ⚠  WARNING: Installation will PERMANENTLY ERASE the selected disk.${RST}\n"
 printf "${YLW}     Back up all important data before continuing.${RST}\n"
 echo
-printf "  Ready to launch the guided installer? [y/N] "
+printf "  Ready to start? [y/N] "
 read -r ans
 [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
-# ── Locate local TorrentOS repo ───────────────────────────────────────────────
-step "Locating local TorrentOS package repo"
+# ── Locate local TorrentOS package repo ──────────────────────────────────────
+step "Locating TorrentOS packages"
 LOCAL_REPO=""
 for candidate in \
     "/run/archiso/bootmnt/repo/x86_64" \
@@ -122,29 +122,29 @@ do
     fi
 done
 
-# ── Guided account + locale setup ────────────────────────────────────────────
+# ── Guided account setup ──────────────────────────────────────────────────────
 step "Create your user account"
-printf "${DIM}  This will be your login on the installed system.${RST}\n\n"
+printf "${DIM}  This will be your username and password on TorrentOS.${RST}\n\n"
 
 # Username
 while true; do
-    printf "  ${W}Username${RST} (letters/numbers/underscores, no spaces): "
+    printf "  ${WHT}Username${RST} (lowercase letters, numbers, underscores — no spaces): "
     read -r NEW_USERNAME
     [[ -z "$NEW_USERNAME" ]] && NEW_USERNAME="user"
     if [[ "$NEW_USERNAME" =~ ^[a-z_][a-z0-9_-]{0,30}$ ]]; then
         break
     fi
-    warn "Must start with a lowercase letter and contain only a-z, 0-9, _ or -"
+    warn "Username must start with a lowercase letter and only contain a-z, 0-9, _ or -"
 done
 
-# Password (hidden, with confirmation)
+# Password (hidden input, confirmation, minimum length)
 while true; do
-    printf "  ${W}Password${RST}: "
+    printf "  ${WHT}Password${RST}: "
     read -rs NEW_PASS; echo
     if [[ ${#NEW_PASS} -lt 4 ]]; then
         warn "Password must be at least 4 characters."; continue
     fi
-    printf "  ${W}Confirm password${RST}: "
+    printf "  ${WHT}Confirm password${RST}: "
     read -rs NEW_PASS2; echo
     if [[ "$NEW_PASS" == "$NEW_PASS2" ]]; then
         break
@@ -155,13 +155,13 @@ done
 ok "Account: ${NEW_USERNAME}"
 echo
 
+# ── Timezone ──────────────────────────────────────────────────────────────────
 step "Timezone"
-printf "${DIM}  Common examples:  Europe/London  America/New_York  America/Los_Angeles${RST}\n"
-printf "${DIM}                    Europe/Berlin   Asia/Tokyo        Australia/Sydney${RST}\n\n"
-printf "  ${W}Timezone${RST} [Europe/London]: "
+printf "${DIM}  Common options:  Europe/London  America/New_York  America/Los_Angeles${RST}\n"
+printf "${DIM}                   Europe/Berlin   Asia/Tokyo        Australia/Sydney${RST}\n\n"
+printf "  ${WHT}Timezone${RST} [Europe/London]: "
 read -r NEW_TIMEZONE
 [[ -z "$NEW_TIMEZONE" ]] && NEW_TIMEZONE="Europe/London"
-# Validate — fall back to UTC if unknown
 if [[ ! -f "/usr/share/zoneinfo/$NEW_TIMEZONE" ]]; then
     warn "Timezone '$NEW_TIMEZONE' not found — defaulting to Europe/London"
     NEW_TIMEZONE="Europe/London"
@@ -169,11 +169,10 @@ fi
 ok "Timezone: ${NEW_TIMEZONE}"
 echo
 
-# ── Write archinstall config ─────────────────────────────────────────────────
+# ── Build installer config ────────────────────────────────────────────────────
 CONF_DIR=$(mktemp -d /tmp/torrentos-install.XXXXX)
 trap 'rm -rf "$CONF_DIR"' EXIT
 
-# Additional packages to install on the new system (on top of Desktop/Hyprland)
 EXTRA_PACKAGES=(
     # TorrentOS custom packages
     torrentos-base
@@ -237,7 +236,7 @@ EXTRA_PACKAGES=(
     # Network
     networkmanager
     network-manager-applet
-    # Display / colour
+    # Display
     brightnessctl
     gammastep
     # Qt / GTK theming
@@ -249,7 +248,7 @@ EXTRA_PACKAGES=(
     grim
     slurp
     imv
-    loupe              # default image viewer for torrentos-screenshot "Open in Loupe"
+    loupe
     # Files
     nautilus
     file-roller
@@ -269,21 +268,19 @@ EXTRA_PACKAGES=(
     xdg-user-dirs
     # Accessibility
     magnus
-    expac              # package query tool — used by pkgsize alias in .zshrc
-    # Browsers & media (default apps per mimeapps.list)
+    expac
+    # Apps
     firefox
     qbittorrent
     mpv
     # Desktop integration
-    polkit-gnome          # exec-once polkit auth agent in hyprland.conf
-    libinput-gestures     # exec-once libinput-gestures-setup start
-    nm-connection-editor  # network settings from waybar
-    xdg-desktop-portal-gtk  # file chooser fallback for GTK apps
-    # Editor
-    neovim                # nvim config deployed by torrentos-hyprland-config
+    polkit-gnome
+    libinput-gestures
+    nm-connection-editor
+    xdg-desktop-portal-gtk
+    neovim
 )
 
-# Add NVIDIA packages if detected
 if [[ "$NVIDIA_DETECTED" == "true" ]]; then
     EXTRA_PACKAGES+=(
         nvidia-dkms
@@ -295,48 +292,43 @@ if [[ "$NVIDIA_DETECTED" == "true" ]]; then
     )
 fi
 
-# Build additional-repositories JSON block (include local repo if found)
 ADD_REPOS="[]"
 if [[ -n "$LOCAL_REPO" ]]; then
-    ok "Found local TorrentOS repo: $LOCAL_REPO"
+    ok "Found TorrentOS packages at: $LOCAL_REPO"
     ADD_REPOS="[{\"name\":\"torrentos\",\"url\":\"file://$LOCAL_REPO\",\"sign_check\":\"Never\",\"sign_option\":\"Never\"}]"
 else
-    warn "Local TorrentOS package repo not found on live media."
-    warn "The installer will try to fetch TorrentOS packages from the internet."
-    warn "If that fails, run after reboot: sudo pacman -S torrentos-base torrentos-settings ..."
+    warn "TorrentOS packages not found on live media — will download during install."
 fi
 
 PKG_JSON="$(printf '%s\n' "${EXTRA_PACKAGES[@]}" | jq -R . | jq -s .)"
 
-# Build the user JSON — jq handles special chars in username/password safely
+# Build user JSON safely (jq handles special chars in password)
 USER_JSON="$(jq -n \
     --arg u "$NEW_USERNAME" \
     --arg p "$NEW_PASS" \
     '[{"username":$u,"!password":$p,"sudo":true,"groups":["wheel","video","audio","input","storage","optical","network","power","sys","tty","lp"]}]')"
 
-# Post-install custom commands (run inside the new system chroot)
-CUSTOM_CMDS="[
-  \"chsh -s /usr/bin/zsh ${NEW_USERNAME} 2>/dev/null || true\",
-  \"systemctl enable NetworkManager 2>/dev/null || true\",
-  \"systemctl enable bluetooth 2>/dev/null || true\",
-  \"systemctl enable fstrim.timer 2>/dev/null || true\",
-  \"systemctl enable systemd-resolved 2>/dev/null || true\",
-  \"flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true\",
-  \"ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true\"
-]"
+# Build post-install commands safely
+CUSTOM_CMDS="$(jq -n \
+    --arg u "$NEW_USERNAME" \
+    '[ ("chsh -s /usr/bin/zsh " + $u + " 2>/dev/null || true"),
+       "systemctl enable NetworkManager 2>/dev/null || true",
+       "systemctl enable bluetooth 2>/dev/null || true",
+       "systemctl enable fstrim.timer 2>/dev/null || true",
+       "systemctl enable systemd-resolved 2>/dev/null || true",
+       "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true",
+       "ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true"
+    ]')"
 
-# Build graphics driver string
 GFX_DRIVER="All open-source (default)"
-if [[ "$NVIDIA_DETECTED" == "true" ]]; then
-    GFX_DRIVER="Nvidia"
-fi
+[[ "$NVIDIA_DETECTED" == "true" ]] && GFX_DRIVER="Nvidia"
 
 jq -n \
     --argjson repos "$ADD_REPOS" \
-    --argjson pkgs "$PKG_JSON" \
+    --argjson pkgs  "$PKG_JSON" \
     --argjson users "$USER_JSON" \
-    --argjson cmds "$CUSTOM_CMDS" \
-    --arg tz "$NEW_TIMEZONE" \
+    --argjson cmds  "$CUSTOM_CMDS" \
+    --arg tz  "$NEW_TIMEZONE" \
     --arg gfx "$GFX_DRIVER" \
 '{
   "additional-repositories": $repos,
@@ -344,19 +336,11 @@ jq -n \
   "bootloader": "Grub",
   "hostname": "torrentos",
   "kernels": ["linux"],
-  "locale_config": {
-    "kb_layout": "us",
-    "sys_enc": "UTF-8",
-    "sys_lang": "en_US"
-  },
+  "locale_config": { "kb_layout": "us", "sys_enc": "UTF-8", "sys_lang": "en_US" },
   "packages": $pkgs,
   "!users": $users,
   "profile_config": {
-    "profile": {
-      "custom_settings": {},
-      "details": ["Hyprland"],
-      "main": "Desktop"
-    },
+    "profile": { "custom_settings": {}, "details": ["Hyprland"], "main": "Desktop" },
     "gfx_driver": $gfx
   },
   "custom-commands": $cmds,
@@ -364,36 +348,28 @@ jq -n \
   "timezone": $tz
 }' > "$CONF_DIR/user_configuration.json"
 
-# ── Launch archinstall ────────────────────────────────────────────────────────
-step "Launching archinstall with TorrentOS defaults"
-log "(You will be prompted to choose your disk, user, and password.)"
+# ── Install TorrentOS ─────────────────────────────────────────────────────────
+step "Installing TorrentOS to your disk"
+log "This will take 10-20 minutes depending on your internet speed."
+log "Please do not turn off your computer during installation."
 echo
 
 archinstall --config "$CONF_DIR/user_configuration.json"
 
-# ── Post-install: fix greetd config ──────────────────────────────────────────
-# archinstall's built-in Desktop/Hyprland profile writes its own
-# /etc/greetd/config.toml inside the chroot (using agreety or its own
-# defaults) AFTER packages are installed, which overwrites the correct
-# config shipped by torrentos-base.  We stamp the right config here,
-# writing directly to the installed system's mountpoint (/mnt).
-#
-# The correct installed-system config has NO [initial_session] block —
-# that block exists only on the live ISO for liveuser autologin.  On an
-# installed system liveuser doesn't exist, so [initial_session] would
-# cause greetd to crash on every boot.
-step "Applying TorrentOS post-install fixes"
+# ── Post-install configuration ────────────────────────────────────────────────
+step "Applying TorrentOS settings"
 
 INSTALL_MNT="/mnt"
 GREETD_DEST="$INSTALL_MNT/etc/greetd/config.toml"
 
+# Configure login screen
 if [[ -d "$INSTALL_MNT/etc/greetd" ]]; then
-    log "Writing TorrentOS greetd config to installed system..."
-    # --remember-user-session: after first login the username is pre-filled so
-    # the user only needs to type their password on every subsequent boot.
-    cat > "$GREETD_DEST" << GREETD_EOF
-# TorrentOS — greetd configuration for installed systems.
-# tuigreet login screen — username is remembered after first login.
+    log "Configuring login screen..."
+    # --remember + --remember-user-session: after the first login the username
+    # is pre-filled permanently — users only ever need to type their password.
+    cat > "$GREETD_DEST" << 'GREETD_EOF'
+# TorrentOS — login screen configuration.
+# Username is remembered after first login — only password required each boot.
 
 [terminal]
 vt = 1
@@ -402,26 +378,38 @@ vt = 1
 command = "tuigreet --time --remember --remember-user-session --asterisks --greeting 'Welcome to TorrentOS — enter your password' --cmd Hyprland"
 user = "greeter"
 GREETD_EOF
-    ok "greetd config written → $GREETD_DEST"
+    ok "Login screen configured."
 
-    # Pre-seed tuigreet's state file with the username so it's pre-filled on
-    # the very first boot (no login needed first to trigger --remember).
+    # Pre-seed the username so it appears on the very first boot
     TUIGREET_STATE="$INSTALL_MNT/var/cache/tuigreet"
     mkdir -p "$TUIGREET_STATE"
     echo "$NEW_USERNAME" > "$TUIGREET_STATE/last_user"
     echo "Hyprland"      > "$TUIGREET_STATE/last_session"
-    ok "Login screen pre-seeded with username: ${NEW_USERNAME}"
+    ok "Login screen pre-seeded — username: ${NEW_USERNAME}"
 else
-    warn "Could not find installed system at $INSTALL_MNT/etc/greetd — greetd config NOT patched."
-    warn "If greetd fails on first boot, run as root on the installed system:"
-    warn "  systemctl edit --force greetd"
+    warn "Login screen not found — greetd config not written."
 fi
 
+# Configure login security: 10 attempts allowed, then 5-minute lockout
+log "Configuring login security..."
+mkdir -p "$INSTALL_MNT/etc/security"
+cat > "$INSTALL_MNT/etc/security/faillock.conf" << 'FAILLOCK_EOF'
+# TorrentOS login security
+# After 10 failed password attempts the account is locked for 5 minutes.
+deny = 10
+unlock_time = 300
+fail_interval = 900
+silent = false
+audit = true
+FAILLOCK_EOF
+ok "Login security: 10 attempts allowed, 5-minute lockout after that."
+
 echo
-ok "Installation complete!"
-printf "\n  ${GRN}➜${RST}  Remove the live media and reboot to your new system:\n"
-printf "\n     ${BLU}reboot${RST}\n\n"
-printf "${CYN}  On the login screen your username (${NEW_USERNAME}) will already be filled in.\n"
-printf "  Just enter your password and press Enter — every time you boot.${RST}\n\n"
-printf "${CYN}  After first login, the TorrentOS setup wizard will guide you\n"
-printf "  through WiFi, keyboard layout, timezone, and browser choice.${RST}\n\n"
+ok "TorrentOS installed successfully!"
+printf "\n  ${GRN}➜${RST}  Remove the USB drive and reboot into your new system:\n"
+printf "\n     ${CYN}reboot${RST}\n\n"
+printf "${CYN}  On the login screen your username (${WHT}${NEW_USERNAME}${CYN}) will already be filled in.\n"
+printf "  Just type your password and press Enter — every single time you boot.${RST}\n\n"
+printf "${DIM}  Security: after 10 wrong password attempts, login is locked for 5 minutes.${RST}\n\n"
+printf "${CYN}  After first login, the TorrentOS setup wizard guides you through\n"
+printf "  WiFi, keyboard layout, timezone, and browser selection.${RST}\n\n"
