@@ -9,10 +9,9 @@
      ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚══════╝
 ```
 
-**A private, fast, and beautiful desktop operating system.**
+**An independent operating system. Built from scratch.**
 
-[![Latest Release](https://img.shields.io/github/v/release/rupertjwakefield2-dot/torrentos?label=latest&color=1E6FFF&style=flat-square)](https://github.com/rupertjwakefield2-dot/torrentos/releases/latest)
-[![Build](https://img.shields.io/github/actions/workflow/status/rupertjwakefield2-dot/torrentos/build.yml?branch=main&style=flat-square&color=1E6FFF)](https://github.com/rupertjwakefield2-dot/torrentos/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/rupertjwakefield2-dot/torrentos/build-iso.yml?branch=main&style=flat-square&color=1E6FFF&label=build)](https://github.com/rupertjwakefield2-dot/torrentos/actions)
 [![License](https://img.shields.io/badge/license-GPL--3.0-1E6FFF?style=flat-square)](LICENSE)
 
 </div>
@@ -23,48 +22,42 @@
 
 <div align="center">
 
-### [⬇ Download TorrentOS v0.5 — Riptide](https://github.com/rupertjwakefield2-dot/torrentos/releases/latest)
+### [⬇ Download TorrentOS](https://github.com/rupertjwakefield2-dot/torrentos/actions)
+
+*Download the latest ISO from the Actions tab → most recent build → Artifacts*
 
 </div>
 
 1. Download the `.iso` from the link above
-2. Flash to a USB drive with [Rufus](https://rufus.ie) *(Windows)* or [Balena Etcher](https://etcher.balena.io) *(Mac/Windows)*
-3. Boot from USB — run `sudo torrentos-install` to install to disk
+2. Flash to USB with [Rufus](https://rufus.ie) *(Windows)* or [Balena Etcher](https://etcher.balena.io)
+3. Boot from USB
 
-> Minimum: 4 GB RAM · 20 GB storage · x86_64 processor
+> Minimum: any x86 PC · 512 MB RAM · 1 GB storage
 
 ---
 
-## What's included
+## What is TorrentOS?
 
-| | |
+TorrentOS is an independent operating system built from the ground up. The kernel, drivers, display system, keyboard input, and shell are all original TorrentOS code — written from scratch, with no external OS underneath.
+
+The only external component is the **bootloader** (GRUB) — its sole job is to load the TorrentOS kernel from disk and hand over control. From that point on, everything is TorrentOS.
+
+---
+
+## Current state — v0.1 kernel
+
+| Component | Status |
 |---|---|
-| **TorrentOS Desktop** | Smooth composited desktop · glass dock · status bar · notification centre |
-| **Torrent Browser** | Built-in private browser with DuckDuckGo — independent engine, not Chrome or Firefox |
-| **TorrentOS Terminal** | Fast GPU-accelerated terminal · JetBrains Mono Nerd Font · starship prompt |
-| **Installer** | Guided setup wizard — username, password, WiFi, timezone |
-| **TorrentOS Settings** | Settings app — appearance, display, keyboard, network, accessibility |
-| **Privacy** | 10-attempt login lockout · DuckDuckGo default · no telemetry |
-| **Gaming** | Game optimisation · performance overlay · sandboxed app support |
-| **Dev tools** | Code editors · containers · version control · system tools |
-| **Accessibility** | Screen reader · high-contrast · colour filters · voice output |
+| Boot | ✅ Boots from USB via GRUB |
+| Display | ✅ Full VGA text driver (original code) |
+| Keyboard | ✅ PS/2 keyboard driver (original code) |
+| Shell | ✅ Command shell with built-in commands |
+| Memory | 🔄 Basic — full memory manager coming |
+| Filesystem | 🔄 Planned |
+| GUI | 🔄 Planned |
+| Networking | 🔄 Planned |
 
----
-
-## Keyboard shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Super + Space` | App launcher |
-| `Super + Return` | Terminal |
-| `Super + B` | Torrent Browser |
-| `Super + E` | File manager |
-| `Super + ,` | Settings |
-| `Super + L` | Lock screen |
-| `Super + Q` | Close window |
-| `Super + Shift + S` | Screenshot |
-| `Super + Ctrl + Q` | Power menu |
-| `Super + 1–9` | Switch workspace |
+**Shell commands:** `help` · `version` · `about` · `clear` · `reboot` · `halt`
 
 ---
 
@@ -73,23 +66,24 @@
 ```bash
 git clone https://github.com/rupertjwakefield2-dot/torrentos
 cd torrentos
-./scripts/build-pkgs.sh   # build TorrentOS packages
-./scripts/build-aur.sh    # build community packages
-./scripts/build-iso.sh    # build the final ISO
+bash build.sh
 ```
 
-The ISO is written to `./out/torrentos-<version>-x86_64.iso`.
-
-CI builds run automatically on every push — pre-built ISOs are always available on the [Releases page](https://github.com/rupertjwakefield2-dot/torrentos/releases).
+Requires: `gcc` · `gcc-multilib` · `grub-pc-bin` · `xorriso`
 
 ---
 
-## Status
+## Roadmap
 
-**v0.5 — Riptide** · Active development. Boots to a polished desktop with first-boot wizard, TorrentOS Settings app, Torrent Browser, screenshot tool, and system updater.
+- [ ] Memory manager (paging, heap allocation)
+- [ ] Filesystem (read/write files)  
+- [ ] Process management (run multiple programs)
+- [ ] Graphics mode (pixel display)
+- [ ] Network stack
+- [ ] TorrentOS GUI desktop
 
 ---
 
 ## License
 
-GPL-3.0 for TorrentOS-specific code. Bundled packages retain their original licences.
+GPL-3.0 — TorrentOS is fully open source.

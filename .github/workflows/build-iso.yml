@@ -1,284 +1,31 @@
-name: Build TorrentOS ISO
+name: Build TorrentOS
 
 on:
-  workflow_dispatch:        # manual trigger from GitHub Actions tab
   push:
     branches: [main]
-    paths:                  # only rebuild when source actually changes
-      - 'archiso/**'
-      - 'packages/**'
-      - 'scripts/**'
-      - '.github/workflows/build-iso.yml'
-  release:
-    types: [created]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  # -------------------------------------------------------------------------
-  # Job 1: Resolve the pre-built kernel packages.
-  #
-  # The kernel takes 20-40 minutes to compile. We don't recompile it on every
-  # ISO build — only when packages/linux-torrentos/** changes (handled by the
-  # build-kernel.yml workflow). Here we just download the cached packages.
-  #
-  # If the cache is cold (first run, or kernel config just changed), we fall
-  # back to downloading from the kernel-latest GitHub release. If that also
-  # doesn't exist yet, we set a flag to skip linux-torrentos and use the
-  # upstream Arch linux package instead (bootstrap mode).
-  # -------------------------------------------------------------------------
-  resolve-kernel:
-    name: Resolve kernel packages
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-      config-hash: ${{ steps.config_hash.outputs.hash }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Compute kernel config hash
-        id: config_hash
-        run: |
-          hash=$(sha256sum packages/linux-torrentos/PKGBUILD \
-                           packages/linux-torrentos/torrentos.config \
-                 | sha256sum | cut -d' ' -f1)
-          echo "hash=${hash}" >> "$GITHUB_OUTPUT"
-
-      - name: Restore kernel package cache
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: kernel-packages/
-          key: linux-torrentos-${{ steps.config_hash.outputs.hash }}
-
-      - name: Validate cache contents
-        id: cache_validate
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |
-          if ls kernel-packages/*.pkg.tar.zst >/dev/null 2>&1; then
-            echo "valid=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Cache hit but empty (poisoned by a prior failed build) — will download from release."
-            echo "valid=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Download kernel from kernel-latest release (cache miss or empty cache)
-        if: steps.cache.outputs.cache-hit != 'true' || steps.cache_validate.outputs.valid == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p kernel-packages
-          if gh release download kernel-latest \
-              --pattern '*.pkg.tar.zst' \
-              --dir kernel-packages/ 2>/dev/null; then
-            echo "Downloaded kernel packages from kernel-latest release."
-            ls -lh kernel-packages/
-          else
-            echo "No kernel-latest release found — ISO will use upstream Arch linux package."
-            echo "BOOTSTRAP_MODE=true" >> "$GITHUB_ENV"
-          fi
-
-      - name: Upload kernel packages for ISO job
-        # Always upload — even on cache hit the build job runs in a separate VM
-        # and cannot access this job's cache. Without this, a cache hit here means
-        # the build job finds no artifact and silently falls back to bootstrap mode.
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-packages-${{ steps.config_hash.outputs.hash }}
-          path: kernel-packages/
-          if-no-files-found: warn
-          retention-days: 1
-
-  # -------------------------------------------------------------------------
-  # Job 2: Build the ISO.
-  # -------------------------------------------------------------------------
   build:
-    name: Build ISO
-    needs: resolve-kernel
-    runs-on: ubuntu-latest   # x86_64 — required for Arch Linux / mkarchiso
-    timeout-minutes: 120
-    permissions:
-      contents: write        # needed to attach files to a Release
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read version
-        id: version
+      - name: Install build tools
         run: |
-          ver=$(grep '^TORRENTOS_VERSION=' archiso/airootfs/etc/torrentos/version \
-                | cut -d= -f2 | tr -d '"')
-          echo "version=${ver}" >> "$GITHUB_OUTPUT"
-          echo "Building TorrentOS v${ver}"
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential gcc-multilib grub-pc-bin grub-common xorriso
 
-      # -----------------------------------------------------------------------
-      # Download the pre-built kernel packages from the cache artifact.
-      # The resolve-kernel job uploaded them; we pull them here so ci-build.sh
-      # can add them to the local pacman repo before mkarchiso runs.
-      # If no kernel packages are available (bootstrap mode), ci-build.sh will
-      # fall back to the upstream Arch linux package automatically.
-      # -----------------------------------------------------------------------
-      - name: Download pre-built kernel packages
-        uses: actions/download-artifact@v4
-        with:
-          name: kernel-packages-${{ needs.resolve-kernel.outputs.config-hash }}
-          path: kernel-packages/
-        continue-on-error: true   # bootstrap mode: no kernel artifact yet
+      - name: Build kernel + ISO
+        run: bash build.sh
 
-      - name: Check kernel package availability
-        run: |
-          if ls kernel-packages/*.pkg.tar.zst 2>/dev/null; then
-            echo "TORRENTOS_KERNEL_PKGS=$(pwd)/kernel-packages" >> "$GITHUB_ENV"
-            echo "Pre-built kernel packages found:"
-            ls -lh kernel-packages/
-          else
-            echo "No pre-built kernel packages — ISO will use upstream linux package."
-            echo "To build the custom kernel, trigger the 'Build TorrentOS Kernel' workflow."
-          fi
-
-      # Pull the Arch Linux image once so the timer doesn't count against the build
-      - name: Pull Arch Linux image
-        run: docker pull archlinux:latest
-
-      # Run the entire build inside an Arch Linux container with --privileged
-      # (mkarchiso needs loop devices to mount the squashfs image).
-      - name: Build ISO inside Arch Linux container
-        run: |
-          docker run --rm \
-            --privileged \
-            --volume "${{ github.workspace }}:/workspace" \
-            --workdir /workspace \
-            --env TORRENTOS_KERNEL_PKGS="${TORRENTOS_KERNEL_PKGS:-}" \
-            archlinux:latest \
-            bash /workspace/scripts/ci-build.sh
-
-      - name: List built artifacts
-        run: ls -lh out/
-
-      - name: Compute checksums
-        run: |
-          cd out
-          sha256sum *.iso > SHA256SUMS
-          cat SHA256SUMS
-
-      # Upload ISO as a workflow artifact (downloadable from the Actions tab for 30 days)
-      - name: Upload ISO artifact
+      - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
-          name: torrentos-${{ steps.version.outputs.version }}-x86_64
-          path: |
-            out/*.iso
-            out/SHA256SUMS
-          if-no-files-found: error
+          name: torrentos-${{ github.ref_name }}-${{ github.run_number }}
+          path: out/torrentos.iso
           retention-days: 30
-          compression-level: 0   # ISO is already compressed; skip re-compression
-
-      # -----------------------------------------------------------------------
-      # Publish to the "latest" GitHub Release on every successful main build.
-      # This gives the website a stable, always-current download URL:
-      #   https://github.com/rupertjwakefield2-dot/torrentos/releases/latest
-      #
-      # GitHub's release asset limit is 2 GB; the ISO is ~3.9 GB, so we split
-      # into 1.9 GB parts. Users reassemble with: cat *.part* > torrentos.iso
-      # -----------------------------------------------------------------------
-      - name: Publish latest build to GitHub Releases
-        if: github.ref == 'refs/heads/main'
-        continue-on-error: true   # don't fail the whole job if release publish fails
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          cd out
-          ISO="torrentos-${VERSION}-x86_64.iso"
-
-          # Guard: if the ISO doesn't exist (mkarchiso failed earlier) skip silently
-          if [[ ! -f "$ISO" ]]; then
-            echo "⚠️  ISO not found: $ISO — skipping release publish."
-            exit 0
-          fi
-
-          # Split into 1900 MB chunks
-          split -b 1900m "$ISO" "${ISO}.part"
-          i=1
-          for f in $(ls "${ISO}.part"* | sort); do
-            mv "$f" "${ISO}.part${i}"
-            i=$((i+1))
-          done
-          PARTS=$(ls "${ISO}.part"* | wc -l)
-
-          # Write reassembly instructions (single-line notes to avoid YAML indentation traps)
-          NOTES="TorrentOS ${VERSION} — latest build. ISO split into ${PARTS} x 1.9 GB parts (GitHub 2 GB asset limit). Reassemble: cat torrentos-*.part* > torrentos.iso && sha256sum -c SHA256SUMS — then flash with Rufus (DD mode) or Balena Etcher."
-
-          # Delete old latest release + tag, then recreate fresh
-          gh release delete "latest" --yes 2>/dev/null || true
-          git push origin ":refs/tags/latest" 2>/dev/null || true
-
-          gh release create "latest" \
-            --title "TorrentOS ${VERSION} — Latest Build" \
-            --notes "$NOTES" \
-            --latest \
-            "${ISO}.part"* \
-            SHA256SUMS
-
-          echo "✅ Release published → https://github.com/${{ github.repository }}/releases/latest"
-
-      # -----------------------------------------------------------------------
-      # Upload to Internet Archive for permanent, free, direct-download hosting.
-      # Only runs on explicit GitHub Release events (not every push).
-      # Requires two GitHub secrets — set them at:
-      #   Repo → Settings → Secrets and variables → Actions
-      #   IA_ACCESS_KEY  — get from https://archive.org/account/s3.php
-      #   IA_SECRET_KEY  — same page
-      # -----------------------------------------------------------------------
-      - name: Upload ISO to Internet Archive
-        if: github.event_name == 'release'
-        env:
-          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
-          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          # secrets context is not available in if: expressions — guard here instead
-          if [[ -z "${IA_ACCESS_KEY:-}" ]]; then
-            echo "No IA_ACCESS_KEY secret configured — skipping Internet Archive upload."
-            echo "Set IA_ACCESS_KEY and IA_SECRET_KEY in repo Settings > Secrets to enable."
-            exit 0
-          fi
-          pip install --quiet internetarchive
-          ITEM="torrentos-${VERSION}-x86_64"
-          ia upload "$ITEM" \
-            out/torrentos-${VERSION}-x86_64.iso \
-            out/SHA256SUMS \
-            --access-key "$IA_ACCESS_KEY" \
-            --secret-key "$IA_SECRET_KEY" \
-            --metadata="mediatype:software" \
-            --metadata="title:TorrentOS ${VERSION} (x86_64 ISO)" \
-            --metadata="description:TorrentOS ${VERSION} — A fast desktop OS with Hyprland and Wayland, built for downloading." \
-            --metadata="subject:operating system;torrentos;hyprland;wayland;desktop;torrenting" \
-            --metadata="licenseurl:https://www.gnu.org/licenses/gpl-3.0.html" \
-            --metadata="creator:TorrentOS" \
-            --no-derive
-          echo "✅ ISO uploaded → https://archive.org/download/${ITEM}/torrentos-${VERSION}-x86_64.iso"
-
-      # Attach to an explicitly-tagged GitHub Release when one is created
-      - name: Attach ISO parts to tagged GitHub Release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          cd out
-          ISO="torrentos-${VERSION}-x86_64.iso"
-          # Parts already exist from the "Publish latest" step above if it ran,
-          # otherwise split here (handles release events on non-main pushes)
-          if ! ls "${ISO}.part1" 2>/dev/null; then
-            split -b 1900m "$ISO" "${ISO}.part"
-            i=1
-            for f in $(ls "${ISO}.part"* | sort); do
-              mv "$f" "${ISO}.part${i}"; i=$((i+1))
-            done
-          fi
-          gh release upload "${{ github.ref_name }}" \
-            "${ISO}.part"* SHA256SUMS --clobber
