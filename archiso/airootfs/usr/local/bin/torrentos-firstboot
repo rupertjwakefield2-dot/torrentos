@@ -97,8 +97,52 @@ echo
 printf "${D}  Let's get you set up. This takes about a minute.${N}\n"
 echo
 
-# ── 1. Keyboard layout ────────────────────────────────────────────────────────
-printf "${C}  Step 1 of 4 — Keyboard layout${N}\n"
+# ── 1. WiFi / Network ────────────────────────────────────────────────────────
+printf "${C}  Step 1 of 5 — WiFi & Internet${N}\n"
+printf "$HR\n\n"
+
+_check_net() { curl -s --max-time 4 https://archlinux.org >/dev/null 2>&1 || curl -s --max-time 4 https://1.1.1.1 >/dev/null 2>&1; }
+
+if _check_net; then
+    _SSID=$(nmcli -t -f NAME,TYPE connection show --active 2>/dev/null \
+            | grep -v ':loopback' | head -1 | cut -d: -f1 || true)
+    if [[ -n "$_SSID" ]]; then
+        printf "${G}  ✔  Connected to: ${W}${_SSID}${N}\n"
+    else
+        printf "${G}  ✔  Internet connection active.${N}\n"
+    fi
+    echo
+    printf "${D}  Press Enter to continue, or type 'wifi' to switch network: ${N}"
+    fix_stty; IFS= read -r _net_input
+    if [[ "$_net_input" == "wifi" ]]; then
+        nmtui 2>/dev/null || printf "${Y}  ⚠  nmtui not found. Use: nmcli device wifi connect 'SSID' password 'PASS'${N}\n"
+        fix_stty
+    fi
+else
+    printf "${Y}  No internet detected.${N}\n\n"
+    printf "${D}  Scanning for nearby WiFi networks…${N}\n"
+    nmcli device wifi list 2>/dev/null | head -20 || true
+    echo
+    printf "${D}  Opening network manager — connect to WiFi, then choose Quit.${N}\n"
+    sleep 1
+    nmtui 2>/dev/null || {
+        printf "${Y}  ⚠  nmtui not found. Connect manually:${N}\n"
+        printf "${D}     nmcli device wifi connect 'YourNetwork' password 'YourPassword'${N}\n"
+        printf "${D}  Press Enter when connected (or Enter to skip): ${N}"
+        fix_stty; read -r _
+    }
+    fix_stty
+    if _check_net; then
+        printf "${G}  ✔  Internet connected!${N}\n"
+    else
+        printf "${Y}  ⚠  Still offline — some features (browser install, updates) need internet.${N}\n"
+    fi
+fi
+
+echo
+
+# ── 2. Keyboard layout ────────────────────────────────────────────────────────
+printf "${C}  Step 2 of 5 — Keyboard layout${N}\n"
 printf "$HR\n\n"
 
 if [[ -n "$MENU_CMD" ]]; then
@@ -138,9 +182,9 @@ printf "${G}  ✔  Keyboard: ${W}${KB}${N}\n"
 localectl set-keymap "$KB" 2>/dev/null || true
 fix_stty   # localectl can reset terminal settings — restore immediately
 
-# ── 2. Timezone ───────────────────────────────────────────────────────────────
+# ── 3. Timezone ───────────────────────────────────────────────────────────────
 echo
-printf "${C}  Step 2 of 4 — Timezone${N}\n"
+printf "${C}  Step 3 of 5 — Timezone${N}\n"
 printf "$HR\n\n"
 
 if [[ -n "$MENU_CMD" ]]; then
@@ -202,9 +246,9 @@ timedatectl set-timezone "$TZ" 2>/dev/null \
     || ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime 2>/dev/null \
     || true
 
-# ── 3. Locale / language ──────────────────────────────────────────────────────
+# ── 4. Locale / language ──────────────────────────────────────────────────────
 echo
-printf "${C}  Step 3 of 4 — System language${N}\n"
+printf "${C}  Step 4 of 5 — System language${N}\n"
 printf "$HR\n\n"
 
 if [[ -n "$MENU_CMD" ]]; then
@@ -251,9 +295,9 @@ else
     printf "${G}  ✔  Locale unchanged.${N}\n"
 fi
 
-# ── 4. Browser ────────────────────────────────────────────────────────────────
+# ── 5. Browser ────────────────────────────────────────────────────────────────
 echo
-printf "${C}  Step 4 of 4 — Web browser${N}\n"
+printf "${C}  Step 5 of 5 — Web browser${N}\n"
 printf "$HR\n"
 echo
 printf "${D}  Firefox is already installed. Want to add another browser?${N}\n\n"
@@ -392,5 +436,7 @@ printf "${D}  pbcopy / pbpaste    ${N}${W}Clipboard (works like macOS)${N}\n"
 printf "${D}  help                ${N}${W}Full shortcut reference${N}\n"
 echo
 printf "$HR\n"
+printf "${D}  Next time you boot, the login screen will show your username${N}\n"
+printf "${D}  already filled in — just type your password and press Enter.${N}\n\n"
 printf "${D}  Hyprland is starting — your desktop will appear shortly.${N}\n\n"
 sleep 2

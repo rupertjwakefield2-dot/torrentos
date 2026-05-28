@@ -55,17 +55,29 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 log "Checking internet connection..."
-if curl -s --max-time 5 https://archlinux.org >/dev/null 2>&1; then
+_check_internet() { curl -s --max-time 5 https://archlinux.org >/dev/null 2>&1 || curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; }
+if _check_internet; then
     ok "Internet reachable."
-elif curl -s --max-time 5 https://1.1.1.1 >/dev/null 2>&1; then
-    ok "Internet reachable (via IP)."
 else
-    warn "No internet detected. archinstall needs internet to download packages."
-    warn "Connect via WiFi first:  nmtui"
+    warn "No internet connection detected."
     echo
-    printf "  Continue anyway? [y/N] "
-    read -r ans
-    [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+    printf "${CYN}  ▸ WiFi Setup${RST}\n"
+    echo
+    log "Scanning for nearby WiFi networks..."
+    nmcli device wifi list 2>/dev/null | head -20 || true
+    echo
+    printf "${DIM}  Launching network manager (nmtui). Connect to WiFi, then choose Quit.${RST}\n"
+    sleep 1
+    nmtui 2>/dev/null || true
+    echo
+    if _check_internet; then
+        ok "Internet connected!"
+    else
+        warn "Still no internet — archinstall needs internet to download packages."
+        printf "  Continue anyway? [y/N] "
+        read -r ans
+        [[ "$ans" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+    fi
 fi
 
 # Check UEFI vs BIOS
@@ -109,6 +121,53 @@ do
         break
     fi
 done
+
+# ── Guided account + locale setup ────────────────────────────────────────────
+step "Create your user account"
+printf "${DIM}  This will be your login on the installed system.${RST}\n\n"
+
+# Username
+while true; do
+    printf "  ${W}Username${RST} (letters/numbers/underscores, no spaces): "
+    read -r NEW_USERNAME
+    [[ -z "$NEW_USERNAME" ]] && NEW_USERNAME="user"
+    if [[ "$NEW_USERNAME" =~ ^[a-z_][a-z0-9_-]{0,30}$ ]]; then
+        break
+    fi
+    warn "Must start with a lowercase letter and contain only a-z, 0-9, _ or -"
+done
+
+# Password (hidden, with confirmation)
+while true; do
+    printf "  ${W}Password${RST}: "
+    read -rs NEW_PASS; echo
+    if [[ ${#NEW_PASS} -lt 4 ]]; then
+        warn "Password must be at least 4 characters."; continue
+    fi
+    printf "  ${W}Confirm password${RST}: "
+    read -rs NEW_PASS2; echo
+    if [[ "$NEW_PASS" == "$NEW_PASS2" ]]; then
+        break
+    fi
+    warn "Passwords don't match — try again."
+done
+
+ok "Account: ${NEW_USERNAME}"
+echo
+
+step "Timezone"
+printf "${DIM}  Common examples:  Europe/London  America/New_York  America/Los_Angeles${RST}\n"
+printf "${DIM}                    Europe/Berlin   Asia/Tokyo        Australia/Sydney${RST}\n\n"
+printf "  ${W}Timezone${RST} [Europe/London]: "
+read -r NEW_TIMEZONE
+[[ -z "$NEW_TIMEZONE" ]] && NEW_TIMEZONE="Europe/London"
+# Validate — fall back to UTC if unknown
+if [[ ! -f "/usr/share/zoneinfo/$NEW_TIMEZONE" ]]; then
+    warn "Timezone '$NEW_TIMEZONE' not found — defaulting to Europe/London"
+    NEW_TIMEZONE="Europe/London"
+fi
+ok "Timezone: ${NEW_TIMEZONE}"
+echo
 
 # ── Write archinstall config ─────────────────────────────────────────────────
 CONF_DIR=$(mktemp -d /tmp/torrentos-install.XXXXX)
@@ -249,16 +308,22 @@ fi
 
 PKG_JSON="$(printf '%s\n' "${EXTRA_PACKAGES[@]}" | jq -R . | jq -s .)"
 
+# Build the user JSON — jq handles special chars in username/password safely
+USER_JSON="$(jq -n \
+    --arg u "$NEW_USERNAME" \
+    --arg p "$NEW_PASS" \
+    '[{"username":$u,"!password":$p,"sudo":true,"groups":["wheel","video","audio","input","storage","optical","network","power","sys","tty","lp"]}]')"
+
 # Post-install custom commands (run inside the new system chroot)
-CUSTOM_CMDS='[
-  "chsh -s /usr/bin/zsh $(getent passwd 1000 | cut -d: -f1 2>/dev/null) 2>/dev/null || true",
-  "systemctl enable NetworkManager 2>/dev/null || true",
-  "systemctl enable bluetooth 2>/dev/null || true",
-  "systemctl enable fstrim.timer 2>/dev/null || true",
-  "systemctl enable systemd-resolved 2>/dev/null || true",
-  "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true",
-  "ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true"
-]'
+CUSTOM_CMDS="[
+  \"chsh -s /usr/bin/zsh ${NEW_USERNAME} 2>/dev/null || true\",
+  \"systemctl enable NetworkManager 2>/dev/null || true\",
+  \"systemctl enable bluetooth 2>/dev/null || true\",
+  \"systemctl enable fstrim.timer 2>/dev/null || true\",
+  \"systemctl enable systemd-resolved 2>/dev/null || true\",
+  \"flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true\",
+  \"ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf 2>/dev/null || true\"
+]"
 
 # Build graphics driver string
 GFX_DRIVER="All open-source (default)"
@@ -266,9 +331,15 @@ if [[ "$NVIDIA_DETECTED" == "true" ]]; then
     GFX_DRIVER="Nvidia"
 fi
 
-cat > "$CONF_DIR/user_configuration.json" << JSON
-{
-  "additional-repositories": $ADD_REPOS,
+jq -n \
+    --argjson repos "$ADD_REPOS" \
+    --argjson pkgs "$PKG_JSON" \
+    --argjson users "$USER_JSON" \
+    --argjson cmds "$CUSTOM_CMDS" \
+    --arg tz "$NEW_TIMEZONE" \
+    --arg gfx "$GFX_DRIVER" \
+'{
+  "additional-repositories": $repos,
   "archinstall-language": "English",
   "bootloader": "Grub",
   "hostname": "torrentos",
@@ -278,20 +349,20 @@ cat > "$CONF_DIR/user_configuration.json" << JSON
     "sys_enc": "UTF-8",
     "sys_lang": "en_US"
   },
-  "packages": $PKG_JSON,
+  "packages": $pkgs,
+  "!users": $users,
   "profile_config": {
     "profile": {
       "custom_settings": {},
       "details": ["Hyprland"],
       "main": "Desktop"
     },
-    "gfx_driver": "$GFX_DRIVER"
+    "gfx_driver": $gfx
   },
-  "custom-commands": $CUSTOM_CMDS,
+  "custom-commands": $cmds,
   "swap": true,
-  "timezone": "UTC"
-}
-JSON
+  "timezone": $tz
+}' > "$CONF_DIR/user_configuration.json"
 
 # ── Launch archinstall ────────────────────────────────────────────────────────
 step "Launching archinstall with TorrentOS defaults"
@@ -300,9 +371,57 @@ echo
 
 archinstall --config "$CONF_DIR/user_configuration.json"
 
+# ── Post-install: fix greetd config ──────────────────────────────────────────
+# archinstall's built-in Desktop/Hyprland profile writes its own
+# /etc/greetd/config.toml inside the chroot (using agreety or its own
+# defaults) AFTER packages are installed, which overwrites the correct
+# config shipped by torrentos-base.  We stamp the right config here,
+# writing directly to the installed system's mountpoint (/mnt).
+#
+# The correct installed-system config has NO [initial_session] block —
+# that block exists only on the live ISO for liveuser autologin.  On an
+# installed system liveuser doesn't exist, so [initial_session] would
+# cause greetd to crash on every boot.
+step "Applying TorrentOS post-install fixes"
+
+INSTALL_MNT="/mnt"
+GREETD_DEST="$INSTALL_MNT/etc/greetd/config.toml"
+
+if [[ -d "$INSTALL_MNT/etc/greetd" ]]; then
+    log "Writing TorrentOS greetd config to installed system..."
+    # --remember-user-session: after first login the username is pre-filled so
+    # the user only needs to type their password on every subsequent boot.
+    cat > "$GREETD_DEST" << GREETD_EOF
+# TorrentOS — greetd configuration for installed systems.
+# tuigreet login screen — username is remembered after first login.
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --time --remember --remember-user-session --asterisks --greeting 'Welcome to TorrentOS — enter your password' --cmd Hyprland"
+user = "greeter"
+GREETD_EOF
+    ok "greetd config written → $GREETD_DEST"
+
+    # Pre-seed tuigreet's state file with the username so it's pre-filled on
+    # the very first boot (no login needed first to trigger --remember).
+    TUIGREET_STATE="$INSTALL_MNT/var/cache/tuigreet"
+    mkdir -p "$TUIGREET_STATE"
+    echo "$NEW_USERNAME" > "$TUIGREET_STATE/last_user"
+    echo "Hyprland"      > "$TUIGREET_STATE/last_session"
+    ok "Login screen pre-seeded with username: ${NEW_USERNAME}"
+else
+    warn "Could not find installed system at $INSTALL_MNT/etc/greetd — greetd config NOT patched."
+    warn "If greetd fails on first boot, run as root on the installed system:"
+    warn "  systemctl edit --force greetd"
+fi
+
 echo
 ok "Installation complete!"
 printf "\n  ${GRN}➜${RST}  Remove the live media and reboot to your new system:\n"
 printf "\n     ${BLU}reboot${RST}\n\n"
-printf "${CYN}  After first login, the TorrentOS first-boot wizard will guide you\n"
-printf "  through personalisation (keyboard, timezone, browser, etc.).${RST}\n\n"
+printf "${CYN}  On the login screen your username (${NEW_USERNAME}) will already be filled in.\n"
+printf "  Just enter your password and press Enter — every time you boot.${RST}\n\n"
+printf "${CYN}  After first login, the TorrentOS setup wizard will guide you\n"
+printf "  through WiFi, keyboard layout, timezone, and browser choice.${RST}\n\n"
